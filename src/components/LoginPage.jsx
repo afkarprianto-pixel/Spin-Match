@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import logoSpinMatch from '../assets/logo-spinmatch.PNG';
+import logoSpinMatch from '../assets/logo-spinmatch.png';
 import {
   Lock,
   User,

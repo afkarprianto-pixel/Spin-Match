@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import logoSpinMatch from '../assets/logo-spinmatch.PNG';
+import logoSpinMatch from '../assets/logo-spinmatch.png';
 import { 
   LayoutDashboard, Layers, Calendar, Radio, Trophy, Settings, LogOut, KeyRound,
   ChevronUp, Users, Dices
