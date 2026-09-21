@@ -1,6 +1,6 @@
 import { supabase } from './lib/supabaseClient'
 import React, { useState, useEffect, useRef } from 'react';
-import logoSpinMatch from './assets/logo-spinmatch.PNG';
+import logoSpinMatch from './assets/logo-spinmatch.png';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
