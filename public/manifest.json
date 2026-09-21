@@ -1,0 +1,17 @@
+{
+  "name": "SpinMatch",
+  "short_name": "SpinMatch",
+  "description": "Platform Manajemen Turnamen Tenis Meja",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/SpinMatch512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
