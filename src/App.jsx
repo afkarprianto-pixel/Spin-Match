@@ -3774,7 +3774,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             </div>
           </div>
 
-          <div className="relative hidden min-h-[185px] items-center justify-center overflow-visible md:flex">
+          <div className="relative min-h-[185px] items-center justify-center overflow-visible md:flex">
             <div className="absolute left-1/2 top-1/2 h-[180px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/15 blur-[58px]" />
             <img
               src={heroPingpong}
