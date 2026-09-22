@@ -1,11 +1,10 @@
+// SpinMatch Login System Update: SUPER_ADMIN / EO / WASIT / PUBLIC supported via AuthContext + LoginPage
 import { supabase } from './lib/supabaseClient'
 import React, { useState, useEffect, useRef } from 'react';
 import logoSpinMatch from './assets/logo-spinmatch.png';
+import heroPingpong from './assets/hero-pingpong-new.png';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Sidebar } from './components/Sidebar';
-import { Header } from './components/Header';
 import { StatCard } from './components/StatCard';
-import { LiveTables } from './components/LiveTables';
 import { LoginPage } from './components/LoginPage';
 import * as XLSX from 'xlsx';
 import {
@@ -15,6 +14,76 @@ import {
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
   Printer, Search, FileText, Radio
 } from 'lucide-react';
+
+
+const SpinMatchSidebar = ({ activeView, setActiveView }) => {
+  const menu = [
+    { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
+    { view: 'REGISTRATION', label: 'Pendaftaran', icon: Users },
+    { view: 'DRAW', label: 'Undian Pool', icon: Dices },
+    { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
+    { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
+    { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
+    { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
+  ];
+
+  return (
+    <aside className="flex h-screen w-[268px] flex-col bg-gradient-to-b from-[#052a4a] via-[#063a67] to-[#052a4a] text-white shadow-2xl">
+      <div className="flex min-h-[112px] items-center gap-3.5 border-b border-white/10 px-5">
+        <img
+          src={logoSpinMatch}
+          alt="SpinMatch"
+          className="h-[58px] w-[58px] shrink-0 rounded-[14px] object-contain"
+        />
+        <div className="min-w-0">
+          <div className="whitespace-nowrap text-[20px] font-black leading-none tracking-[-0.03em]">
+            <span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span>
+          </div>
+          <div className="mt-2 flex items-start gap-1.5">
+            <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" />
+            <div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]">
+              <div>TABLE TENNIS</div>
+              <div>PLATFORM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav className="flex-1 space-y-2 overflow-y-auto px-3.5 py-5">
+        {menu.map(({ view, label, icon: Icon }) => (
+          <button
+            key={view}
+            type="button"
+            onClick={() => setActiveView(view)}
+            className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
+              activeView === view
+                ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
+                : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="border-t border-white/10 p-3.5">
+        <button
+          type="button"
+          onClick={() => setActiveView('SETTINGS')}
+          className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
+            activeView === 'SETTINGS'
+              ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
+              : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <Settings className="h-[18px] w-[18px] shrink-0" />
+          <span>Pengaturan</span>
+        </button>
+      </div>
+    </aside>
+  );
+};
 
 const SignaturePad = ({ value, onChange, label }) => {
   const canvasRef = useRef(null);
@@ -119,11 +188,43 @@ const MainContent = () => {
   // ============================================
   
   const [activeView, setActiveView] = useState('DASHBOARD');
+  const [heroEventIndex, setHeroEventIndex] = useState(0);
   const [selectedEventIdForReg, setSelectedEventIdForReg] = useState('');
   const [selectedEventIdForDraw, setSelectedEventIdForDraw] = useState('');
   const [selectedEventIdForSchedule, setSelectedEventIdForSchedule] = useState('');
   const [selectedEventIdForLive, setSelectedEventIdForLive] = useState('');
   const [selectedEventIdForKnockout, setSelectedEventIdForKnockout] = useState('');
+
+  // Peringkat & Poin
+  const [rankingMode, setRankingMode] = useState('EVENT');
+  const [selectedEventIdForRanking, setSelectedEventIdForRanking] = useState('');
+  const [selectedDivisionForRanking, setSelectedDivisionForRanking] = useState('');
+
+  // Pengaturan terpusat
+  const [selectedEventIdForSettings, setSelectedEventIdForSettings] = useState('');
+  const [settingsSection, setSettingsSection] = useState('HOME');
+  const [refereeAssignments, setRefereeAssignments] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('spinmatch_referee_assignments') || '{}'); }
+    catch { return {}; }
+  });
+  const [financeDrafts, setFinanceDrafts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('spinmatch_finance_drafts') || '{}'); }
+    catch { return {}; }
+  });
+
+  // Master Wasit SpinMatch + log aktivitas lokal.
+  // Nanti dipindahkan ke Supabase/Auth agar lintas perangkat dan akun.
+  const [refereeRegistry, setRefereeRegistry] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('spinmatch_referee_registry') || '[]'); }
+    catch { return []; }
+  });
+  const [refereeModalOpen, setRefereeModalOpen] = useState(false);
+  const [newRefereeName, setNewRefereeName] = useState('');
+  const [newRefereeStatus, setNewRefereeStatus] = useState('AKTIF');
+  const [activityLogs, setActivityLogs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('spinmatch_activity_logs') || '[]'); }
+    catch { return []; }
+  });
 
   const [events, setEvents] = useState(() => {
     const savedEvents = localStorage.getItem('spinmatch_events');
@@ -140,6 +241,7 @@ const MainContent = () => {
         durasiMatch: '20 Menit',
         jamMulai: '08:00',
         jamSelesai: '18:00',
+        jumlahMeja: 4,
         metodePengundian: 'PER_DIVISI',
         divisiList: [
           { nama: 'Divisi 5', sistemMatch: 'Best of 5', jumlahPool: '1 Pool isi 3 Orang', lolosPool: '2 Pemain' }
@@ -234,6 +336,7 @@ const MainContent = () => {
     durasiMatch: row.durasimatch || '20 Menit',
     jamMulai: row.jammulai || '08:00',
     jamSelesai: row.jamselesai || '18:00',
+    jumlahMeja: Number(row.jumlahmeja || row.jumlahMeja || 4),
     metodePengundian: row.metodeundian || 'PER_DIVISI',
     divisiList: Array.isArray(row.divisilist) ? row.divisilist : []
   });
@@ -357,6 +460,7 @@ const MainContent = () => {
   const [durasiMatch, setDurasiMatch] = useState('20 Menit');
   const [jamMulai, setJamMulai] = useState('08:00');
   const [jamSelesai, setJamSelesai] = useState('18:00');
+  const [jumlahMeja, setJumlahMeja] = useState(4);
   const [metodePengundian, setMetodePengundian] = useState('PER_DIVISI');
 
   const [inputDivisi, setInputDivisi] = useState('');
@@ -839,6 +943,12 @@ const MainContent = () => {
     if (activeView === 'KNOCKOUT' && !selectedEventIdForKnockout && events.length > 0) {
       setSelectedEventIdForKnockout(String(events[0].id));
     }
+    if (activeView === 'RANKING' && !selectedEventIdForRanking && events.length > 0) {
+      setSelectedEventIdForRanking(String(events[0].id));
+    }
+    if (activeView === 'SETTINGS' && !selectedEventIdForSettings && events.length > 0) {
+      setSelectedEventIdForSettings(String(events[0].id));
+    }
   }, [user, activeView, events, selectedEventIdForReg, selectedEventIdForDraw, selectedEventIdForSchedule, selectedEventIdForLive, selectedEventIdForKnockout]);
 
   useEffect(() => {
@@ -848,6 +958,96 @@ const MainContent = () => {
     // Tidak mengubah skor/match; hanya ranking/keterangan.
     calculatePoolRankings(selectedScheduleEvent.id);
   }, [selectedScheduleEvent?.id, matchResults, poolResults]);
+
+  // ============================================
+  // MIGRASI MASTER WASIT - HOOK WAJIB SEBELUM CONDITIONAL RETURN LOGIN
+  // ============================================
+  // Migrasi kompatibilitas: versi lama pernah menyimpan nama wasit pada
+  // penugasan meja tanpa ID WST. Sekali jalan, nama lama dibuatkan Master
+  // Wasit dan assignment diperbarui agar dropdown, nama, status, dan aksi sinkron.
+  useEffect(() => {
+    const registry = Array.isArray(refereeRegistry) ? [...refereeRegistry] : [];
+    const assignments = refereeAssignments && typeof refereeAssignments === 'object'
+      ? JSON.parse(JSON.stringify(refereeAssignments))
+      : {};
+
+    let changedRegistry = false;
+    let changedAssignments = false;
+
+    const normalizeName = (v) => String(v || '').trim().toLowerCase();
+    const usedNumbers = registry
+      .map(r => Number(String(r.id || '').replace(/\D/g, '')))
+      .filter(n => Number.isFinite(n) && n > 0);
+    let nextNumber = usedNumbers.length ? Math.max(...usedNumbers) + 1 : 1;
+
+    const getOrCreateReferee = (name) => {
+      const cleanName = String(name || '').trim();
+      if (!cleanName) return null;
+
+      let found = registry.find(r => normalizeName(r.nama) === normalizeName(cleanName));
+      if (found) return found;
+
+      found = {
+        id: `WST-${String(nextNumber++).padStart(4, '0')}`,
+        nama: cleanName,
+        status: 'AKTIF',
+        createdAt: new Date().toISOString(),
+        migratedFromLegacy: true
+      };
+      registry.push(found);
+      changedRegistry = true;
+      return found;
+    };
+
+    Object.keys(assignments).forEach(eventKey => {
+      const tables = assignments[eventKey];
+      if (!tables || typeof tables !== 'object') return;
+
+      Object.keys(tables).forEach(tableKey => {
+        const a = tables[tableKey];
+        if (!a || typeof a !== 'object') return;
+
+        // Sudah punya ID valid di registry -> sinkronkan nama/status terbaru.
+        if (a.refereeId) {
+          const registered = registry.find(r => r.id === a.refereeId);
+          if (registered) {
+            if (a.refereeName !== registered.nama || a.status !== registered.status) {
+              assignments[eventKey][tableKey] = {
+                ...a,
+                refereeName: registered.nama,
+                status: registered.status
+              };
+              changedAssignments = true;
+            }
+            return;
+          }
+        }
+
+        // Assignment legacy: nama ada tetapi ID kosong/tidak dikenal.
+        if (a.refereeName) {
+          const ref = getOrCreateReferee(a.refereeName);
+          if (ref) {
+            assignments[eventKey][tableKey] = {
+              ...a,
+              refereeId: ref.id,
+              refereeName: ref.nama,
+              status: ref.status
+            };
+            changedAssignments = true;
+          }
+        }
+      });
+    });
+
+    if (changedRegistry) {
+      localStorage.setItem('spinmatch_referee_registry', JSON.stringify(registry));
+      setRefereeRegistry(registry);
+    }
+    if (changedAssignments) {
+      localStorage.setItem('spinmatch_referee_assignments', JSON.stringify(assignments));
+      setRefereeAssignments(assignments);
+    }
+  }, []);
 
   // Otomatis tentukan pemenang dari jumlah SET yang dimenangkan.
   // Hook harus berada sebelum conditional return login agar urutan Hooks selalu konsisten.
@@ -914,6 +1114,7 @@ const MainContent = () => {
     setDurasiMatch('20 Menit');
     setJamMulai('08:00');
     setJamSelesai('18:00');
+    setJumlahMeja(4);
     setMetodePengundian('PER_DIVISI');
     setDivisiList([]);
     setActiveDivisiTab(null);
@@ -937,6 +1138,7 @@ const MainContent = () => {
     setDurasiMatch(eventItem.durasiMatch || '20 Menit');
     setJamMulai(eventItem.jamMulai || '08:00');
     setJamSelesai(eventItem.jamSelesai || '18:00');
+    setJumlahMeja(Math.max(1, Number(eventItem.jumlahMeja || eventItem.jumlahmeja || 4)));
     setMetodePengundian(eventItem.metodePengundian || 'PER_DIVISI');
     setDivisiList(eventItem.divisiList ? [...eventItem.divisiList] : []);
     setActiveDivisiTab(eventItem.divisiList?.[0]?.nama || null);
@@ -1000,6 +1202,7 @@ const MainContent = () => {
         durasiMatch,
         jamMulai,
         jamSelesai,
+        jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
         divisiList
       };
@@ -1029,6 +1232,7 @@ const MainContent = () => {
         durasiMatch,
         jamMulai,
         jamSelesai,
+        jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
         divisiList
       };
@@ -1734,7 +1938,7 @@ const handleUpdatePlayerSubmit = async (e) => {
     }
     let currentTime = parseTime(jamMulai);
     let mejaNumber = 1;
-    const maxMeja = 4;
+    const maxMeja = Math.max(1, Number(eventData.jumlahMeja || eventData.jumlahmeja || 4));
     const hariMain = getDayName(tanggal);
     const tanggalShort = formatDateShort(tanggal);
     const poolEntries = Object.entries(poolData.pools);
@@ -2586,9 +2790,140 @@ const handleUpdatePlayerSubmit = async (e) => {
     setShowPrintModal(false);
   };
 
-  const totalEventAktif = events.filter(e => e.status === 'Aktif').length;
-  const totalPeserta = events.reduce((sum, e) => sum + e.peserta, 0);
-  const configDivisiData = selectedDivisiForConfig
+    // ============================================================
+    // DASHBOARD - DATA EVENT AKTIF
+    // Semua angka dashboard mengikuti event aktif yang sama
+    // ============================================================
+
+    const activeHeroEvents = events.filter(
+      e => String(e.status || '').toLowerCase() === 'aktif'
+    );
+
+    const heroEvents = activeHeroEvents.length > 0
+      ? activeHeroEvents
+      : events.slice(0, 1);
+
+    const safeHeroIndex = heroEvents.length > 0
+      ? Math.min(heroEventIndex, heroEvents.length - 1)
+      : 0;
+
+    const dashboardActiveEvent = heroEvents[safeHeroIndex] || null;
+    const dashboardActiveEventId = dashboardActiveEvent?.id ?? null;
+
+    const dashboardParticipants = dashboardActiveEventId !== null
+      ? (
+          participants[dashboardActiveEventId] ||
+          participants[String(dashboardActiveEventId)] ||
+          []
+        )
+      : [];
+
+    const goHeroPrevious = () => {
+      if (heroEvents.length <= 1) return;
+      setHeroEventIndex(current =>
+        current <= 0 ? heroEvents.length - 1 : current - 1
+      );
+    };
+
+    const goHeroNext = () => {
+      if (heroEvents.length <= 1) return;
+      setHeroEventIndex(current =>
+        current >= heroEvents.length - 1 ? 0 : current + 1
+      );
+    };
+
+    // Jumlah event yang statusnya Aktif
+    const totalEventAktif = activeHeroEvents.length;
+
+    // =====================================================
+    // DASHBOARD LIVE MEJA - mengikuti event hero yang dipilih
+    // =====================================================
+    const dashboardJumlahMeja = Math.max(
+      1,
+      Number(
+        dashboardActiveEvent?.jumlahMeja ||
+        dashboardActiveEvent?.jumlahmeja ||
+        4
+      )
+    );
+
+    const dashboardScheduleRows = dashboardActiveEvent
+      ? generateScheduleFromPools(dashboardActiveEvent.id).filter(
+          row => row?.type === 'player' && row?.showMatch && row?.matchId
+        )
+      : [];
+
+    const dashboardTableCards = Array.from(
+      { length: dashboardJumlahMeja },
+      (_, index) => {
+        const tableNo = index + 1;
+        const tableName = `Meja ${tableNo}`;
+
+        const rowsForTable = dashboardScheduleRows.filter(
+          row => String(row.meja || '').toLowerCase() === tableName.toLowerCase()
+        );
+
+        const runningRow = rowsForTable.find(
+          row => liveScoreMatch?.matchId && String(row.matchId) === String(liveScoreMatch.matchId)
+        );
+
+        const unfinishedRow = rowsForTable.find(row => !matchResults[row.matchId]);
+        const latestFinishedRow = [...rowsForTable]
+          .reverse()
+          .find(row => matchResults[row.matchId]);
+
+        const row = runningRow || unfinishedRow || latestFinishedRow || null;
+        const result = row?.matchId ? matchResults[row.matchId] : null;
+        const isLive = Boolean(
+          runningRow &&
+          selectedLiveEvent?.id &&
+          String(selectedLiveEvent.id) === String(dashboardActiveEvent?.id)
+        );
+        const isFinished = Boolean(result && !isLive);
+
+        let point1 = 0;
+        let point2 = 0;
+
+        if (isLive) {
+          point1 = Number(livePoint1 || currentGameP1 || 0);
+          point2 = Number(livePoint2 || currentGameP2 || 0);
+        } else if (result) {
+          point1 = Number(result.point1 || result.player1Score || 0);
+          point2 = Number(result.point2 || result.player2Score || 0);
+        }
+
+        return {
+          tableNo,
+          tableName,
+          row,
+          result,
+          isLive,
+          isFinished,
+          point1,
+          point2,
+          hasSchedule: rowsForTable.length > 0
+        };
+      }
+    );
+
+    const dashboardLiveCount = dashboardTableCards.filter(card => card.isLive).length;
+    const dashboardReadyCount = dashboardTableCards.filter(
+      card => card.hasSchedule && !card.isLive && !card.isFinished
+    ).length;
+
+    // Jumlah peserta KHUSUS event aktif
+    const totalPeserta = Object.values(participants || {})
+    .reduce((total, daftarPeserta) => {
+      return total + (Array.isArray(daftarPeserta) ? daftarPeserta.length : 0);
+    }, 0);
+
+    // Total uang pendaftaran KHUSUS event aktif
+    const dashboardTotalOmzet = dashboardParticipants.reduce(
+      (sum, p) => sum + (Number(p.nilaiBayar) || 0),
+      0
+    );
+
+    const configDivisiData = selectedDivisiForConfig
     ? divisiList.find(d => d.nama === selectedDivisiForConfig)
     : null;
   const currentEventParticipants = selectedEventItem ? (participants[selectedEventItem.id] || []) : [];
@@ -2662,32 +2997,557 @@ const handleUpdatePlayerSubmit = async (e) => {
       row.player?.ptm?.toLowerCase().includes(searchLower);
   });
 
+
+  // ============================================================
+  // PERINGKAT & POIN
+  // Poin awal: menang 3, kalah 0. Rumus dipusatkan di sini agar
+  // mudah diganti nanti tanpa merombak UI.
+  // ============================================================
+  const selectedRankingEvent = events.find(
+    e => String(e.id) === String(selectedEventIdForRanking)
+  ) || events[0] || null;
+
+  const rankingDivisionOptions = rankingMode === 'EVENT'
+    ? (selectedRankingEvent?.divisiList || []).map(d => d.nama)
+    : Array.from(new Set(
+        events.flatMap(e => (e.divisiList || []).map(d => d.nama)).filter(Boolean)
+      ));
+
+  const effectiveRankingDivision =
+    rankingDivisionOptions.includes(selectedDivisionForRanking)
+      ? selectedDivisionForRanking
+      : (rankingDivisionOptions[0] || '');
+
+  const buildEventRanking = (eventItem, divisionName) => {
+    if (!eventItem || !divisionName) return [];
+
+    const eventPlayers = (
+      participants[eventItem.id] ||
+      participants[String(eventItem.id)] ||
+      []
+    ).filter(p => String(p.divisi || '').toLowerCase() === String(divisionName).toLowerCase());
+
+    const allowedIds = new Set(eventPlayers.map(p => String(p.id)));
+    const allowedNames = new Set(eventPlayers.map(p => String(p.nama || '').trim().toLowerCase()));
+    const rows = generateScheduleFromPools(eventItem.id)
+      .filter(r => r?.type === 'player' && r?.showMatch && r?.matchId);
+
+    const stats = {};
+    eventPlayers.forEach(p => {
+      const key = String(p.id || p.nama);
+      stats[key] = {
+        id: p.id,
+        nama: p.nama || '-',
+        ptm: p.ptm || p.club || p.klub || '-',
+        main: 0, menang: 0, kalah: 0, poin: 0,
+        eventCount: 1
+      };
+    });
+
+    rows.forEach(row => {
+      const result = matchResults[row.matchId];
+      if (!result || !row.player || !row.opponent) return;
+
+      const p1Allowed = allowedIds.has(String(row.player.id)) ||
+        allowedNames.has(String(row.player.nama || '').trim().toLowerCase());
+      const p2Allowed = allowedIds.has(String(row.opponent.id)) ||
+        allowedNames.has(String(row.opponent.nama || '').trim().toLowerCase());
+      if (!p1Allowed || !p2Allowed) return;
+
+      const key1 = String(row.player.id || row.player.nama);
+      const key2 = String(row.opponent.id || row.opponent.nama);
+
+      if (!stats[key1]) stats[key1] = { id: row.player.id, nama: row.player.nama, ptm: row.player.ptm || '-', main:0, menang:0, kalah:0, poin:0, eventCount:1 };
+      if (!stats[key2]) stats[key2] = { id: row.opponent.id, nama: row.opponent.nama, ptm: row.opponent.ptm || '-', main:0, menang:0, kalah:0, poin:0, eventCount:1 };
+
+      stats[key1].main += 1;
+      stats[key2].main += 1;
+
+      if (result.winner === 'player1') {
+        stats[key1].menang += 1; stats[key1].poin += 3;
+        stats[key2].kalah += 1;
+      } else if (result.winner === 'player2') {
+        stats[key2].menang += 1; stats[key2].poin += 3;
+        stats[key1].kalah += 1;
+      }
+    });
+
+    return Object.values(stats)
+      .sort((a,b) => b.poin - a.poin || b.menang - a.menang || a.kalah - b.kalah || a.nama.localeCompare(b.nama))
+      .map((item, index) => ({ ...item, rank: index + 1 }));
+  };
+
+  const eventRankingRows = buildEventRanking(selectedRankingEvent, effectiveRankingDivision);
+
+  const globalRankingRows = (() => {
+    if (!effectiveRankingDivision) return [];
+    const aggregate = {};
+
+    events.forEach(ev => {
+      const rows = buildEventRanking(ev, effectiveRankingDivision);
+      rows.forEach(p => {
+        // Untuk saat ini prioritaskan ID pemain; fallback nama+club.
+        const key = p.id ? `ID:${p.id}` : `NM:${String(p.nama).toLowerCase()}|${String(p.ptm).toLowerCase()}`;
+        if (!aggregate[key]) {
+          aggregate[key] = {
+            id: p.id, nama: p.nama, ptm: p.ptm,
+            main: 0, menang: 0, kalah: 0, poin: 0,
+            eventCount: 0
+          };
+        }
+        aggregate[key].main += p.main;
+        aggregate[key].menang += p.menang;
+        aggregate[key].kalah += p.kalah;
+        aggregate[key].poin += p.poin;
+        if (p.main > 0) aggregate[key].eventCount += 1;
+      });
+    });
+
+    return Object.values(aggregate)
+      .sort((a,b) => b.poin - a.poin || b.menang - a.menang || a.kalah - b.kalah || a.nama.localeCompare(b.nama))
+      .map((item, index) => ({ ...item, rank: index + 1 }));
+  })();
+
+  const rankingRows = rankingMode === 'EVENT' ? eventRankingRows : globalRankingRows;
+
+  // ============================================================
+  // PENGATURAN TERPUSAT
+  // ============================================================
+  const selectedSettingsEvent = events.find(
+    e => String(e.id) === String(selectedEventIdForSettings)
+  ) || events[0] || null;
+
+  const settingsTableCount = Math.max(
+    1,
+    Number(selectedSettingsEvent?.jumlahMeja || selectedSettingsEvent?.jumlahmeja || 4)
+  );
+
+
+  const nextRefereeId = (() => {
+    const nums = refereeRegistry
+      .map(r => Number(String(r.id || '').replace(/\D/g, '')))
+      .filter(Number.isFinite);
+    const next = (nums.length ? Math.max(...nums) : 0) + 1;
+    return `WST-${String(next).padStart(4, '0')}`;
+  })();
+
+
+
+  const addActivityLog = (type, description, eventId = null) => {
+    const entry = {
+      id: `LOG-${Date.now()}`,
+      type,
+      description,
+      eventId: eventId ? String(eventId) : null,
+      at: new Date().toISOString()
+    };
+    setActivityLogs(prev => {
+      const next = [entry, ...prev].slice(0, 500);
+      localStorage.setItem('spinmatch_activity_logs', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const createReferee = () => {
+    const nama = newRefereeName.trim();
+    if (!nama) {
+      alert('Nama wasit belum diisi.');
+      return;
+    }
+    const item = {
+      id: nextRefereeId,
+      nama,
+      status: newRefereeStatus,
+      createdAt: new Date().toISOString()
+    };
+    setRefereeRegistry(prev => {
+      const next = [...prev, item];
+      localStorage.setItem('spinmatch_referee_registry', JSON.stringify(next));
+      return next;
+    });
+    addActivityLog('WASIT_BARU', `${item.id} - ${item.nama} ditambahkan ke daftar wasit SpinMatch.`);
+    setNewRefereeName('');
+    setNewRefereeStatus('AKTIF');
+    setRefereeModalOpen(false);
+  };
+
+  const toggleRefereeStatus = (refereeId) => {
+    const current = refereeRegistry.find(r => r.id === refereeId);
+    if (!current) return;
+    const newStatus = current.status === 'AKTIF' ? 'NONAKTIF' : 'AKTIF';
+
+    setRefereeRegistry(prev => {
+      const next = prev.map(r => r.id === refereeId ? { ...r, status: newStatus } : r);
+      localStorage.setItem('spinmatch_referee_registry', JSON.stringify(next));
+      return next;
+    });
+
+    setRefereeAssignments(prev => {
+      const next = JSON.parse(JSON.stringify(prev || {}));
+      Object.keys(next).forEach(eventKey => {
+        Object.keys(next[eventKey] || {}).forEach(tableKey => {
+          if (next[eventKey][tableKey]?.refereeId === refereeId) {
+            next[eventKey][tableKey].status = newStatus;
+          }
+        });
+      });
+      localStorage.setItem('spinmatch_referee_assignments', JSON.stringify(next));
+      return next;
+    });
+
+    addActivityLog(
+      'STATUS_WASIT',
+      `${current.id} - ${current.nama} diubah menjadi ${newStatus}.`
+    );
+  };
+
+  const assignRegisteredReferee = (tableNo, refereeId) => {
+    if (!selectedSettingsEvent) return;
+    const ref = refereeRegistry.find(r => r.id === refereeId);
+    const eventKey = String(selectedSettingsEvent.id);
+
+    if (refereeId && (!ref || ref.status !== 'AKTIF')) {
+      alert('Wasit ini tidak aktif. Aktifkan terlebih dahulu di Master Wasit.');
+      return;
+    }
+
+    setRefereeAssignments(prev => {
+      const next = {
+        ...prev,
+        [eventKey]: {
+          ...(prev[eventKey] || {}),
+          [String(tableNo)]: refereeId && ref ? {
+            refereeId: ref.id,
+            refereeName: ref.nama,
+            status: ref.status
+          } : {}
+        }
+      };
+      localStorage.setItem('spinmatch_referee_assignments', JSON.stringify(next));
+      return next;
+    });
+
+    addActivityLog(
+      'PENUGASAN_WASIT',
+      refereeId && ref
+        ? `${ref.id} - ${ref.nama} ditugaskan ke Meja ${tableNo}.`
+        : `Penugasan wasit Meja ${tableNo} dibatalkan.`,
+      selectedSettingsEvent.id
+    );
+  };
+
+
+  // Status kerja wasit dihitung otomatis dari pertandingan pada meja:
+  // MENUNGGU -> BERTUGAS -> SIAP. Status akun AKTIF/NONAKTIF tetap
+  // hanya diatur dari Master Wasit oleh EO/Super Admin.
+  const getRefereeWorkStatus = (tableNo, assignment) => {
+    if (!assignment?.refereeId) {
+      return { code: 'KOSONG', label: 'KOSONG', match: null };
+    }
+
+    const registered = refereeRegistry.find(r => r.id === assignment.refereeId);
+    if (!registered) {
+      return { code: 'KOSONG', label: 'KOSONG', match: null };
+    }
+    if (registered.status !== 'AKTIF') {
+      return { code: 'NONAKTIF', label: 'NONAKTIF', match: null };
+    }
+    if (!selectedSettingsEvent) {
+      return { code: 'MENUNGGU', label: 'MENUNGGU', match: null };
+    }
+
+    const schedule = generateScheduleFromPools(selectedSettingsEvent.id)
+      .filter(row =>
+        row?.type === 'player' &&
+        row?.showMatch &&
+        row?.matchId &&
+        Number(row?.meja || row?.table || row?.tableNo || 0) === Number(tableNo)
+      );
+
+    if (!schedule.length) {
+      return { code: 'MENUNGGU', label: 'MENUNGGU', match: null };
+    }
+
+    // Hindari pasangan player/opponent terhitung dua kali bila generator
+    // mengembalikan dua baris untuk match yang sama.
+    const uniqueMatches = [];
+    const seen = new Set();
+    schedule.forEach(row => {
+      if (!seen.has(String(row.matchId))) {
+        seen.add(String(row.matchId));
+        uniqueMatches.push(row);
+      }
+    });
+
+    const unfinished = uniqueMatches.filter(row => {
+      const result = matchResults[row.matchId];
+      return !(result?.winner === 'player1' || result?.winner === 'player2');
+    });
+
+    if (!unfinished.length) {
+      return { code: 'SIAP', label: 'SIAP', match: null };
+    }
+
+    // Pertandingan dianggap sedang berjalan bila sudah ada input skor/set
+    // pada matchResults tetapi belum mempunyai winner final.
+    const activeMatch = unfinished.find(row => {
+      const result = matchResults[row.matchId];
+      if (!result) return false;
+
+      const hasScoreValue = (value) =>
+        value !== undefined && value !== null && String(value).trim() !== '' &&
+        Number(value) > 0;
+
+      if (Array.isArray(result.sets)) {
+        return result.sets.some(set =>
+          hasScoreValue(set?.player1) || hasScoreValue(set?.player2) ||
+          hasScoreValue(set?.p1) || hasScoreValue(set?.p2)
+        );
+      }
+
+      return (
+        hasScoreValue(result.player1Score) ||
+        hasScoreValue(result.player2Score) ||
+        hasScoreValue(result.score1) ||
+        hasScoreValue(result.score2)
+      );
+    });
+
+    if (activeMatch) {
+      return {
+        code: 'BERTUGAS',
+        label: 'BERTUGAS',
+        match: activeMatch
+      };
+    }
+
+    // Bila meja pernah menyelesaikan match sebelumnya dan sekarang menunggu
+    // match berikutnya, wasit sudah kembali free/siap.
+    const hasFinishedMatch = uniqueMatches.some(row => {
+      const result = matchResults[row.matchId];
+      return result?.winner === 'player1' || result?.winner === 'player2';
+    });
+
+    return hasFinishedMatch
+      ? { code: 'SIAP', label: 'SIAP', match: unfinished[0] || null }
+      : { code: 'MENUNGGU', label: 'MENUNGGU', match: unfinished[0] || null };
+  };
+
+  const currentRefereeAssignments =
+    refereeAssignments[String(selectedSettingsEvent?.id)] || {};
+
+  const assignedRefereeCount = Array.from({ length: settingsTableCount }, (_, i) => i + 1)
+    .filter(no => {
+      const id = currentRefereeAssignments[String(no)]?.refereeId;
+      return !!id && refereeRegistry.some(r => r.id === id);
+    }).length;
+
+  const refereeWorkSummary = Array.from({ length: settingsTableCount }, (_, i) => i + 1)
+    .map(no => getRefereeWorkStatus(no, currentRefereeAssignments[String(no)] || {}));
+
+  const workingRefereeCount = refereeWorkSummary.filter(s => s.code === 'BERTUGAS').length;
+  const readyRefereeCount = refereeWorkSummary.filter(s => s.code === 'SIAP').length;
+  const waitingRefereeCount = refereeWorkSummary.filter(s => s.code === 'MENUNGGU').length;
+
+  const updateRefereeAssignment = (tableNo, field, value) => {
+    if (!selectedSettingsEvent) return;
+    const eventKey = String(selectedSettingsEvent.id);
+    setRefereeAssignments(prev => {
+      const next = {
+        ...prev,
+        [eventKey]: {
+          ...(prev[eventKey] || {}),
+          [String(tableNo)]: {
+            ...((prev[eventKey] || {})[String(tableNo)] || {}),
+            [field]: value
+          }
+        }
+      };
+      localStorage.setItem('spinmatch_referee_assignments', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const saveRefereeAssignments = () => {
+    localStorage.setItem('spinmatch_referee_assignments', JSON.stringify(refereeAssignments));
+    if (selectedSettingsEvent) {
+      addActivityLog(
+        'SIMPAN_PENUGASAN',
+        `Penugasan wasit disimpan untuk ${selectedSettingsEvent.nama}.`,
+        selectedSettingsEvent.id
+      );
+    }
+    alert('Pengaturan wasit untuk event ini berhasil disimpan.');
+  };
+
+  const currentFinance = financeDrafts[String(selectedSettingsEvent?.id)] || {
+    registrationIncome: '',
+    otherIncome: '',
+    refereeFee: '',
+    operationalCost: '',
+    otherExpense: ''
+  };
+
+  const updateFinance = (field, value) => {
+    if (!selectedSettingsEvent) return;
+    const eventKey = String(selectedSettingsEvent.id);
+    setFinanceDrafts(prev => {
+      const next = {
+        ...prev,
+        [eventKey]: {
+          ...(prev[eventKey] || {}),
+          [field]: value
+        }
+      };
+      localStorage.setItem('spinmatch_finance_drafts', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const financeIncome =
+    Number(currentFinance.registrationIncome || 0) +
+    Number(currentFinance.otherIncome || 0);
+  const financeExpense =
+    Number(currentFinance.refereeFee || 0) +
+    Number(currentFinance.operationalCost || 0) +
+    Number(currentFinance.otherExpense || 0);
+  const financeBalance = financeIncome - financeExpense;
+
   return (
     <div className="spinmatch-app flex h-[100dvh] bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <div className="hidden h-screen sticky top-0 shrink-0 md:block">
-        <Sidebar activeView={activeView} setActiveView={setActiveView} />
+        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} />
       </div>
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <div className="spinmatch-page-head shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-10 border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
-          <div className="hidden md:block"><Header /></div>
+          <div className="hidden md:block">
+            <div className="flex items-start justify-between gap-6">
+              <div className="min-w-0 pt-0.5">
+                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">
+                  SEPTEMBER 2026 • SUPER ADMIN WORKSPACE
+                </p>
+                <h1 className="mt-1 text-[22px] font-black tracking-tight text-slate-950">
+                  Selamat datang di SpinMatch
+                </h1>
+              </div>
+
+              <div className="flex shrink-0 flex-col items-end gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-2 text-[10px] font-bold text-emerald-700">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Sistem online
+                  </span>
+
+                  <span className="flex h-9 min-w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-3 text-[10px] font-black text-slate-700 shadow-sm">
+                    SA
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenCreate}
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#07101f] px-4 text-[11px] font-black text-white shadow-[0_5px_14px_rgba(2,6,23,.22)] transition hover:-translate-y-0.5 hover:bg-[#0a3971]"
+                  >
+                    <Plus className="h-4 w-4 text-[#8DFF63]" />
+                    Buat Event
+                  </button>
+                </div>
+
+                {/* Tombol persiapan fitur berikutnya - sengaja belum diberi aksi */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    title="Fitur Berita Pingpong akan diaktifkan berikutnya"
+                    className="inline-flex h-8 cursor-default items-center gap-1.5 rounded-full border border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-3 text-[9px] font-black text-[#0a3971] shadow-sm"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-cyan-600" />
+                    Berita Pingpong
+                  </button>
+
+                  <button
+                    type="button"
+                    title="Fitur Cari Pelatih akan diaktifkan berikutnya"
+                    className="inline-flex h-8 cursor-default items-center gap-1.5 rounded-full border border-lime-200 bg-gradient-to-r from-lime-50 to-emerald-50 px-3 text-[9px] font-black text-emerald-700 shadow-sm"
+                  >
+                    <Search className="h-3.5 w-3.5 text-emerald-600" />
+                    Cari Pelatih
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {activeView === 'RANKING' && (
+            <div className="relative mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-white shadow-[0_12px_30px_rgba(7,27,59,.18)]">
+              <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+              <div className="pointer-events-none absolute right-8 top-1/2 h-[2px] w-44 -rotate-[18deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+              <div className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setActiveView('DASHBOARD')} className="rounded-xl border border-white/15 bg-white/10 p-2 hover:bg-white/20">
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <div>
+                    <h2 className="text-lg font-black">Peringkat & Poin</h2>
+                    <p className="text-xs text-blue-100/75">Peringkat Event dan peringkat keseluruhan SpinMatch per divisi</p>
+                  </div>
+                </div>
+                <div className="flex rounded-xl border border-white/15 bg-white/10 p-1">
+                  <button onClick={() => setRankingMode('EVENT')} className={`rounded-lg px-3 py-2 text-[10px] font-black ${rankingMode === 'EVENT' ? 'bg-[#8DFF63] text-[#09243e]' : 'text-white/80'}`}>Peringkat Event</button>
+                  <button onClick={() => setRankingMode('GLOBAL')} className={`rounded-lg px-3 py-2 text-[10px] font-black ${rankingMode === 'GLOBAL' ? 'bg-[#8DFF63] text-[#09243e]' : 'text-white/80'}`}>Peringkat SpinMatch</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeView === 'SETTINGS' && (
+            <div className="relative mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-white shadow-[0_12px_30px_rgba(7,27,59,.18)]">
+              <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+              <div className="pointer-events-none absolute right-8 top-1/2 h-[2px] w-44 -rotate-[18deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+              <div className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => { setActiveView('DASHBOARD'); setSettingsSection('HOME'); }} className="rounded-xl border border-white/15 bg-white/10 p-2 hover:bg-white/20">
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <div>
+                    <h2 className="text-lg font-black">Pengaturan</h2>
+                    <p className="text-xs text-blue-100/75">Pertandingan, penugasan wasit, dan keuangan per event</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2">
+                  <Filter className="h-4 w-4 text-cyan-200" />
+                  <select
+                    value={selectedEventIdForSettings}
+                    onChange={(e) => { setSelectedEventIdForSettings(e.target.value); setSettingsSection('HOME'); }}
+                    className="max-w-[280px] bg-transparent text-xs font-black text-white outline-none [&>option]:text-slate-900"
+                  >
+                    {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {activeView === 'REGISTRATION' && (
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer text-slate-700" title="Kembali ke Dashboard">
+            <div className="p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
+                <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                <div className="absolute left-[34%] -top-10 h-24 w-52 rotate-[8deg] rounded-full bg-cyan-200/10 blur-3xl" />
+              </div>
+              <div className="relative z-10 flex items-center gap-3 w-full md:w-auto">
+                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer text-blue-50" title="Kembali ke Dashboard">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Manajemen Peserta</h2>
-                  <p className="text-xs text-slate-400">Kelola data peserta turnamen</p>
+                  <h2 className="text-lg font-bold text-white">Manajemen Peserta</h2>
+                  <p className="text-xs text-blue-100/70">Kelola data peserta turnamen</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-200">
-                  <Filter className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-600">Pilih Event:</span>
-                  <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer">
+              <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
+                  <Filter className="w-4 h-4 text-blue-100/80" />
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -2699,23 +3559,28 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'DRAW' && (
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
+            <div className="p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
+                <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                <div className="absolute left-[34%] -top-10 h-24 w-52 rotate-[8deg] rounded-full bg-cyan-200/10 blur-3xl" />
+              </div>
               <div className="flex items-center gap-3 w-full md:w-auto">
-                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer text-slate-700" title="Kembali ke Dashboard">
+                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer text-blue-50" title="Kembali ke Dashboard">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Dices className="w-5 h-5 text-emerald-600" /> Undian Peserta
                   </h2>
-                  <p className="text-xs text-slate-400">Acak pemain ke dalam pool secara adil</p>
+                  <p className="text-xs text-blue-100/70">Acak pemain ke dalam pool secara adil</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-200">
-                  <Filter className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-600">Pilih Event:</span>
-                  <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer">
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
+                  <Filter className="w-4 h-4 text-blue-100/80" />
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -2724,23 +3589,28 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'SCHEDULE' && (
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 text-white">
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
+                <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                <div className="absolute left-[34%] -top-10 h-24 w-52 rotate-[8deg] rounded-full bg-cyan-200/10 blur-3xl" />
+              </div>
               <div className="flex items-center gap-3 w-full md:w-auto">
-                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer text-slate-700" title="Kembali ke Dashboard">
+                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer text-blue-50" title="Kembali ke Dashboard">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-emerald-600" /> Jadwal Pertandingan
                   </h2>
-                  <p className="text-xs text-slate-400">Jadwal match berdasarkan hasil undian pool</p>
+                  <p className="text-xs text-blue-100/70">Jadwal match berdasarkan hasil undian pool</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-200">
-                  <Filter className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-600">Pilih Event:</span>
-                  <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer">
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
+                  <Filter className="w-4 h-4 text-blue-100/80" />
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -2756,21 +3626,26 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'KNOCKOUT' && (
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 text-white">
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
+                <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                <div className="absolute left-[34%] -top-10 h-24 w-52 rotate-[8deg] rounded-full bg-cyan-200/10 blur-3xl" />
+              </div>
+              <div className="relative z-10 flex items-center gap-3">
+                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-500" /> Knockout</h2>
-                  <p className="text-xs text-slate-400">Bagan gugur • klik Match untuk Live Score</p>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-500" /> Knockout</h2>
+                  <p className="text-xs text-blue-100/70">Bagan gugur • klik Match untuk Live Score</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-200">
-                  <Filter className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-600">Pilih Event:</span>
-                  <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none">
+              <div className="relative z-10 flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
+                  <Filter className="w-4 h-4 text-blue-100/80" />
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
                     {events.map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
                 </div>
@@ -2782,23 +3657,28 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'LIVE_SCORE' && (
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
+            <div className="p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
+                <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                <div className="absolute left-[34%] -top-10 h-24 w-52 rotate-[8deg] rounded-full bg-cyan-200/10 blur-3xl" />
+              </div>
               <div className="flex items-center gap-3 w-full md:w-auto">
-                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer text-slate-700" title="Kembali ke Dashboard">
+                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer text-blue-50" title="Kembali ke Dashboard">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Radio className="w-5 h-5 text-red-600" /> Live Skor Pertandingan
                   </h2>
-                  <p className="text-xs text-slate-400">Input skor real-time untuk dilihat publik</p>
+                  <p className="text-xs text-blue-100/70">Input skor real-time untuk dilihat publik</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-200">
-                  <Filter className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-600">Pilih Event:</span>
-                  <select value={selectedEventIdForLive} onChange={(e) => setSelectedEventIdForLive(e.target.value)} className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer">
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
+                  <Filter className="w-4 h-4 text-blue-100/80" />
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <select value={selectedEventIdForLive} onChange={(e) => setSelectedEventIdForLive(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -2808,260 +3688,646 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
 
         <div className="spinmatch-main-content flex-1 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8">
-          {activeView === 'DASHBOARD' ? (
-            <>
-              {/* =========================================================
-                  SPINMATCH LIVE TOURNAMENT DASHBOARD
-                  Mobile-first: hero event + compact stats + menu cepat
-              ========================================================== */}
-              <div className="space-y-3 md:space-y-5 mb-4 md:mb-7">
+{activeView === 'DASHBOARD' ? (
+  <>
+    {/* =========================================================
+        SPINMATCH PREMIUM DASHBOARD
+        Mobile-first • Premium Blue • Responsive
+    ========================================================== */}
 
-                {/* HERO EVENT AKTIF */}
-                <div className="relative overflow-hidden rounded-[24px] md:rounded-[30px] bg-gradient-to-br from-[#064e3b] via-[#065f46] to-[#0f2740] text-white shadow-[0_16px_40px_rgba(6,78,59,0.20)]">
-                  <div className="absolute -right-12 -top-16 w-44 h-44 rounded-full bg-emerald-300/10 blur-2xl" />
-                  <div className="absolute -left-16 -bottom-20 w-52 h-52 rounded-full bg-cyan-300/10 blur-3xl" />
+    <div className="mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
 
-                  <div className="relative p-4 sm:p-5 md:p-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-300 px-3 py-1 text-[10px] md:text-xs font-black uppercase tracking-wide text-emerald-950 shadow-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-700 animate-pulse" />
-                          Event Aktif
-                        </span>
+      {/* ===================== HERO ===================== */}
+      <section className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] text-white shadow-[0_18px_48px_rgba(8,55,110,0.24)]">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 left-[35%] h-56 w-56 rounded-full bg-blue-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute left-[-70px] top-[-80px] h-52 w-52 rounded-full bg-indigo-300/10 blur-3xl" />
 
-                        <h2 className="mt-3 text-[20px] sm:text-2xl md:text-3xl font-black leading-tight tracking-tight truncate">
-                          {(events.find(e => e.status === 'Aktif') || events[0])?.nama || 'Belum Ada Event Aktif'}
-                        </h2>
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[38%] opacity-15">
+          <div className="absolute bottom-6 left-[7%] right-[7%] h-[2px] bg-white/80" />
+          <div className="absolute bottom-6 left-1/2 h-20 w-[2px] -translate-x-1/2 bg-white/70" />
+          <div className="absolute bottom-6 left-[7%] h-14 w-[2px] bg-white/60" />
+          <div className="absolute bottom-6 right-[7%] h-14 w-[2px] bg-white/60" />
+        </div>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs md:text-sm text-emerald-50/90">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 text-emerald-300" />
-                            {(events.find(e => e.status === 'Aktif') || events[0])?.tanggal || 'Tanggal belum ditentukan'}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Users className="w-4 h-4 text-emerald-300" />
-                            {((events.find(e => e.status === 'Aktif') || events[0])?.id
-                              ? (participants[(events.find(e => e.status === 'Aktif') || events[0]).id] || []).length
-                              : 0)} Peserta
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Trophy className="w-4 h-4 text-emerald-300" />
-                            {(events.find(e => e.status === 'Aktif') || events[0])?.jumlahMeja || 0} Meja
-                          </span>
-                        </div>
-                      </div>
+        <div className="relative z-10 grid min-h-[220px] grid-cols-1 items-center gap-4 px-6 py-6 sm:px-7 md:grid-cols-[1.28fr_.72fr] md:px-9 md:py-7 lg:px-10 lg:py-7">
+          <div className="flex min-w-0 flex-col justify-center">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] backdrop-blur-md sm:text-xs">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-[#7CFF6B]" />
+                Event Aktif
+              </span>
+              <span className="hidden rounded-full border border-cyan-200/20 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-bold text-cyan-100 sm:inline-flex">
+                LIVE TOURNAMENT
+              </span>
+              {heroEvents.length > 1 && (
+                <span className="hidden rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-black text-white/85 sm:inline-flex">
+                  {safeHeroIndex + 1} / {heroEvents.length}
+                </span>
+              )}
+            </div>
 
-                      <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-white/95 p-1.5 shadow-lg ring-1 ring-white/30">
-                        <img src={logoSpinMatch} alt="SpinMatch" className="w-full h-full object-contain rounded-xl" />
-                      </div>
+            <h1 className="max-w-3xl text-[25px] font-black leading-[1.04] tracking-[-0.03em] sm:text-3xl md:text-[34px] lg:text-[38px]">
+              {dashboardActiveEvent?.nama || 'Belum Ada Event'}
+            </h1>
+
+            <p className="mt-2.5 max-w-2xl text-xs font-medium leading-relaxed text-blue-100/85 sm:text-sm">
+              Kelola pertandingan tenis meja lebih cepat, terintegrasi dan real-time.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold sm:text-xs">
+              <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
+                <Calendar className="h-4 w-4 text-cyan-300" />
+                <span>{dashboardActiveEvent?.tanggal || 'Tanggal belum ditentukan'}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
+                <Users className="h-4 w-4 text-[#8BFF77]" />
+                <span>{dashboardParticipants.length} Peserta</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
+                <Trophy className="h-4 w-4 text-yellow-300" />
+                <span>{dashboardActiveEvent?.divisiList?.length || 0} Divisi</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <button
+                onClick={() => {
+                  if (!dashboardActiveEvent) return;
+                  setSelectedEventIdForSchedule(String(dashboardActiveEvent.id));
+                  setActiveView('SCHEDULE');
+                }}
+                className="flex items-center gap-2 rounded-xl bg-[#8DFF63] px-4 py-2.5 text-xs font-black text-[#09243e] shadow-lg shadow-lime-950/20 transition hover:-translate-y-0.5 hover:bg-[#a2ff80]"
+              >
+                <Calendar className="h-4 w-4" /> Lihat Jadwal
+              </button>
+              <button
+                onClick={() => {
+                  if (!dashboardActiveEvent) return;
+                  setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                  setActiveView('LIVE_SCORE');
+                }}
+                className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-black text-white backdrop-blur-md transition hover:bg-white/20"
+              >
+                <Radio className="h-4 w-4 text-red-300" /> Live Score
+              </button>
+            </div>
+          </div>
+
+          <div className="relative hidden min-h-[185px] items-center justify-center overflow-visible md:flex">
+            <div className="absolute left-1/2 top-1/2 h-[180px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/15 blur-[58px]" />
+            <img
+              src={heroPingpong}
+              alt="SpinMatch Table Tennis"
+              className="relative z-10 w-[300px] max-w-full object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.24)] lg:w-[330px] xl:w-[350px]"
+            />
+          </div>
+        </div>
+
+        {heroEvents.length > 1 && (
+          <div className="absolute bottom-4 right-5 z-30 hidden items-center gap-2.5 md:flex">
+            <button type="button" onClick={goHeroPrevious}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-bold text-white backdrop-blur-md transition hover:bg-white/20"
+              title="Event sebelumnya">‹</button>
+
+            <div className="flex max-w-[180px] items-center gap-1.5 overflow-hidden">
+              {heroEvents.map((ev, index) => (
+                <button key={ev.id} type="button" onClick={() => setHeroEventIndex(index)}
+                  title={ev.nama}
+                  className={`h-2 shrink-0 rounded-full transition-all duration-300 ${
+                    index === safeHeroIndex ? 'w-6 bg-[#8DFF63]' : 'w-2 bg-white/40 hover:bg-white/70'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <span className="min-w-[38px] text-center text-[10px] font-black text-white/75">
+              {safeHeroIndex + 1}/{heroEvents.length}
+            </span>
+
+            <button type="button" onClick={goHeroNext}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-bold text-white backdrop-blur-md transition hover:bg-white/20"
+              title="Event berikutnya">›</button>
+          </div>
+        )}
+
+        {heroEvents.length > 1 && (
+          <div className="relative z-30 flex items-center justify-center gap-3 px-5 pb-5 md:hidden">
+            <button type="button" onClick={goHeroPrevious}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-bold text-white">‹</button>
+            <span className="text-[10px] font-black text-white/80">
+              Event {safeHeroIndex + 1} dari {heroEvents.length}
+            </span>
+            <button type="button" onClick={goHeroNext}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-bold text-white">›</button>
+          </div>
+        )}
+      </section>
+
+
+      {/* ===================== STATISTICS ===================== */}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+
+        <div className="group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50">
+              <Trophy className="h-5 w-5 text-blue-600" />
+            </div>
+            <span className="rounded-full bg-blue-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-blue-600">
+              Event
+            </span>
+          </div>
+          <div className="mt-4 text-3xl font-black tracking-tight text-slate-950">
+            {totalEventAktif < 10 ? `0${totalEventAktif}` : totalEventAktif}
+          </div>
+          <div className="mt-1 text-[11px] font-bold text-slate-500">
+            Event Aktif
+          </div>
+        </div>
+
+
+        <div className="group rounded-[22px] border border-emerald-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50">
+              <Users className="h-5 w-5 text-emerald-600" />
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-600">
+              Peserta
+            </span>
+          </div>
+          <div className="mt-4 text-3xl font-black tracking-tight text-slate-950">
+            {totalPeserta}
+          </div>
+          <div className="mt-1 text-[11px] font-bold text-slate-500">
+            Pemain Terdaftar
+          </div>
+        </div>
+
+
+        <div className="group rounded-[22px] border border-orange-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
+              <Activity className="h-5 w-5 text-orange-500" />
+            </div>
+            <span className="rounded-full bg-orange-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-orange-600">
+              Match
+            </span>
+          </div>
+          <div className="mt-4 text-3xl font-black tracking-tight text-slate-950">
+            {Object.keys(matchResults || {}).length}
+          </div>
+          <div className="mt-1 text-[11px] font-bold text-slate-500">
+            Hasil Pertandingan
+          </div>
+        </div>
+
+
+        <div className="group rounded-[22px] border border-purple-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50">
+              <Wallet className="h-5 w-5 text-purple-600" />
+            </div>
+            <span className="rounded-full bg-purple-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-purple-600">
+              Saldo
+            </span>
+          </div>
+          <div className="mt-4 truncate text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+            Rp {dashboardTotalOmzet.toLocaleString('id-ID')}
+          </div>
+          <div className="mt-1 text-[11px] font-bold text-slate-500">
+            Pendaftaran
+          </div>
+        </div>
+
+      </section>
+
+
+      {/* ===================== QUICK MENU ===================== */}
+      <section className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
+
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
+              <h2 className="text-base font-black text-slate-950">
+                Menu Cepat
+              </h2>
+            </div>
+            <p className="ml-3.5 mt-1 text-[10px] font-medium text-slate-400 sm:text-xs">
+              Akses pengelolaan turnamen
+            </p>
+          </div>
+
+          <span className="hidden rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-blue-600 sm:block">
+            SPINMATCH CONTROL
+          </span>
+        </div>
+
+
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:gap-4">
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForReg(String(ev.id));
+              setActiveView('REGISTRATION');
+            }}
+            className="group flex flex-col items-center gap-2"
+          >
+            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-emerald-50 to-emerald-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
+              <UserPlus className="h-7 w-7 text-emerald-600" />
+            </span>
+            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
+              Peserta
+            </span>
+          </button>
+
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForDraw(String(ev.id));
+              setActiveView('DRAW');
+            }}
+            className="group flex flex-col items-center gap-2"
+          >
+            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-cyan-50 to-blue-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
+              <Shuffle className="h-7 w-7 text-blue-600" />
+            </span>
+            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
+              Undian
+            </span>
+          </button>
+
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForSchedule(String(ev.id));
+              setActiveView('SCHEDULE');
+            }}
+            className="group flex flex-col items-center gap-2"
+          >
+            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-amber-50 to-orange-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
+              <Calendar className="h-7 w-7 text-orange-500" />
+            </span>
+            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
+              Jadwal
+            </span>
+          </button>
+
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForLive(String(ev.id));
+              setActiveView('LIVE_SCORE');
+            }}
+            className="group flex flex-col items-center gap-2"
+          >
+            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-rose-50 to-red-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
+              <Radio className="h-7 w-7 text-red-500" />
+            </span>
+            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
+              Live Score
+            </span>
+          </button>
+
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForKnockout(String(ev.id));
+              setActiveView('KNOCKOUT');
+            }}
+            className="group flex flex-col items-center gap-2"
+          >
+            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-purple-50 to-violet-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
+              <Trophy className="h-7 w-7 text-purple-600" />
+            </span>
+            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
+              Knockout
+            </span>
+          </button>
+
+        </div>
+      </section>
+
+
+      {/* ===================== LOWER CONTENT ===================== */}
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_.65fr]">
+
+        {/* EVENTS */}
+        <div className="overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
+
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
+            <div>
+              <h2 className="text-base font-black text-slate-950">
+                Event Saya
+              </h2>
+              <p className="mt-0.5 text-[10px] font-medium text-slate-400 sm:text-xs">
+                Event dan turnamen yang sedang dikelola
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenCreate}
+              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a3971] px-3 py-2 text-[10px] font-black text-white shadow-md transition hover:bg-[#0874c9] sm:px-4 sm:text-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Buat Event</span>
+              <span className="sm:hidden">Baru</span>
+            </button>
+          </div>
+
+
+          {events.length === 0 ? (
+
+            <div className="flex min-h-[220px] flex-col items-center justify-center p-8 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
+                <Trophy className="h-7 w-7 text-blue-300" />
+              </div>
+              <p className="mt-3 text-sm font-black text-slate-600">
+                Belum ada event
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                Buat event pertama untuk memulai turnamen.
+              </p>
+            </div>
+
+          ) : (
+
+            <div className="divide-y divide-slate-100">
+
+              {events.slice(0, 5).map((item) => (
+
+                <div
+                  key={item.id}
+                  className="group flex items-center gap-3 p-4 transition hover:bg-slate-50 sm:p-5"
+                >
+
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
+                    <Trophy className="h-5 w-5 text-blue-600" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-xs font-black text-slate-900 sm:text-sm">
+                      {item.nama}
                     </div>
 
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-emerald-50/80">
-                        <span>Turnamen siap dikelola</span>
-                        <span>{totalPeserta} peserta terdaftar</span>
-                      </div>
-                      <div className="mt-2 h-2 rounded-full bg-white/15 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-emerald-300 to-lime-300 transition-all"
-                          style={{ width: `${Math.min(100, Math.max(8, totalPeserta > 0 ? 65 : 8))}%` }}
-                        />
-                      </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-semibold text-slate-400 sm:text-[10px]">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {item.tanggal}
+                      </span>
+
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {(participants[item.id] || []).length} Peserta
+                      </span>
                     </div>
                   </div>
+
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black ${
+                      item.status === 'Aktif'
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+
+                  <button
+                    onClick={() => handleRowClick(item)}
+                    className="hidden rounded-lg bg-slate-100 px-2.5 py-1.5 text-[9px] font-black text-slate-600 transition hover:bg-blue-600 hover:text-white sm:block"
+                  >
+                    Edit
+                  </button>
+
                 </div>
 
-                {/* STATISTIK COMPACT */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
-                  <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50 p-3.5 md:p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-                        <Trophy className="w-4.5 h-4.5 text-emerald-700" />
-                      </div>
-                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider text-emerald-600">Event</span>
-                    </div>
-                    <div className="mt-2 text-2xl md:text-3xl font-black text-slate-950 leading-none">
-                      {totalEventAktif < 10 ? `0${totalEventAktif}` : totalEventAktif}
-                    </div>
-                    <div className="mt-1 text-[10px] md:text-xs font-semibold text-slate-500">Event Aktif</div>
-                  </div>
+              ))}
 
-                  <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50 p-3.5 md:p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center">
-                        <Users className="w-4.5 h-4.5 text-sky-700" />
-                      </div>
-                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider text-sky-600">Peserta</span>
-                    </div>
-                    <div className="mt-2 text-2xl md:text-3xl font-black text-slate-950 leading-none">
-                      {totalPeserta < 10 && totalPeserta > 0 ? `0${totalPeserta}` : totalPeserta}
-                    </div>
-                    <div className="mt-1 text-[10px] md:text-xs font-semibold text-slate-500">Terdaftar</div>
-                  </div>
+            </div>
+          )}
+        </div>
 
-                  <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-white to-orange-50 p-3.5 md:p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center">
-                        <Activity className="w-4.5 h-4.5 text-orange-700" />
-                      </div>
-                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider text-orange-600">Match</span>
-                    </div>
-                    <div className="mt-2 text-2xl md:text-3xl font-black text-slate-950 leading-none">0</div>
-                    <div className="mt-1 text-[10px] md:text-xs font-semibold text-slate-500">Hari Ini</div>
-                  </div>
 
-                  <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50 p-3.5 md:p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center">
-                        <DollarSign className="w-4.5 h-4.5 text-purple-700" />
-                      </div>
-                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider text-purple-600">Omzet</span>
-                    </div>
-                    <div className="mt-2 text-lg md:text-2xl font-black text-slate-950 leading-none">Rp 0</div>
-                    <div className="mt-1 text-[10px] md:text-xs font-semibold text-slate-500">Pendaftaran</div>
-                  </div>
-                </div>
+        {/* RIGHT COLUMN */}
+        <div className="space-y-4">
 
-                {/* MENU CEPAT */}
-                <div className="rounded-[22px] md:rounded-[26px] border border-slate-100 bg-white p-3.5 md:p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-6 rounded-full bg-emerald-500" />
-                      <div>
-                        <h3 className="text-sm md:text-base font-black text-slate-900">Menu Cepat</h3>
-                        <p className="hidden sm:block text-[10px] text-slate-400">Kelola turnamen dari satu tempat</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] md:text-xs font-bold text-emerald-600">Kelola Turnamen</span>
-                  </div>
+          {/* TOURNAMENT STATUS */}
+          <div className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-white shadow-[0_15px_35px_rgba(7,27,59,.20)]">
 
-                  <div className="grid grid-cols-5 gap-2 md:gap-3">
-                    <button onClick={() => { if (events[0]) setSelectedEventIdForReg(String(events[0].id)); setActiveView('REGISTRATION'); }} className="group flex flex-col items-center gap-1.5 cursor-pointer">
-                      <span className="w-full aspect-[1.25/1] max-h-16 rounded-xl md:rounded-2xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition">
-                        <UserPlus className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-slate-700">Peserta</span>
-                    </button>
+            {/* cahaya putih/cyan - satu keluarga visual dengan Hero dan Live Meja */}
+            <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 left-1/3 h-36 w-36 rounded-full bg-cyan-200/10 blur-3xl" />
+            <div className="pointer-events-none absolute right-[-25px] top-[42%] h-[2px] w-[190px] -rotate-[18deg] bg-gradient-to-r from-transparent via-white/40 to-transparent blur-[1px]" />
+            <div className="pointer-events-none absolute right-[10px] top-[30%] h-24 w-24 rounded-full border border-white/10" />
 
-                    <button onClick={() => { if (events[0]) setSelectedEventIdForDraw(String(events[0].id)); setActiveView('DRAW'); }} className="group flex flex-col items-center gap-1.5 cursor-pointer">
-                      <span className="w-full aspect-[1.25/1] max-h-16 rounded-xl md:rounded-2xl bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition">
-                        <Shuffle className="w-5 h-5 md:w-6 md:h-6 text-sky-600" />
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-slate-700">Undian</span>
-                    </button>
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-blue-200">
+                  Tournament Status
+                </p>
+                <h3 className="mt-1 text-lg font-black">
+                  SpinMatch Live
+                </h3>
+              </div>
 
-                    <button onClick={() => { if (events[0]) setSelectedEventIdForSchedule(String(events[0].id)); setActiveView('SCHEDULE'); }} className="group flex flex-col items-center gap-1.5 cursor-pointer">
-                      <span className="w-full aspect-[1.25/1] max-h-16 rounded-xl md:rounded-2xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition">
-                        <Calendar className="w-5 h-5 md:w-6 md:h-6 text-amber-600" />
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-slate-700">Jadwal</span>
-                    </button>
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+                <Activity className="h-5 w-5 text-[#8DFF63]" />
+              </span>
+            </div>
 
-                    <button onClick={() => { if (events[0]) setSelectedEventIdForLive(String(events[0].id)); setActiveView('LIVE_SCORE'); }} className="group flex flex-col items-center gap-1.5 cursor-pointer">
-                      <span className="w-full aspect-[1.25/1] max-h-16 rounded-xl md:rounded-2xl bg-rose-50 flex items-center justify-center group-hover:bg-rose-100 transition">
-                        <Radio className="w-5 h-5 md:w-6 md:h-6 text-rose-600" />
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-slate-700">Live Score</span>
-                    </button>
+            <div className="relative z-10 mt-5 grid grid-cols-3 gap-2">
 
-                    <button onClick={() => { if (events[0]) setSelectedEventIdForKnockout(String(events[0].id)); setActiveView('KNOCKOUT'); }} className="group flex flex-col items-center gap-1.5 cursor-pointer">
-                      <span className="w-full aspect-[1.25/1] max-h-16 rounded-xl md:rounded-2xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition">
-                        <Trophy className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-slate-700">Knockout</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* STATUS TURNAMEN */}
-                <div className="rounded-[22px] md:rounded-[26px] border border-slate-100 bg-white p-4 md:p-5 shadow-sm">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-6 rounded-full bg-sky-500" />
-                      <h3 className="text-sm md:text-base font-black text-slate-900">Status Turnamen</h3>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] md:text-[10px] font-black text-emerald-600">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      SIAP
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 md:gap-3">
-                    <div className="rounded-xl bg-slate-50 p-3 text-center">
-                      <div className="text-lg md:text-2xl font-black text-slate-900">{events.length}</div>
-                      <div className="text-[9px] md:text-[10px] font-semibold text-slate-500">Total Event</div>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-3 text-center">
-                      <div className="text-lg md:text-2xl font-black text-slate-900">{totalPeserta}</div>
-                      <div className="text-[9px] md:text-[10px] font-semibold text-slate-500">Peserta</div>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-3 text-center">
-                      <div className="text-lg md:text-2xl font-black text-slate-900">
-                        {(events.find(e => e.status === 'Aktif') || events[0])?.jumlahMeja || 0}
-                      </div>
-                      <div className="text-[9px] md:text-[10px] font-semibold text-slate-500">Meja</div>
-                    </div>
-                  </div>
+              <div className="rounded-2xl bg-white/10 p-3 text-center">
+                <div className="text-xl font-black">{events.length}</div>
+                <div className="mt-1 text-[9px] font-bold text-blue-200">
+                  Event
                 </div>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
-                <div className="lg:col-span-2 bg-white p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 shadow-xs">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900">Event EO Saya</h2>
-                      <p className="text-xs text-slate-400">Kelola event dan pantau jumlah peserta turnamen</p>
-                    </div>
-                    <button onClick={handleOpenCreate} className="flex items-center gap-1.5 text-xs font-bold bg-[#bef264] hover:bg-[#a3e635] text-slate-950 px-3.5 py-2 rounded-xl transition cursor-pointer shadow-sm">
-                      <Plus className="w-4 h-4" /> Buat Event Baru
-                    </button>
-                  </div>
-                  {events.length === 0 ? (
-                    <div className="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
-                      <Trophy className="w-8 h-8 text-slate-300 mb-2" />
-                      <p className="text-sm font-semibold text-slate-500">Belum ada event yang dibuat</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-center">
-                            <th className="py-3 px-3 w-12">No</th>
-                            <th className="py-3 px-4 text-left">Nama Event</th>
-                            <th className="py-3 px-4 text-left">Tgl Pelaksanaan</th>
-                            <th className="py-3 px-3">Status</th>
-                            <th className="py-3 px-3">Peserta</th>
-                            <th className="py-3 px-4">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-700">
-                          {events.map((item, index) => (
-                            <tr key={item.id} className="hover:bg-slate-50 text-center font-medium">
-                              <td className="py-3 px-3 font-semibold text-slate-500">{index + 1}</td>
-                              <td className="py-3 px-4 text-left font-bold text-slate-900">{item.nama}</td>
-                              <td className="py-3 px-4 text-left text-slate-600">{item.tanggal}</td>
-                              <td className="py-3 px-3">
-                                <span className={`font-bold px-2.5 py-1 rounded-md text-[11px] ${item.status === 'Aktif' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
-                                  {item.status}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 font-bold text-slate-900">{(participants[item.id] || []).length}</td>
-                              <td className="py-3 px-4">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <button onClick={() => handleRowClick(item)} className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-md text-[11px] transition cursor-pointer">Edit</button>
-                                  <button onClick={() => { setSelectedEventIdForReg(String(item.id)); setActiveView('REGISTRATION'); }} className="px-2.5 py-1 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-md text-[11px] transition cursor-pointer">Peserta</button>
-                                  <button onClick={() => handleDeleteEvent(item.id, item.nama)} className="px-2.5 py-1 bg-red-500 hover:bg-red-600 text-white font-bold rounded-md text-[11px] transition cursor-pointer">Hapus</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+
+              <div className="rounded-2xl bg-white/10 p-3 text-center">
+                <div className="text-xl font-black">{totalPeserta}</div>
+                <div className="mt-1 text-[9px] font-bold text-blue-200">
+                  Peserta
                 </div>
-                <div className="lg:col-span-1"><LiveTables /></div>
               </div>
-            </>
+
+              <div className="rounded-2xl bg-white/10 p-3 text-center">
+                <div className="text-xl font-black">
+                  {Object.keys(matchResults || {}).length}
+                </div>
+                <div className="mt-1 text-[9px] font-bold text-blue-200">
+                  Match
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#8DFF63]/10 px-3 py-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#8DFF63]" />
+              <span className="text-[10px] font-bold text-[#baff9e]">
+                Sistem turnamen aktif dan siap digunakan
+              </span>
+            </div>
+
+          </div>
+
+
+          {/* LIVE MEJA - DINAMIS MENGIKUTI EVENT HERO */}
+          <div className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-white shadow-[0_15px_35px_rgba(7,27,59,.20)]">
+
+            {/* variasi sinar putih/cyan agar match dengan hero */}
+            <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 left-1/3 h-40 w-40 rounded-full bg-cyan-200/10 blur-3xl" />
+            <div className="pointer-events-none absolute right-[-18px] top-[42%] h-[2px] w-[180px] -rotate-[18deg] bg-gradient-to-r from-transparent via-white/45 to-transparent blur-[1px]" />
+            <div className="pointer-events-none absolute right-[-30px] top-[49%] h-[1px] w-[220px] -rotate-[18deg] bg-gradient-to-r from-transparent via-cyan-100/35 to-transparent" />
+            <div className="pointer-events-none absolute right-[18px] top-[35%] h-28 w-28 rounded-full border border-white/10" />
+            <div className="pointer-events-none absolute right-[32px] top-[39%] h-20 w-20 rounded-full border border-cyan-100/10" />
+
+            <div className="relative z-10">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-cyan-100/80">Live sekarang</p>
+                  <h3 className="mt-1 truncate text-[13px] font-black text-white">
+                    {dashboardActiveEvent?.nama || 'Belum Ada Event'}
+                  </h3>
+                </div>
+
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#8DFF63] px-3 py-1 text-[9px] font-black text-[#09243e]">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#09243e]" />
+                  LIVE
+                </span>
+              </div>
+
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <div>
+                  <div className="text-[22px] font-black leading-none">
+                    {dashboardJumlahMeja} meja
+                  </div>
+                  <div className="mt-1 text-[9px] font-bold text-blue-100/70">
+                    {dashboardLiveCount > 0
+                      ? `${dashboardLiveCount} sedang live`
+                      : dashboardReadyCount > 0
+                        ? `${dashboardReadyCount} siap dimainkan`
+                        : 'Menunggu jadwal pertandingan'}
+                  </div>
+                </div>
+
+                {heroEvents.length > 1 && (
+                  <div className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9px] font-black text-white/80 backdrop-blur-md">
+                    Event {safeHeroIndex + 1}/{heroEvents.length}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className={`mt-4 grid gap-2 ${
+                  dashboardJumlahMeja <= 2
+                    ? 'grid-cols-2'
+                    : dashboardJumlahMeja <= 6
+                      ? 'grid-cols-3'
+                      : 'grid-cols-4'
+                }`}
+              >
+                {dashboardTableCards.map(card => {
+                  const scoreText = card.isLive
+                    ? `${String(card.point1).padStart(2, '0')}-${String(card.point2).padStart(2, '0')}`
+                    : card.isFinished
+                      ? (card.result?.score || `${card.result?.player1Score || 0}-${card.result?.player2Score || 0}`)
+                      : card.hasSchedule
+                        ? 'READY'
+                        : '--';
+
+                  return (
+                    <button
+                      key={card.tableNo}
+                      type="button"
+                      disabled={!card.row}
+                      onClick={() => {
+                        if (!card.row || !dashboardActiveEvent) return;
+                        setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                        openLiveScore(card.row);
+                      }}
+                      title={
+                        card.row
+                          ? `${card.tableName} • ${card.row.pool || ''} ${card.row.matchRef || ''} • ${card.row.jam || ''}`
+                          : `${card.tableName} belum memiliki jadwal`
+                      }
+                      className={`group relative min-h-[58px] rounded-2xl border px-2 py-2.5 text-center transition ${
+                        card.isLive
+                          ? 'border-[#a7ff72] bg-[#8DFF63] text-[#09243e] shadow-[0_8px_22px_rgba(141,255,99,.22)]'
+                          : card.isFinished
+                            ? 'border-white/10 bg-white/10 text-white hover:bg-white/15'
+                            : card.hasSchedule
+                              ? 'border-cyan-200/15 bg-[#0b2c55]/75 text-white hover:-translate-y-0.5 hover:border-cyan-200/30 hover:bg-[#103965]'
+                              : 'cursor-default border-white/5 bg-[#071b3b]/45 text-white/35'
+                      }`}
+                    >
+                      {card.isLive && (
+                        <span className="absolute right-2 top-2 h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                      )}
+
+                      <div className={`text-[8px] font-black uppercase tracking-wide ${
+                        card.isLive ? 'text-[#164426]' : 'text-blue-100/70'
+                      }`}>
+                        M{card.tableNo}
+                      </div>
+
+                      <div className="mt-1 text-[12px] font-black leading-none">
+                        {scoreText}
+                      </div>
+
+                      <div className={`mt-1 truncate text-[7px] font-bold ${
+                        card.isLive ? 'text-[#164426]/75' : 'text-blue-100/55'
+                      }`}>
+                        {card.isLive
+                          ? 'SEDANG MAIN'
+                          : card.isFinished
+                            ? 'SELESAI'
+                            : card.hasSchedule
+                              ? (card.row?.jam || 'SIAP')
+                              : 'KOSONG'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-cyan-300" />
+                  <span className="truncate text-[8px] font-medium text-blue-100/70">
+                    Skor mengikuti event, meja dan Live Score secara real-time
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!dashboardActiveEvent) return;
+                    setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                    setActiveView('LIVE_SCORE');
+                  }}
+                  className="shrink-0 rounded-lg border border-white/15 bg-white/10 px-2.5 py-1.5 text-[8px] font-black text-white transition hover:bg-white/20"
+                >
+                  Buka Live
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  </>
+
           ) : activeView === 'REGISTRATION' ? (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
@@ -3828,6 +5094,303 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </div>
               ) : null}
             </div>
+          ) : activeView === 'RANKING' ? (
+            <div className="mx-auto w-full max-w-[1500px] space-y-4">
+              <div className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                  {rankingMode === 'EVENT' && (
+                    <div className="min-w-0 flex-1">
+                      <label className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">Pilih Event</label>
+                      <select
+                        value={selectedEventIdForRanking}
+                        onChange={(e) => { setSelectedEventIdForRanking(e.target.value); setSelectedDivisionForRanking(''); }}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-500"
+                      >
+                        {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama} • {ev.tanggal}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">Pilih Divisi</label>
+                    <select
+                      value={effectiveRankingDivision}
+                      onChange={(e) => setSelectedDivisionForRanking(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-500"
+                    >
+                      {rankingDivisionOptions.length === 0
+                        ? <option value="">Belum ada divisi</option>
+                        : rankingDivisionOptions.map(div => <option key={div} value={div}>{div}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="rounded-xl bg-blue-50 px-4 py-2.5">
+                    <div className="text-[9px] font-black uppercase text-blue-500">Mode</div>
+                    <div className="text-xs font-black text-[#0a3971]">
+                      {rankingMode === 'EVENT' ? 'Event Tertentu' : 'Seluruh Event SpinMatch'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                <div className="flex items-center justify-between border-b border-slate-100 p-5">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">{effectiveRankingDivision || 'Pilih Divisi'}</h3>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      {rankingMode === 'EVENT'
+                        ? selectedRankingEvent?.nama || '-'
+                        : 'Akumulasi seluruh event yang menggunakan SpinMatch'}
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-[#071b3b] px-3 py-1.5 text-[9px] font-black text-white">
+                    {rankingRows.length} Pemain
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px]">
+                    <thead className="bg-slate-50 text-[9px] uppercase tracking-wide text-slate-400">
+                      <tr>
+                        <th className="px-5 py-3 text-left">Rank</th>
+                        <th className="px-4 py-3 text-left">Pemain</th>
+                        <th className="px-4 py-3 text-left">PTM / Club</th>
+                        {rankingMode === 'GLOBAL' && <th className="px-4 py-3 text-center">Event</th>}
+                        <th className="px-4 py-3 text-center">Main</th>
+                        <th className="px-4 py-3 text-center">Menang</th>
+                        <th className="px-4 py-3 text-center">Kalah</th>
+                        <th className="px-5 py-3 text-right">Poin</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {rankingRows.length === 0 ? (
+                        <tr><td colSpan="8" className="px-5 py-14 text-center text-xs font-bold text-slate-400">Belum ada hasil pertandingan untuk divisi ini.</td></tr>
+                      ) : rankingRows.map(row => (
+                        <tr key={`${row.id || row.nama}-${row.rank}`} className="hover:bg-slate-50">
+                          <td className="px-5 py-3">
+                            <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black ${
+                              row.rank === 1 ? 'bg-amber-100 text-amber-700' :
+                              row.rank === 2 ? 'bg-slate-200 text-slate-700' :
+                              row.rank === 3 ? 'bg-orange-100 text-orange-700' :
+                              'bg-blue-50 text-blue-700'
+                            }`}>{row.rank}</span>
+                          </td>
+                          <td className="px-4 py-3 text-xs font-black text-slate-900">{row.nama}</td>
+                          <td className="px-4 py-3 text-[10px] font-semibold text-slate-500">{row.ptm}</td>
+                          {rankingMode === 'GLOBAL' && <td className="px-4 py-3 text-center text-xs font-bold">{row.eventCount}</td>}
+                          <td className="px-4 py-3 text-center text-xs font-bold">{row.main}</td>
+                          <td className="px-4 py-3 text-center text-xs font-black text-emerald-600">{row.menang}</td>
+                          <td className="px-4 py-3 text-center text-xs font-black text-rose-500">{row.kalah}</td>
+                          <td className="px-5 py-3 text-right text-sm font-black text-[#0a3971]">{row.poin}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-3 text-[9px] font-semibold text-slate-400">
+                  Rumus sementara: menang = 3 poin, kalah = 0 poin. Rumus dapat diubah kemudian tanpa mengubah struktur halaman.
+                </div>
+              </div>
+            </div>
+
+          ) : activeView === 'SETTINGS' ? (
+            <div className="mx-auto w-full max-w-[1500px] space-y-4">
+              {!selectedSettingsEvent ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm font-bold text-slate-400">Belum ada event.</div>
+              ) : settingsSection === 'HOME' ? (
+                <>
+                  <div className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                    <div className="text-[10px] font-black uppercase tracking-wide text-slate-400">Event yang diatur</div>
+                    <div className="mt-1 text-lg font-black text-slate-950">{selectedSettingsEvent.nama}</div>
+                    <div className="mt-1 text-xs font-semibold text-slate-400">{selectedSettingsEvent.tanggal}</div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <button onClick={() => { handleRowClick(selectedSettingsEvent); }} className="group relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-left text-white shadow-lg transition hover:-translate-y-1">
+                      <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+                      <Settings className="relative z-10 h-7 w-7 text-cyan-200" />
+                      <div className="relative z-10 mt-4 text-sm font-black">Pengaturan Pertandingan</div>
+                      <div className="relative z-10 mt-1 text-[10px] text-blue-100/70">{settingsTableCount} meja • {selectedSettingsEvent.durasiMatch || '20 Menit'} • {selectedSettingsEvent.jamMulai || '08:00'}–{selectedSettingsEvent.jamSelesai || '18:00'}</div>
+                      <div className="relative z-10 mt-5 text-[9px] font-black text-[#8DFF63]">BUKA PENGATURAN →</div>
+                    </button>
+
+                    <button onClick={() => setSettingsSection('REFEREE')} className="group relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-left text-white shadow-lg transition hover:-translate-y-1">
+                      <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+                      <Users className="relative z-10 h-7 w-7 text-cyan-200" />
+                      <div className="relative z-10 mt-4 text-sm font-black">Pengaturan Wasit</div>
+                      <div className="relative z-10 mt-1 text-[10px] text-blue-100/70">{assignedRefereeCount}/{settingsTableCount} meja sudah memiliki wasit</div>
+                      <div className="relative z-10 mt-5 text-[9px] font-black text-[#8DFF63]">ATUR WASIT →</div>
+                    </button>
+
+                    <button onClick={() => setSettingsSection('FINANCE')} className="group relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-left text-white shadow-lg transition hover:-translate-y-1">
+                      <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+                      <Wallet className="relative z-10 h-7 w-7 text-cyan-200" />
+                      <div className="relative z-10 mt-4 text-sm font-black">Pengaturan Keuangan</div>
+                      <div className="relative z-10 mt-1 text-[10px] text-blue-100/70">Pemasukan, pengeluaran dan laporan event</div>
+                      <div className="relative z-10 mt-5 text-[9px] font-black text-[#8DFF63]">BUKA KEUANGAN →</div>
+                    </button>
+                  </div>
+                </>
+              ) : settingsSection === 'REFEREE' ? (
+                <div className="space-y-4">
+                  <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                    <div className="flex flex-col gap-3 border-b border-slate-100 p-5 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setSettingsSection('HOME')} className="rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900">Pengaturan Wasit</h3>
+                          <p className="text-[10px] text-slate-400">{selectedSettingsEvent.nama} • {settingsTableCount} meja</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setRefereeModalOpen(true)} className="rounded-xl bg-[#071b3b] px-4 py-2.5 text-[10px] font-black text-white hover:bg-[#0a3971]">+ Tambah Wasit</button>
+                        <button onClick={saveRefereeAssignments} className="rounded-xl bg-[#8DFF63] px-4 py-2.5 text-[10px] font-black text-[#09243e]">Simpan Penugasan</button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 p-5 lg:grid-cols-5">
+                      <div className="rounded-2xl bg-blue-50 p-4"><div className="text-[9px] font-black text-blue-500">JUMLAH MEJA</div><div className="mt-1 text-2xl font-black text-[#0a3971]">{settingsTableCount}</div></div>
+                      <div className="rounded-2xl bg-emerald-50 p-4"><div className="text-[9px] font-black text-emerald-600">DITUGASKAN</div><div className="mt-1 text-2xl font-black text-emerald-700">{assignedRefereeCount}</div></div>
+                      <div className="rounded-2xl bg-rose-50 p-4"><div className="text-[9px] font-black text-rose-600">SEDANG BERTUGAS</div><div className="mt-1 text-2xl font-black text-rose-700">{workingRefereeCount}</div></div>
+                      <div className="rounded-2xl bg-cyan-50 p-4"><div className="text-[9px] font-black text-cyan-600">SIAP / MENUNGGU</div><div className="mt-1 text-2xl font-black text-cyan-800">{readyRefereeCount + waitingRefereeCount}</div></div>
+                      <div className="rounded-2xl bg-amber-50 p-4"><div className="text-[9px] font-black text-amber-600">MEJA KOSONG</div><div className="mt-1 text-2xl font-black text-amber-700">{Math.max(0, settingsTableCount - assignedRefereeCount)}</div></div>
+                    </div>
+                  </div>
+
+                  <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                    <div className="border-b border-slate-100 p-5">
+                      <h4 className="text-xs font-black text-slate-900">Penugasan Meja</h4>
+                      <p className="mt-1 text-[9px] font-semibold text-slate-400">Pilih wasit aktif dari Master Wasit SpinMatch. Status tugas berubah otomatis: MENUNGGU → BERTUGAS saat skor mulai diinput → SIAP setelah hasil final disimpan.</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[760px]">
+                        <thead className="bg-slate-50 text-[9px] font-black uppercase tracking-wide text-slate-400">
+                          <tr><th className="px-5 py-3 text-left">Meja</th><th className="px-4 py-3 text-left">ID Wasit</th><th className="px-4 py-3 text-left">Nama Wasit</th><th className="px-4 py-3 text-center">Status Akun</th><th className="px-4 py-3 text-center">Status Tugas</th><th className="px-5 py-3 text-right">Aksi</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {Array.from({ length: settingsTableCount }, (_, i) => i + 1).map(no => {
+                            const a = currentRefereeAssignments[String(no)] || {};
+                            const registered = refereeRegistry.find(r => r.id === a.refereeId);
+                            const hasValidAssignment = !!registered;
+                            const status = registered?.status || '';
+                            const workStatus = getRefereeWorkStatus(no, a);
+                            return (
+                              <tr key={no} className="hover:bg-slate-50/70">
+                                <td className="px-5 py-4"><span className="inline-flex h-8 min-w-8 items-center justify-center rounded-xl bg-[#071b3b] px-2 text-[10px] font-black text-white">{no}</span></td>
+                                <td className="px-4 py-4">
+                                  <select value={hasValidAssignment ? registered.id : ''} onChange={e => assignRegisteredReferee(no, e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black text-slate-800 outline-none focus:border-blue-500">
+                                    <option value="">Belum Ditugaskan</option>
+                                    {refereeRegistry.map(r => <option key={r.id} value={r.id} disabled={r.status !== 'AKTIF'}>{r.id} {r.status !== 'AKTIF' ? '• NONAKTIF' : ''}</option>)}
+                                  </select>
+                                </td>
+                                <td className="px-4 py-4 text-xs font-black text-slate-800">{hasValidAssignment ? registered.nama : '-'}</td>
+                                <td className="px-4 py-4 text-center">
+                                  {!hasValidAssignment ? <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[8px] font-black text-slate-500">-</span>
+                                    : status === 'AKTIF' ? <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[8px] font-black text-emerald-700">AKTIF</span>
+                                    : <span className="rounded-full bg-rose-100 px-2.5 py-1 text-[8px] font-black text-rose-700">NONAKTIF</span>}
+                                </td>
+                                <td className="px-4 py-4 text-center">
+                                  {workStatus.code === 'BERTUGAS' ? <span className="rounded-full bg-rose-100 px-2.5 py-1 text-[8px] font-black text-rose-700">BERTUGAS</span>
+                                    : workStatus.code === 'SIAP' ? <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-[8px] font-black text-cyan-800">SIAP</span>
+                                    : workStatus.code === 'MENUNGGU' ? <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[8px] font-black text-amber-700">MENUNGGU</span>
+                                    : workStatus.code === 'NONAKTIF' ? <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[8px] font-black text-slate-600">NONAKTIF</span>
+                                    : <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[8px] font-black text-slate-500">KOSONG</span>}
+                                </td>
+                                <td className="px-5 py-4 text-right">
+                                  {hasValidAssignment && <button onClick={() => assignRegisteredReferee(no, '')} className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-1.5 text-[8px] font-black text-rose-600">Batalkan Tugas</button>}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                    <div className="flex items-center justify-between border-b border-slate-100 p-5">
+                      <div><h4 className="text-xs font-black text-slate-900">Master Wasit SpinMatch</h4><p className="mt-1 text-[9px] font-semibold text-slate-400">Status AKTIF/NONAKTIF adalah status akun dan hanya diatur EO/Super Admin. Status tugas pertandingan berubah otomatis.</p></div>
+                      <button onClick={() => setRefereeModalOpen(true)} className="rounded-xl bg-[#8DFF63] px-4 py-2 text-[9px] font-black text-[#09243e]">+ Tambah Wasit</button>
+                    </div>
+                    {refereeRegistry.length === 0 ? (
+                      <div className="p-10 text-center text-xs font-bold text-slate-400">Belum ada Master Wasit. Klik + Tambah Wasit untuk membuat ID pertama.</div>
+                    ) : (
+                      <div className="overflow-x-auto"><table className="w-full min-w-[620px]">
+                        <thead className="bg-slate-50 text-[9px] font-black uppercase text-slate-400"><tr><th className="px-5 py-3 text-left">ID Wasit</th><th className="px-4 py-3 text-left">Nama</th><th className="px-4 py-3 text-center">Status</th><th className="px-5 py-3 text-right">Ubah Status</th></tr></thead>
+                        <tbody className="divide-y divide-slate-100">{refereeRegistry.map(r => (
+                          <tr key={r.id}>
+                            <td className="px-5 py-3 text-xs font-black text-[#0a3971]">{r.id}</td>
+                            <td className="px-4 py-3 text-xs font-black text-slate-800">{r.nama}</td>
+                            <td className="px-4 py-3 text-center"><span className={`rounded-full px-2.5 py-1 text-[8px] font-black ${r.status === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>{r.status}</span></td>
+                            <td className="px-5 py-3 text-right"><button onClick={() => toggleRefereeStatus(r.id)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[8px] font-black text-slate-600">{r.status === 'AKTIF' ? 'Nonaktifkan' : 'Aktifkan'}</button></td>
+                          </tr>
+                        ))}</tbody>
+                      </table></div>
+                    )}
+                  </div>
+
+                  <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                    <div className="border-b border-slate-100 p-5"><h4 className="text-xs font-black text-slate-900">Aktivitas Terakhir</h4><p className="mt-1 text-[9px] font-semibold text-slate-400">Fondasi monitoring Super Admin. Log ini tidak menyediakan tombol hapus untuk EO/Wasit.</p></div>
+                    <div className="divide-y divide-slate-100">
+                      {activityLogs.filter(l => !l.eventId || String(l.eventId) === String(selectedSettingsEvent.id)).slice(0, 8).map(log => (
+                        <div key={log.id} className="flex items-center justify-between gap-4 px-5 py-3">
+                          <div><div className="text-[10px] font-black text-slate-800">{log.description}</div><div className="mt-1 text-[8px] font-semibold uppercase text-slate-400">{log.type}</div></div>
+                          <div className="whitespace-nowrap text-[8px] font-bold text-slate-400">{new Date(log.at).toLocaleString('id-ID')}</div>
+                        </div>
+                      ))}
+                      {activityLogs.length === 0 && <div className="p-8 text-center text-[10px] font-bold text-slate-400">Belum ada aktivitas wasit.</div>}
+                    </div>
+                  </div>
+
+                  {refereeModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+                      <div className="w-full max-w-md overflow-hidden rounded-[24px] bg-white shadow-2xl">
+                        <div className="bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-white">
+                          <div className="text-sm font-black">Tambah Wasit</div>
+                          <div className="mt-1 text-[9px] font-semibold text-blue-100/75">SpinMatch membuat ID wasit secara otomatis.</div>
+                        </div>
+                        <div className="space-y-4 p-5">
+                          <div><label className="mb-1 block text-[9px] font-black text-slate-400">ID WASIT</label><div className="rounded-xl bg-blue-50 px-3 py-3 text-sm font-black text-[#0a3971]">{nextRefereeId}</div></div>
+                          <div><label className="mb-1 block text-[9px] font-black text-slate-400">NAMA WASIT</label><input autoFocus value={newRefereeName} onChange={e=>setNewRefereeName(e.target.value)} placeholder="Masukkan nama lengkap" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-500" /></div>
+                          <div><label className="mb-1 block text-[9px] font-black text-slate-400">STATUS</label><select value={newRefereeStatus} onChange={e=>setNewRefereeStatus(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold outline-none"><option value="AKTIF">Aktif</option><option value="NONAKTIF">Nonaktif</option></select></div>
+                          <div className="rounded-xl bg-amber-50 p-3 text-[9px] font-semibold leading-relaxed text-amber-800">ID WST ini menjadi identitas permanen wasit. Password login akan dibuat pada tahap Authentication dan tidak disimpan sebagai teks di App.jsx/localStorage.</div>
+                          <div className="flex justify-end gap-2 pt-2"><button onClick={()=>{setRefereeModalOpen(false);setNewRefereeName('');}} className="rounded-xl border border-slate-200 px-4 py-2.5 text-[9px] font-black text-slate-600">Batal</button><button onClick={createReferee} className="rounded-xl bg-[#8DFF63] px-4 py-2.5 text-[9px] font-black text-[#09243e]">Simpan Wasit</button></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                  <div className="flex items-center gap-3 border-b border-slate-100 p-5">
+                    <button onClick={() => setSettingsSection('HOME')} className="rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
+                    <div><h3 className="text-sm font-black text-slate-900">Pengaturan Keuangan</h3><p className="text-[10px] text-slate-400">{selectedSettingsEvent.nama} • draft laporan event</p></div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
+                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+                      <div className="mb-3 text-xs font-black text-emerald-800">Pemasukan</div>
+                      {[['registrationIncome','Pendaftaran Peserta'],['otherIncome','Pemasukan Lain']].map(([key,label]) => (
+                        <div key={key} className="mb-3"><label className="mb-1 block text-[9px] font-black text-slate-500">{label}</label><input type="number" min="0" value={currentFinance[key] || ''} onChange={e=>updateFinance(key,e.target.value)} className="w-full rounded-xl border border-emerald-100 bg-white px-3 py-2 text-xs font-bold outline-none" placeholder="0" /></div>
+                      ))}
+                    </div>
+                    <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                      <div className="mb-3 text-xs font-black text-rose-800">Pengeluaran</div>
+                      {[['refereeFee','Fee Wasit'],['operationalCost','Biaya Operasional'],['otherExpense','Pengeluaran Lain']].map(([key,label]) => (
+                        <div key={key} className="mb-3"><label className="mb-1 block text-[9px] font-black text-slate-500">{label}</label><input type="number" min="0" value={currentFinance[key] || ''} onChange={e=>updateFinance(key,e.target.value)} className="w-full rounded-xl border border-rose-100 bg-white px-3 py-2 text-xs font-bold outline-none" placeholder="0" /></div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 border-t border-slate-100 p-5">
+                    <div className="rounded-2xl bg-emerald-50 p-4"><div className="text-[9px] font-black text-emerald-600">PEMASUKAN</div><div className="mt-1 text-sm font-black text-emerald-800">Rp {financeIncome.toLocaleString('id-ID')}</div></div>
+                    <div className="rounded-2xl bg-rose-50 p-4"><div className="text-[9px] font-black text-rose-600">PENGELUARAN</div><div className="mt-1 text-sm font-black text-rose-800">Rp {financeExpense.toLocaleString('id-ID')}</div></div>
+                    <div className="rounded-2xl bg-blue-50 p-4"><div className="text-[9px] font-black text-blue-600">SALDO EVENT</div><div className="mt-1 text-sm font-black text-[#0a3971]">Rp {financeBalance.toLocaleString('id-ID')}</div></div>
+                  </div>
+                  <div className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-[9px] font-semibold text-slate-400">Modul laporan keuangan disiapkan di sini. Cetak/export dan sinkron database dapat ditambahkan pada tahap berikutnya.</div>
+                </div>
+              )}
+            </div>
+
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -4513,7 +6076,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Durasi/Match</label>
                   <select value={durasiMatch} onChange={(e) => setDurasiMatch(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:border-slate-800">
@@ -4529,6 +6092,18 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="relative">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Jam Selesai</label>
                   <input type="time" value={jamSelesai} onChange={(e) => setJamSelesai(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:border-slate-800" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Jumlah Meja</label>
+                  <select
+                    value={jumlahMeja}
+                    onChange={(e) => setJumlahMeja(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:border-slate-800"
+                  >
+                    {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
+                      <option key={n} value={n}>{n} Meja</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div>
