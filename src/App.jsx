@@ -3774,7 +3774,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         <div className="sm-dashboard-mobile-brand">
           <img src={logoSpinMatch} alt="SpinMatch" />
           <div>
-            <div className="sm-dashboard-mobile-brand-name">SpinMatch</div>
+            <div className="sm-dashboard-mobile-brand-name">SPINMATCH</div>
             <div className="sm-dashboard-mobile-brand-page">Dashboard</div>
           </div>
         </div>
@@ -4147,7 +4147,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
             {!isPublic && (isEO || isSuperAdmin) && <button
               onClick={handleOpenCreate}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a3971] px-3 py-2 text-[10px] font-black text-white shadow-md transition hover:bg-[#0874c9] sm:px-4 sm:text-xs"
+              className="sm-new-event-btn flex shrink-0 items-center gap-1.5 rounded-xl border border-white/80 bg-white/75 px-3 py-2 text-[10px] font-black text-[#0a3971] shadow-md backdrop-blur-sm transition hover:bg-white sm:px-4 sm:text-xs"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Buat Event</span>
@@ -6577,6 +6577,33 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
           .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
           .spinmatch-main-content { padding-bottom:8px !important; }
+          /* PREMIUM COMPACT MOBILE OVERRIDE */
+          .sm-dashboard-layout { gap:4px !important; }
+          .sm-dashboard-mobile-title { margin:0 0 1px !important; }
+          .sm-dashboard-mobile-brand { justify-content:flex-start !important; gap:9px !important; padding:0 8px 2px !important; }
+          .sm-dashboard-mobile-brand img { width:38px !important; height:38px !important; border-radius:10px !important; }
+          .sm-dashboard-mobile-brand-name { font-size:9px !important; letter-spacing:.18em !important; font-weight:950 !important; color:#0781cf !important; }
+          .sm-dashboard-mobile-brand-page { margin-top:1px !important; font-size:21px !important; letter-spacing:-.035em !important; line-height:.95 !important; font-weight:950 !important; color:#08233f !important; }
+          .sm-dashboard-event-buttons { gap:7px !important; margin:0 !important; }
+          .sm-dashboard-event-buttons button { min-height:27px !important; border-radius:12px !important; font-size:9.5px !important; }
+          .sm-dashboard-hero { margin-top:1px !important; border-radius:19px !important; }
+          .sm-dashboard-hero-inner { padding:5px 9px 3px !important; }
+          .sm-dashboard-mobile-paddle { display:none !important; }
+          .sm-dashboard-hero h1 { margin-top:3px !important; font-size:14px !important; }
+          .sm-dashboard-hero-meta { margin-top:4px !important; }
+          .sm-dashboard-hero-actions { margin-top:4px !important; }
+          .sm-dashboard-hero > div:last-child { padding-bottom:3px !important; gap:8px !important; }
+          .sm-dashboard-hero > div:last-child button { width:27px !important; height:27px !important; }
+          .sm-dashboard-stats > div { height:32px !important; border-radius:11px !important; }
+          .sm-dashboard-lower { gap:5px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child { padding:7px 10px !important; }
+          .sm-dashboard-lower > div:first-child > div:nth-child(2) > div { padding:6px 10px !important; }
+          .sm-new-event-btn { background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(226,232,240,.90)) !important; color:#0a3971 !important; border:1px solid rgba(255,255,255,.92) !important; box-shadow:0 4px 12px rgba(15,23,42,.10) !important; }
+          .sm-dashboard-quick { padding:8px 10px 6px !important; }
+          .sm-dashboard-quick .mb-4 { margin-bottom:5px !important; }
+          .sm-dashboard-quick .mx-auto.grid { gap:5px !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-height:38px !important; padding:6px 8px !important; }
+
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
