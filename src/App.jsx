@@ -12,76 +12,73 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, FileText, Radio
+  Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout }) => {
+  const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
+  const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
+  const handleDesktopLogout = () => {
+    setShowDesktopMoreMenu(false);
+    onLogout?.();
+  };
   const normalizedRole = String(role || '').toUpperCase();
   const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
+
+  const openView = (view) => {
+    const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS'];
+    if (isPublicRole && publicBlocked.includes(view)) {
+      alert('Akun Public hanya dapat melihat event. Untuk mencari pertandingan, silakan pilih Semua Event.');
+      return;
+    }
+    setActiveView(view);
+  };
+
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
-    { view: 'REGISTRATION', label: 'Pendaftaran', icon: Users },
+    { view: 'REGISTRATION', label: 'Kelola Pemain', icon: Users },
     { view: 'DRAW', label: 'Undian Pool', icon: Dices },
     { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
     { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
-  ].filter(item => !isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view));
+  ];
 
   return (
     <aside className="flex h-screen w-[268px] flex-col bg-gradient-to-b from-[#052a4a] via-[#063a67] to-[#052a4a] text-white shadow-2xl">
-      <div className="flex min-h-[112px] items-center gap-3.5 border-b border-white/10 px-5">
-        <img
-          src={logoSpinMatch}
-          alt="SpinMatch"
-          className="h-[58px] w-[58px] shrink-0 rounded-[14px] object-contain"
-        />
+      <div className="flex min-h-[82px] items-center gap-3 border-b border-white/10 px-4">
+        <img src={logoSpinMatch} alt="SpinMatch" className="h-[48px] w-[48px] shrink-0 rounded-[12px] object-contain" />
         <div className="min-w-0">
-          <div className="whitespace-nowrap text-[20px] font-black leading-none tracking-[-0.03em]">
-            <span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span>
-          </div>
-          <div className="mt-2 flex items-start gap-1.5">
-            <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" />
-            <div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]">
-              <div>TABLE TENNIS</div>
-              <div>PLATFORM</div>
-            </div>
-          </div>
+          <div className="whitespace-nowrap text-[18px] font-black leading-none tracking-[-0.03em]"><span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span></div>
+          <div className="mt-2 flex items-start gap-1.5"><span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" /><div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]"><div>TABLE TENNIS</div><div>PLATFORM</div></div></div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-2 overflow-y-auto px-3.5 py-5">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
         {menu.map(({ view, label, icon: Icon }) => (
-          <button
-            key={view}
-            type="button"
-            onClick={() => setActiveView(view)}
-            className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
-              activeView === view
-                ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
-                : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} />
-            <span>{label}</span>
+          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === view ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
         ))}
+
+        <div className="my-1.5 border-t border-white/10" />
+        <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>
+        <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>
       </nav>
 
-      <div className="border-t border-white/10 p-3.5">
-        <button
-          type="button"
-          onClick={() => setActiveView('SETTINGS')}
-          className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
-            activeView === 'SETTINGS'
-              ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
-              : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
-          }`}
-        >
-          <Settings className="h-[18px] w-[18px] shrink-0" />
-          <span>Pengaturan</span>
+      <div className="relative border-t border-white/10 p-2.5">
+        <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+          <Settings className="h-[17px] w-[17px] shrink-0" /><span>Pengaturan</span>
         </button>
+
+        {showDesktopMoreMenu && (
+          <div className="absolute bottom-[48px] right-2 z-50 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-[#07345c] p-1.5 shadow-2xl">
+            <button type="button" onClick={handleDesktopRestart} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><RefreshCw className="h-4 w-4" />Restart</button>
+            <button type="button" onClick={handleDesktopLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-red-200 hover:bg-red-500/10"><LogOut className="h-4 w-4" />Keluar</button>
+          </div>
+        )}
+        <button type="button" aria-label="Menu lainnya" onClick={() => setShowDesktopMoreMenu(v => !v)} className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"><MoreVertical className="h-4 w-4" /></button>
       </div>
     </aside>
   );
@@ -183,9 +180,24 @@ const SignaturePad = ({ value, onChange, label }) => {
 };
 
 const MainContent = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
+  const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
+  const isEO = userRole === 'EO';
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+
+  const handleMobileRestart = () => {
+    setShowMobileMoreMenu(false);
+    window.location.reload();
+  };
+
+  const handleMobileLogout = () => {
+    setShowMobileMoreMenu(false);
+    logout();
+  };
+  const currentUserId = String(user?.id || user?.user_id || user?.uid || '');
+  const currentUserName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.name || user?.email || 'EO');
 
   // ============================================
   // SEMUA HOOKS HARUS DI SINI (SEBELUM RETURN APAPUN)
@@ -198,6 +210,8 @@ const MainContent = () => {
   const [selectedEventIdForSchedule, setSelectedEventIdForSchedule] = useState('');
   const [selectedEventIdForLive, setSelectedEventIdForLive] = useState('');
   const [selectedEventIdForKnockout, setSelectedEventIdForKnockout] = useState('');
+  const [dashboardEventBrowser, setDashboardEventBrowser] = useState(null); // null | 'MINE' | 'ALL'
+  const [publicViewedEventId, setPublicViewedEventId] = useState(() => sessionStorage.getItem('spinmatch_public_view_event') || '');
 
   // Peringkat & Poin
   const [rankingMode, setRankingMode] = useState('EVENT');
@@ -342,7 +356,11 @@ const MainContent = () => {
     jamSelesai: row.jamselesai || '18:00',
     jumlahMeja: Number(row.jumlahmeja || row.jumlahMeja || 4),
     metodePengundian: row.metodeundian || 'PER_DIVISI',
-    divisiList: Array.isArray(row.divisilist) ? row.divisilist : []
+    divisiList: Array.isArray(row.divisilist) ? row.divisilist : [],
+    ownerId: String(row.owner_id || row.ownerid || row.created_by || row.owner || ''),
+    ownerName: row.owner_name || row.ownername || row.eo_name || row.eo || '',
+    lokasi: row.lokasi || row.location || '',
+    contactPerson: row.contact_person || row.contactperson || row.kontak || ''
   });
 
   const eventToSupabase = (eventItem) => ({
@@ -357,6 +375,21 @@ const MainContent = () => {
     metodeundian: eventItem.metodePengundian || 'PER_DIVISI',
     divisilist: Array.isArray(eventItem.divisiList) ? eventItem.divisiList : []
   });
+
+
+  // Hak akses event di sisi UI/handler. RLS Supabase tetap wajib sebagai lapisan keamanan server.
+  const eventOwnerId = (eventItem) => String(eventItem?.ownerId || eventItem?.owner_id || eventItem?.ownerid || eventItem?.created_by || eventItem?.owner || '');
+  const canManageEvent = (eventItem) => {
+    if (isSuperAdmin) return true;
+    if (!isEO || !eventItem || !currentUserId) return false;
+    return eventOwnerId(eventItem) === currentUserId;
+  };
+  const myEvents = isSuperAdmin ? events : events.filter(canManageEvent);
+  const guardPublicMutation = () => {
+    if (!isPublic) return false;
+    alert('Akun Public hanya dapat melihat data. Silakan pilih event melalui Semua Event.');
+    return true;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1114,6 +1147,8 @@ const MainContent = () => {
   };
 
   const handleOpenCreate = () => {
+    if (isPublic) { alert('Akun Public tidak dapat membuat event. Silakan pilih Semua Event.'); return; }
+    if (!isEO && !isSuperAdmin) { alert('Hanya akun EO atau Super Admin yang dapat membuat event.'); return; }
     setIsEditMode(false);
     setFormNama('');
     setIsMultiDate(false);
@@ -1133,6 +1168,7 @@ const MainContent = () => {
   };
 
   const handleRowClick = (eventItem) => {
+    if (!canManageEvent(eventItem)) { alert('Event ini hanya dapat diedit oleh EO pemilik event atau Super Admin.'); return; }
     setIsEditMode(true);
     setFormNama(eventItem.nama);
     setFormStatus(eventItem.status);
@@ -1195,6 +1231,8 @@ const MainContent = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (guardPublicMutation()) return;
+    if (!isEO && !isSuperAdmin) { alert('Akses ditolak.'); return; }
     let formattedTanggal = isMultiDate
       ? `Dari Tanggal ${formStartDate} sd ${formEndDate}`
       : (formSingleDate || '21 Sep 2026');
@@ -1203,6 +1241,7 @@ const MainContent = () => {
       const eventId = Number(selectedEventIdForReg);
       const currentEvent = events.find(ev => Number(ev.id) === eventId);
       if (!currentEvent) return;
+      if (!canManageEvent(currentEvent)) { alert('Anda tidak dapat mengubah event milik EO lain.'); return; }
 
       const updatedEvent = {
         ...currentEvent,
@@ -1244,7 +1283,9 @@ const MainContent = () => {
         jamSelesai,
         jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
-        divisiList
+        divisiList,
+        ownerId: currentUserId,
+        ownerName: currentUserName
       };
 
       const { error } = await supabase
@@ -1270,6 +1311,9 @@ const MainContent = () => {
   };
 
   const handleDeleteEvent = async (id, nama) => {
+    if (guardPublicMutation()) return;
+    const targetEvent = events.find(ev => Number(ev.id) === Number(id));
+    if (!canManageEvent(targetEvent)) { alert('Anda tidak dapat menghapus event milik EO lain.'); return; }
     if (!window.confirm(`Apakah Anda yakin ingin menghapus event "${nama}"?`)) return;
 
     const { error } = await supabase
@@ -2809,9 +2853,13 @@ const handleUpdatePlayerSubmit = async (e) => {
       e => String(e.status || '').toLowerCase() === 'aktif'
     );
 
-    const heroEvents = activeHeroEvents.length > 0
-      ? activeHeroEvents
-      : events.slice(0, 1);
+    const publicSelectedEvent = isPublic && publicViewedEventId
+      ? events.find(ev => String(ev.id) === String(publicViewedEventId))
+      : null;
+
+    const heroEvents = publicSelectedEvent
+      ? [publicSelectedEvent]
+      : (activeHeroEvents.length > 0 ? activeHeroEvents : events.slice(0, 1));
 
     const safeHeroIndex = heroEvents.length > 0
       ? Math.min(heroEventIndex, heroEvents.length - 1)
@@ -3426,16 +3474,67 @@ const handleUpdatePlayerSubmit = async (e) => {
   return (
     <div className="spinmatch-app flex h-[100dvh] bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <div className="hidden h-screen sticky top-0 shrink-0 md:block">
-        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} role={userRole} />
+        <SpinMatchSidebar
+          activeView={activeView}
+          setActiveView={setActiveView}
+          role={userRole}
+          onMyEvents={() => {
+            if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
+            setActiveView('DASHBOARD');
+            setDashboardEventBrowser('MINE');
+          }}
+          onAllEvents={() => { setActiveView('DASHBOARD'); setDashboardEventBrowser('ALL'); }}
+          onLogout={logout}
+        />
       </div>
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <div className="spinmatch-page-head shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-10 border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
+          <div className="relative z-50 flex justify-end md:hidden">
+            <button
+              type="button"
+              onClick={() => setShowMobileMoreMenu(prev => !prev)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm active:scale-95"
+              aria-label="Menu lainnya"
+              title="Menu lainnya"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+
+            {showMobileMoreMenu && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Tutup menu"
+                  onClick={() => setShowMobileMoreMenu(false)}
+                  className="fixed inset-0 z-40 cursor-default bg-transparent"
+                />
+                <div className="absolute right-0 top-11 z-50 w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,.18)]">
+                  <button
+                    type="button"
+                    onClick={handleMobileRestart}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"
+                  >
+                    <RefreshCw className="h-4 w-4 text-blue-600" />
+                    Restart
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleMobileLogout}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Keluar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <div className="hidden md:block">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0 pt-0.5">
                 <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">
-                  SEPTEMBER 2026 • SUPER ADMIN WORKSPACE
+                  SEPTEMBER 2026 • {String(userRole || 'USER').replace('_', ' ')} WORKSPACE
                 </p>
                 <h1 className="mt-1 text-[22px] font-black tracking-tight text-slate-950">
                   Selamat datang di SpinMatch
@@ -3450,7 +3549,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </span>
 
                   <span className="flex h-9 min-w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-3 text-[10px] font-black text-slate-700 shadow-sm">
-                    SA
+                    {isPublic ? 'PU' : String(userRole || 'US').toUpperCase().slice(0, 2)}
                   </span>
 
                   {!isPublic && (
@@ -3715,9 +3814,58 @@ const handleUpdatePlayerSubmit = async (e) => {
     <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
 
       <div className="sm-dashboard-event-buttons hidden md:hidden">
-        <button type="button" onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><Trophy className="h-4 w-4" /> Event Saya</button>
-        <button type="button" onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><FileText className="h-4 w-4" /> Daftar Event</button>
+        <button type="button" className="sm-btn-my-events" onClick={() => {
+          if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
+          setDashboardEventBrowser('MINE');
+        }}><Trophy className="h-4 w-4" /> Event Saya</button>
+        <button type="button" className="sm-btn-all-events" onClick={() => setDashboardEventBrowser('ALL')}><FileText className="h-4 w-4" /> Semua Event</button>
       </div>
+
+      {dashboardEventBrowser && (
+        <section className="sm-event-browser order-[1] overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm md:order-none">
+          <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
+            <div>
+              <h2 className="text-[13px] font-black text-slate-900">{dashboardEventBrowser === 'MINE' ? 'Event Saya' : 'Semua Event'}</h2>
+              <p className="text-[9px] font-semibold text-slate-400">Pilih event untuk ditampilkan di Dashboard</p>
+            </div>
+            <button type="button" onClick={() => setDashboardEventBrowser(null)} className="rounded-lg bg-slate-100 p-1.5 text-slate-500"><X className="h-4 w-4" /></button>
+          </div>
+          <div className="max-h-[48vh] overflow-auto">
+            {(dashboardEventBrowser === 'MINE' ? myEvents : events).length === 0 ? (
+              <div className="p-5 text-center text-xs font-bold text-slate-400">Belum ada event.</div>
+            ) : (dashboardEventBrowser === 'MINE' ? myEvents : events).map(ev => (
+              <div key={ev.id} className="border-b border-slate-100 px-3 py-3 last:border-b-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[12px] font-black text-slate-900">{ev.nama}</div>
+                    <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] font-semibold text-slate-500">
+                      <span><b>EO:</b> {ev.ownerName || ev.eo || '-'}</span>
+                      <span><b>Tanggal:</b> {ev.tanggal || '-'}</span>
+                      <span><b>Lokasi:</b> {ev.lokasi || '-'}</span>
+                      <span><b>Contact:</b> {ev.contactPerson || '-'}</span>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => {
+                    if (isPublic) {
+                      setPublicViewedEventId(String(ev.id));
+                      sessionStorage.setItem('spinmatch_public_view_event', String(ev.id));
+                    } else {
+                      const idx = heroEvents.findIndex(h => String(h.id) === String(ev.id));
+                      if (idx >= 0) setHeroEventIndex(idx);
+                    }
+                    setSelectedEventIdForSchedule(String(ev.id));
+                    setSelectedEventIdForLive(String(ev.id));
+                    setSelectedEventIdForKnockout(String(ev.id));
+                    setSelectedEventIdForRanking(String(ev.id));
+                    setDashboardEventBrowser(null);
+                    setActiveView('DASHBOARD');
+                  }} className="shrink-0 rounded-lg bg-[#0a3971] px-2.5 py-1.5 text-[9px] font-black text-white">Pilih</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ===================== HERO ===================== */}
       <section className="sm-dashboard-hero relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] text-white shadow-[0_18px_48px_rgba(8,55,110,0.24)]">
@@ -3850,7 +3998,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== STATISTICS ===================== */}
-      <section className="sm-dashboard-stats grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className={`sm-dashboard-stats grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
 
         <div className="group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
           <div className="flex items-start justify-between">
@@ -3906,6 +4054,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
 
 
+{!isPublic && (
         <div className="group rounded-[22px] border border-purple-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
           <div className="flex items-start justify-between">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50">
@@ -3922,6 +4071,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             Pendaftaran
           </div>
         </div>
+        )}
 
       </section>
 
@@ -4021,25 +4171,25 @@ const handleUpdatePlayerSubmit = async (e) => {
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
             <div>
               <h2 className="text-base font-black text-slate-950">
-                Daftar Event Saya
+                Event Saya
               </h2>
               <p className="mt-0.5 text-[10px] font-medium text-slate-400 sm:text-xs">
                 Event dan turnamen yang sedang dikelola
               </p>
             </div>
 
-            <button
+            {!isPublic && (isEO || isSuperAdmin) && <button
               onClick={handleOpenCreate}
               className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a3971] px-3 py-2 text-[10px] font-black text-white shadow-md transition hover:bg-[#0874c9] sm:px-4 sm:text-xs"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Buat Event</span>
               <span className="sm:hidden">Baru</span>
-            </button>
+            </button>}
           </div>
 
 
-          {events.length === 0 ? (
+          {myEvents.length === 0 ? (
 
             <div className="flex min-h-[220px] flex-col items-center justify-center p-8 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
@@ -4057,7 +4207,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
             <div className="divide-y divide-slate-100">
 
-              {events.slice(0, 5).map((item) => (
+              {myEvents.slice(0, 5).map((item) => (
 
                 <div
                   key={item.id}
@@ -4096,12 +4246,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {item.status}
                   </span>
 
-                  <button
+                  {canManageEvent(item) && <button
                     onClick={() => handleRowClick(item)}
                     className="hidden rounded-lg bg-slate-100 px-2.5 py-1.5 text-[9px] font-black text-slate-600 transition hover:bg-blue-600 hover:text-white sm:block"
                   >
                     Edit
-                  </button>
+                  </button>}
 
                 </div>
 
@@ -6410,16 +6560,19 @@ const handleUpdatePlayerSubmit = async (e) => {
           /* DASHBOARD MOBILE FINAL COMPACT V2 */
           .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:10px !important; }
           .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
-          .sm-dashboard-event-buttons button { min-height:38px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#0a3971 !important; background:#fff !important; border:1px solid #dbeafe !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
-          .sm-dashboard-hero { order:1 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
-          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:10px 14px 11px !important; }
+          .sm-dashboard-event-buttons button { min-height:32px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
+          .sm-btn-my-events { background:linear-gradient(135deg,#0a3971,#0874c9) !important; }
+          .sm-btn-all-events { background:linear-gradient(135deg,#f97316,#fb923c) !important; }
+          .sm-event-browser { width:100% !important; }
+          .sm-dashboard-hero { order:2 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
+          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:6px 12px 7px !important; }
           .sm-dashboard-hero-copy { align-items:center !important; text-align:center !important; }
           .sm-dashboard-hero-copy > div:first-child { align-self:flex-start !important; margin-bottom:0 !important; }
           .sm-dashboard-hero-copy > div:first-child span { padding:4px 8px !important; font-size:8px !important; }
-          .sm-dashboard-mobile-paddle { display:flex !important; position:relative !important; height:52px !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
-          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:94px !important; height:60px !important; object-fit:contain !important; }
+          .sm-dashboard-mobile-paddle { display:flex !important; position:relative !important; height:38px !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
+          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:76px !important; height:44px !important; object-fit:contain !important; }
           .sm-dashboard-mobile-glow { position:absolute !important; z-index:1 !important; width:112px !important; height:36px !important; border-radius:999px !important; background:rgba(255,255,255,.45) !important; filter:blur(18px) !important; }
-          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:17px !important; line-height:1.08 !important; margin-top:0 !important; }
+          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:15px !important; line-height:1.08 !important; margin-top:0 !important; }
           .sm-dashboard-hero-desc { display:none !important; }
           .sm-dashboard-hero-meta { margin-top:5px !important; justify-content:center !important; gap:4px !important; }
           .sm-dashboard-hero-meta > div { padding:4px 7px !important; border-radius:9px !important; font-size:8px !important; }
@@ -6428,9 +6581,9 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-hero-actions button { padding:6px 10px !important; border-radius:9px !important; font-size:9px !important; }
           .sm-dashboard-hero > div:last-child { padding-bottom:5px !important; }
           .sm-dashboard-stats { order:2 !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:5px !important; }
-          .sm-dashboard-stats > div { min-width:0 !important; height:58px !important; padding:6px 4px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
+          .sm-dashboard-stats > div { min-width:0 !important; height:42px !important; padding:4px 3px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
           .sm-dashboard-stats > div > div:first-child { display:none !important; }
-          .sm-dashboard-stats > div > div:nth-child(2) { margin-top:0 !important; font-size:14px !important; line-height:1 !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+          .sm-dashboard-stats > div > div:nth-child(2) { margin-top:0 !important; font-size:12px !important; line-height:1 !important; overflow:hidden !important; text-overflow:ellipsis !important; }
           .sm-dashboard-stats > div > div:nth-child(3) { margin-top:3px !important; font-size:7.5px !important; line-height:1 !important; }
           .sm-dashboard-lower { order:3 !important; gap:8px !important; }
           .sm-dashboard-lower > div:first-child { border-radius:18px !important; }
