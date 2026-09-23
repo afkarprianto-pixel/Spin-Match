@@ -3804,6 +3804,18 @@ const handleUpdatePlayerSubmit = async (e) => {
         <button type="button" className="sm-btn-all-events" onClick={() => setDashboardEventBrowser('ALL')}><FileText className="h-4 w-4" /> Semua Event</button>
       </div>
 
+      <div className="sm-news-coach-glass md:hidden">
+        <button type="button" onClick={() => setActiveView('NEWS')} className="sm-news-coach-item">
+          <FileText className="h-3.5 w-3.5" />
+          <span>Berita Pingpong</span>
+        </button>
+        <span className="sm-news-coach-divider" aria-hidden="true" />
+        <button type="button" onClick={() => setActiveView('COACH')} className="sm-news-coach-item">
+          <Search className="h-3.5 w-3.5" />
+          <span>Cari Pelatih</span>
+        </button>
+      </div>
+
       {dashboardEventBrowser && (
         <section className="sm-event-browser order-[1] overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm md:order-none">
           <div className="sm-event-browser-header flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
@@ -6637,6 +6649,50 @@ const handleUpdatePlayerSubmit = async (e) => {
           @media (max-width:767px){
             .sm-dashboard-mobile-brand-page{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif!important;font-size:15px!important;line-height:1!important;font-weight:800!important;letter-spacing:-.025em!important;color:#fff!important;transform:none!important;-webkit-text-stroke:.15px rgba(0,0,0,.48)!important;text-shadow:0 .35px .45px rgba(0,0,0,.30)!important;}
             .sm-settings-glass{background:linear-gradient(145deg,rgba(255,255,255,.90),rgba(240,248,255,.70))!important;-webkit-backdrop-filter:blur(18px) saturate(145%)!important;backdrop-filter:blur(18px) saturate(145%)!important;}
+          }
+
+          /* BERITA PINGPONG | CARI PELATIH — GLASS MENU */
+          @media (max-width:767px){
+            .sm-news-coach-glass{
+              width:fit-content;
+              max-width:calc(100% - 44px);
+              margin:6px auto 0;
+              padding:3px 5px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              gap:2px;
+              border:1px solid rgba(255,255,255,.82);
+              border-radius:999px;
+              background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(231,244,252,.60));
+              box-shadow:0 5px 15px rgba(15,57,92,.09), inset 0 1px 0 rgba(255,255,255,.9);
+              -webkit-backdrop-filter:blur(14px) saturate(140%);
+              backdrop-filter:blur(14px) saturate(140%);
+            }
+            .sm-news-coach-item{
+              height:25px;
+              padding:0 10px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              gap:5px;
+              border:0;
+              border-radius:999px;
+              background:transparent;
+              color:#0a3971;
+              font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+              font-size:9px;
+              line-height:1;
+              font-weight:700;
+              white-space:nowrap;
+            }
+            .sm-news-coach-item:active{background:rgba(255,255,255,.72);}
+            .sm-news-coach-divider{
+              width:1px;
+              height:15px;
+              flex:0 0 1px;
+              background:rgba(10,57,113,.18);
+            }
           }
       `}</style>
     </div>
