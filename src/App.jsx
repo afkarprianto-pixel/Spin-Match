@@ -4149,7 +4149,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
             {!isPublic && (isEO || isSuperAdmin) && <button
               onClick={handleOpenCreate}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a3971] px-3 py-2 text-[10px] font-black text-white shadow-md transition hover:bg-[#0874c9] sm:px-4 sm:text-xs"
+              className="sm-new-event-btn flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black shadow-md transition sm:px-4 sm:text-xs"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Buat Event</span>
@@ -6548,22 +6548,22 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
           /* DASHBOARD MOBILE FINAL COMPACT V3 */
-          .sm-dashboard-mobile-title { display:flex !important; order:-1 !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
-          .sm-dashboard-mobile-brand { display:flex !important; align-items:center !important; justify-content:center !important; gap:8px !important; width:100% !important; padding:4px 8px !important; }
+          .sm-dashboard-mobile-title { display:flex !important; order:-1 !important; width:100% !important; min-height:46px !important; align-items:center !important; justify-content:center !important; margin:0 !important; padding:4px 10px !important; border-radius:20px !important; background:linear-gradient(180deg,#07579b 0%,#1688cf 38%,#bfe3f7 76%,#ffffff 100%) !important; box-shadow:0 7px 18px rgba(8,57,113,.10) !important; }
+          .sm-dashboard-mobile-brand { display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:8px !important; width:100% !important; padding:0 !important; }
           .sm-dashboard-mobile-brand img { width:34px !important; height:34px !important; border-radius:9px !important; object-fit:contain !important; background:#fff !important; box-shadow:0 4px 12px rgba(8,57,113,.12) !important; }
-          .sm-dashboard-mobile-brand-name { font-size:12px !important; line-height:1 !important; font-weight:900 !important; color:#0874c9 !important; }
-          .sm-dashboard-mobile-brand-page { margin-top:2px !important; font-size:16px !important; line-height:1 !important; font-weight:950 !important; color:#0f172a !important; }
+          .sm-dashboard-mobile-brand-name { font-size:10px !important; line-height:1 !important; font-weight:900 !important; color:#eaf7ff !important; letter-spacing:.02em !important; }
+          .sm-dashboard-mobile-brand-page { margin-top:1px !important; font-family:"Arial Black","Segoe UI Black","Segoe UI",sans-serif !important; font-size:18px !important; line-height:.88 !important; font-weight:900 !important; letter-spacing:-.075em !important; color:#071b3b !important; transform:scaleX(.88) !important; transform-origin:left center !important; }
           .sm-event-browser-header, .sm-my-events-header { background:linear-gradient(90deg,#0a3971 0%,#0874c9 42%,#dcefff 78%,#ffffff 100%) !important; }
           .sm-event-browser-header h2, .sm-my-events-header h2 { color:#ffffff !important; text-shadow:0 1px 2px rgba(0,0,0,.12) !important; }
           .sm-event-browser-header p, .sm-my-events-header p { color:rgba(255,255,255,.86) !important; }
           .sm-event-browser-header button { background:rgba(255,255,255,.72) !important; color:#0a3971 !important; }
-          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:7px !important; }
+          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:6px !important; }
           .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
           .sm-dashboard-event-buttons button { min-height:29px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:10px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
           .sm-btn-my-events { background:linear-gradient(135deg,#0a3971,#0874c9) !important; }
           .sm-btn-all-events { background:linear-gradient(135deg,#f97316,#fb923c) !important; }
           .sm-event-browser { width:100% !important; }
-          .sm-dashboard-hero { order:2 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
+          .sm-dashboard-hero { order:2 !important; width:100% !important; margin:-3px auto 0 !important; border-radius:22px !important; }
           .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:4px 10px 5px !important; }
           .sm-dashboard-hero-copy { align-items:center !important; text-align:center !important; }
           .sm-dashboard-hero-copy > div:first-child { align-self:flex-start !important; margin-bottom:0 !important; }
@@ -6591,11 +6591,14 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-lower > div:first-child > div:first-child p { font-size:8px !important; }
           .sm-dashboard-lower > div:first-child > div:nth-child(2) > div { padding:9px 11px !important; }
           .sm-dashboard-lower > div:last-child { display:none !important; }
-          .sm-dashboard-quick { order:99 !important; padding:11px !important; border-radius:19px !important; margin-bottom:0 !important; }
-          .sm-dashboard-quick .mb-4 { margin-bottom:8px !important; }
+          .sm-dashboard-quick { order:99 !important; padding:9px 10px !important; border-radius:19px !important; margin:-3px 0 0 !important; }
+          .sm-dashboard-quick .mb-4 { margin-bottom:6px !important; }
           .sm-dashboard-quick p { display:none !important; }
-          .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
-          .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
+          .sm-dashboard-quick .mx-auto.grid { gap:5px !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-height:29px !important; height:29px !important; padding:3px 8px !important; border-radius:13px !important; font-size:9px !important; line-height:1 !important; }
+          .sm-dashboard-quick .mx-auto.grid button svg { width:15px !important; height:15px !important; }
+          .sm-new-event-btn { background:linear-gradient(135deg,#f8fbff 0%,#e7eef6 52%,#cbd8e6 100%) !important; color:#0a3971 !important; border:1px solid rgba(10,57,113,.16) !important; box-shadow:0 4px 12px rgba(10,57,113,.10) !important; }
+          .sm-new-event-btn:hover { background:linear-gradient(135deg,#ffffff 0%,#edf4fa 52%,#d6e2ed 100%) !important; color:#0874c9 !important; }
           .spinmatch-main-content { padding-bottom:8px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
