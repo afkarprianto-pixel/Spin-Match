@@ -12,74 +12,78 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw
+  Printer, Search, FileText, Radio
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout }) => {
-  const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
-  const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
-  const handleDesktopLogout = () => {
-    setShowDesktopMoreMenu(false);
-    onLogout?.();
-  };
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
   const normalizedRole = String(role || '').toUpperCase();
   const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
-
-  const openView = (view) => {
-    const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS'];
-    if (isPublicRole && publicBlocked.includes(view)) {
-      alert('Akun Public hanya dapat melihat event. Untuk mencari pertandingan, silakan pilih Semua Event.');
-      return;
-    }
-    setActiveView(view);
-  };
-
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
-    { view: 'REGISTRATION', label: 'Kelola Pemain', icon: Users },
+    { view: 'REGISTRATION', label: 'Pendaftaran', icon: Users },
     { view: 'DRAW', label: 'Undian Pool', icon: Dices },
     { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
     { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
-  ];
+  ].filter(item => !isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view));
 
   return (
     <aside className="flex h-screen w-[268px] flex-col bg-gradient-to-b from-[#052a4a] via-[#063a67] to-[#052a4a] text-white shadow-2xl">
-      <div className="flex min-h-[82px] items-center gap-3 border-b border-white/10 px-4">
-        <img src={logoSpinMatch} alt="SpinMatch" className="h-[48px] w-[48px] shrink-0 rounded-[12px] object-contain" />
+      <div className="flex min-h-[112px] items-center gap-3.5 border-b border-white/10 px-5">
+        <img
+          src={logoSpinMatch}
+          alt="SpinMatch"
+          className="h-[58px] w-[58px] shrink-0 rounded-[14px] object-contain"
+        />
         <div className="min-w-0">
-          <div className="whitespace-nowrap text-[18px] font-black leading-none tracking-[-0.03em]"><span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span></div>
-          <div className="mt-2 flex items-start gap-1.5"><span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" /><div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]"><div>TABLE TENNIS</div><div>PLATFORM</div></div></div>
+          <div className="whitespace-nowrap text-[20px] font-black leading-none tracking-[-0.03em]">
+            <span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span>
+          </div>
+          <div className="mt-2 flex items-start gap-1.5">
+            <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" />
+            <div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]">
+              <div>TABLE TENNIS</div>
+              <div>PLATFORM</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+      <nav className="flex-1 space-y-2 overflow-y-auto px-3.5 py-5">
         {menu.map(({ view, label, icon: Icon }) => (
-          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === view ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
-            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
+          <button
+            key={view}
+            type="button"
+            onClick={() => setActiveView(view)}
+            className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
+              activeView === view
+                ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
+                : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} />
+            <span>{label}</span>
           </button>
         ))}
-
-        <div className="my-1.5 border-t border-white/10" />
-        <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>
-        <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>
       </nav>
 
-      <div className="relative border-t border-white/10 p-2.5">
-        <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
-          <Settings className="h-[17px] w-[17px] shrink-0" /><span>Pengaturan</span>
+      {!isPublicRole && <div className="border-t border-white/10 p-3.5">
+        <button
+          type="button"
+          onClick={() => setActiveView('SETTINGS')}
+          className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
+            activeView === 'SETTINGS'
+              ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
+              : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <Settings className="h-[18px] w-[18px] shrink-0" />
+          <span className="flex-1">Pengaturan</span>
+          <span className="ml-auto text-[22px] font-black leading-none text-white" aria-hidden="true">⋮</span>
         </button>
-
-        {showDesktopMoreMenu && (
-          <div className="absolute bottom-[48px] right-2 z-50 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-[#07345c] p-1.5 shadow-2xl">
-            <button type="button" onClick={handleDesktopRestart} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><RefreshCw className="h-4 w-4" />Restart</button>
-            <button type="button" onClick={handleDesktopLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-red-200 hover:bg-red-500/10"><LogOut className="h-4 w-4" />Keluar</button>
-          </div>
-        )}
-        <button type="button" aria-label="Menu lainnya" onClick={() => setShowDesktopMoreMenu(v => !v)} className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"><MoreVertical className="h-4 w-4" /></button>
-      </div>
+      </div>}
     </aside>
   );
 };
@@ -180,22 +184,11 @@ const SignaturePad = ({ value, onChange, label }) => {
 };
 
 const MainContent = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
   const isEO = userRole === 'EO';
-  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
-
-  const handleMobileRestart = () => {
-    setShowMobileMoreMenu(false);
-    window.location.reload();
-  };
-
-  const handleMobileLogout = () => {
-    setShowMobileMoreMenu(false);
-    logout();
-  };
   const currentUserId = String(user?.id || user?.user_id || user?.uid || '');
   const currentUserName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.name || user?.email || 'EO');
 
@@ -3474,67 +3467,31 @@ const handleUpdatePlayerSubmit = async (e) => {
   return (
     <div className="spinmatch-app flex h-[100dvh] bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <div className="hidden h-screen sticky top-0 shrink-0 md:block">
-        <SpinMatchSidebar
-          activeView={activeView}
-          setActiveView={setActiveView}
-          role={userRole}
-          onMyEvents={() => {
-            if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
-            setActiveView('DASHBOARD');
-            setDashboardEventBrowser('MINE');
+        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} role={userRole} />
+        <button
+          type="button"
+          onClick={() => {
+            if (isPublicRole) {
+              alert('Akun Public hanya dapat melihat data. Pengaturan hanya tersedia untuk EO dan Super Admin.');
+              return;
+            }
+            setActiveView('SETTINGS');
           }}
-          onAllEvents={() => { setActiveView('DASHBOARD'); setDashboardEventBrowser('ALL'); }}
-          onLogout={logout}
-        />
+          className="fixed bottom-5 right-4 z-[90] flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#0a3971] to-[#0874c9] text-[26px] font-black leading-none text-white shadow-xl shadow-blue-950/25 md:hidden"
+          title="Pengaturan"
+          aria-label="Buka Pengaturan"
+        >
+          ⋮
+        </button>
       </div>
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <div className="spinmatch-page-head shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-10 border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
-          <div className="relative z-50 flex justify-end md:hidden">
-            <button
-              type="button"
-              onClick={() => setShowMobileMoreMenu(prev => !prev)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm active:scale-95"
-              aria-label="Menu lainnya"
-              title="Menu lainnya"
-            >
-              <MoreVertical className="h-5 w-5" />
-            </button>
-
-            {showMobileMoreMenu && (
-              <>
-                <button
-                  type="button"
-                  aria-label="Tutup menu"
-                  onClick={() => setShowMobileMoreMenu(false)}
-                  className="fixed inset-0 z-40 cursor-default bg-transparent"
-                />
-                <div className="absolute right-0 top-11 z-50 w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,.18)]">
-                  <button
-                    type="button"
-                    onClick={handleMobileRestart}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"
-                  >
-                    <RefreshCw className="h-4 w-4 text-blue-600" />
-                    Restart
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleMobileLogout}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Keluar
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
           <div className="hidden md:block">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0 pt-0.5">
                 <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">
-                  SEPTEMBER 2026 • {String(userRole || 'USER').replace('_', ' ')} WORKSPACE
+                  SEPTEMBER 2026 • SUPER ADMIN WORKSPACE
                 </p>
                 <h1 className="mt-1 text-[22px] font-black tracking-tight text-slate-950">
                   Selamat datang di SpinMatch
@@ -3549,7 +3506,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </span>
 
                   <span className="flex h-9 min-w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-3 text-[10px] font-black text-slate-700 shadow-sm">
-                    {isPublic ? 'PU' : String(userRole || 'US').toUpperCase().slice(0, 2)}
+                    SA
                   </span>
 
                   {!isPublic && (
@@ -3657,7 +3614,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
                   <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3690,7 +3647,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
                   <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3720,7 +3677,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
                   <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3755,7 +3712,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="relative z-10 flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
                   <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
                     {events.map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
@@ -3788,7 +3745,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
                   <select value={selectedEventIdForLive} onChange={(e) => setSelectedEventIdForLive(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3813,6 +3770,16 @@ const handleUpdatePlayerSubmit = async (e) => {
 
     <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
 
+      <div className="sm-dashboard-mobile-title hidden md:hidden">
+        <div className="sm-dashboard-mobile-brand">
+          <img src={logoSpinMatch} alt="SpinMatch" />
+          <div>
+            <div className="sm-dashboard-mobile-brand-name">SpinMatch</div>
+            <div className="sm-dashboard-mobile-brand-page">Dashboard</div>
+          </div>
+        </div>
+      </div>
+
       <div className="sm-dashboard-event-buttons hidden md:hidden">
         <button type="button" className="sm-btn-my-events" onClick={() => {
           if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
@@ -3823,7 +3790,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
       {dashboardEventBrowser && (
         <section className="sm-event-browser order-[1] overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm md:order-none">
-          <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
+          <div className="sm-event-browser-header flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
             <div>
               <h2 className="text-[13px] font-black text-slate-900">{dashboardEventBrowser === 'MINE' ? 'Event Saya' : 'Semua Event'}</h2>
               <p className="text-[9px] font-semibold text-slate-400">Pilih event untuk ditampilkan di Dashboard</p>
@@ -3998,7 +3965,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== STATISTICS ===================== */}
-      <section className={`sm-dashboard-stats grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
+      <section className="sm-dashboard-stats grid grid-cols-2 gap-3 lg:grid-cols-4">
 
         <div className="group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
           <div className="flex items-start justify-between">
@@ -4168,7 +4135,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         {/* EVENTS */}
         <div id="dashboard-event-saya" className="scroll-mt-24 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
 
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
+          <div className="sm-my-events-header flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
             <div>
               <h2 className="text-base font-black text-slate-950">
                 Event Saya
@@ -4503,7 +4470,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="sm-participant-table overflow-x-auto rounded-2xl border border-slate-200">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-center">
+                      <tr className="bg-gradient-to-r from-[#073a72] via-[#0874c9] to-[#1598e8] border-b border-blue-700 font-bold text-white text-center">
                         <th className="py-3.5 px-3 w-12">No</th>
                         <th className="py-3.5 px-4 text-left">ID Peserta</th>
                         <th className="py-3.5 px-4 text-left">Nama Lengkap</th>
@@ -6498,6 +6465,9 @@ const handleUpdatePlayerSubmit = async (e) => {
       )}
 
       <style>{`
+
+        .sm-participant-table thead tr { background:linear-gradient(90deg,#073a72 0%,#0874c9 58%,#1598e8 100%) !important; color:#fff !important; }
+        .sm-participant-table thead th { color:#fff !important; }
         @media (max-width: 767px) {
           .sm-mobile-page-header { margin-top: 10px !important; padding: 14px !important; border-radius: 24px !important; gap: 10px !important; }
           .sm-mobile-page-header > div { position: relative; z-index: 2; }
@@ -6517,7 +6487,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-registration h3 + p { font-size: 9px !important; margin-top: 3px !important; }
           .sm-registration > div > div:first-child { margin-bottom: 10px !important; gap: 8px !important; }
           .sm-registration > div > div:first-child > div:last-child { display:grid !important; grid-template-columns:1fr 1fr !important; width:100% !important; gap:7px !important; }
-          .sm-registration > div > div:first-child > div:last-child > * { min-height:38px !important; padding:7px 9px !important; justify-content:center !important; border-radius:12px !important; font-size:10px !important; }
+          .sm-registration > div > div:first-child > div:last-child > * { min-height:30px !important; padding:7px 9px !important; justify-content:center !important; border-radius:12px !important; font-size:10px !important; }
           .sm-registration > div > div:first-child > div:last-child > *:first-child { grid-column:1 / -1 !important; }
           .sm-participant-table { overflow:visible !important; border:0 !important; border-radius:0 !important; }
           .sm-participant-table table, .sm-participant-table tbody { display:block !important; width:100% !important; }
@@ -6557,22 +6527,31 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-knockout .overflow-x-auto { -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
 
 
-          /* DASHBOARD MOBILE FINAL COMPACT V2 */
-          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:10px !important; }
+          /* DASHBOARD MOBILE FINAL COMPACT V3 */
+          .sm-dashboard-mobile-title { display:flex !important; order:-1 !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
+          .sm-dashboard-mobile-brand { display:flex !important; align-items:center !important; justify-content:center !important; gap:8px !important; width:100% !important; padding:4px 8px !important; }
+          .sm-dashboard-mobile-brand img { width:34px !important; height:34px !important; border-radius:9px !important; object-fit:contain !important; background:#fff !important; box-shadow:0 4px 12px rgba(8,57,113,.12) !important; }
+          .sm-dashboard-mobile-brand-name { font-size:12px !important; line-height:1 !important; font-weight:900 !important; color:#0874c9 !important; }
+          .sm-dashboard-mobile-brand-page { margin-top:2px !important; font-size:16px !important; line-height:1 !important; font-weight:950 !important; color:#0f172a !important; }
+          .sm-event-browser-header, .sm-my-events-header { background:linear-gradient(90deg,#0a3971 0%,#0874c9 42%,#dcefff 78%,#ffffff 100%) !important; }
+          .sm-event-browser-header h2, .sm-my-events-header h2 { color:#ffffff !important; text-shadow:0 1px 2px rgba(0,0,0,.12) !important; }
+          .sm-event-browser-header p, .sm-my-events-header p { color:rgba(255,255,255,.86) !important; }
+          .sm-event-browser-header button { background:rgba(255,255,255,.72) !important; color:#0a3971 !important; }
+          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:7px !important; }
           .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
-          .sm-dashboard-event-buttons button { min-height:32px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
+          .sm-dashboard-event-buttons button { min-height:29px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:10px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
           .sm-btn-my-events { background:linear-gradient(135deg,#0a3971,#0874c9) !important; }
           .sm-btn-all-events { background:linear-gradient(135deg,#f97316,#fb923c) !important; }
           .sm-event-browser { width:100% !important; }
           .sm-dashboard-hero { order:2 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
-          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:6px 12px 7px !important; }
+          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:4px 10px 5px !important; }
           .sm-dashboard-hero-copy { align-items:center !important; text-align:center !important; }
           .sm-dashboard-hero-copy > div:first-child { align-self:flex-start !important; margin-bottom:0 !important; }
           .sm-dashboard-hero-copy > div:first-child span { padding:4px 8px !important; font-size:8px !important; }
           .sm-dashboard-mobile-paddle { display:flex !important; position:relative !important; height:38px !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
-          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:76px !important; height:44px !important; object-fit:contain !important; }
+          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:62px !important; height:34px !important; object-fit:contain !important; }
           .sm-dashboard-mobile-glow { position:absolute !important; z-index:1 !important; width:112px !important; height:36px !important; border-radius:999px !important; background:rgba(255,255,255,.45) !important; filter:blur(18px) !important; }
-          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:15px !important; line-height:1.08 !important; margin-top:0 !important; }
+          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:14px !important; line-height:1.05 !important; margin-top:0 !important; }
           .sm-dashboard-hero-desc { display:none !important; }
           .sm-dashboard-hero-meta { margin-top:5px !important; justify-content:center !important; gap:4px !important; }
           .sm-dashboard-hero-meta > div { padding:4px 7px !important; border-radius:9px !important; font-size:8px !important; }
@@ -6581,7 +6560,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-hero-actions button { padding:6px 10px !important; border-radius:9px !important; font-size:9px !important; }
           .sm-dashboard-hero > div:last-child { padding-bottom:5px !important; }
           .sm-dashboard-stats { order:2 !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:5px !important; }
-          .sm-dashboard-stats > div { min-width:0 !important; height:42px !important; padding:4px 3px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
+          .sm-dashboard-stats > div { min-width:0 !important; height:36px !important; padding:3px 2px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
           .sm-dashboard-stats > div > div:first-child { display:none !important; }
           .sm-dashboard-stats > div > div:nth-child(2) { margin-top:0 !important; font-size:12px !important; line-height:1 !important; overflow:hidden !important; text-overflow:ellipsis !important; }
           .sm-dashboard-stats > div > div:nth-child(3) { margin-top:3px !important; font-size:7.5px !important; line-height:1 !important; }
