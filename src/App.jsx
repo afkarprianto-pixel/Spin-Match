@@ -3712,10 +3712,15 @@ const handleUpdatePlayerSubmit = async (e) => {
         Mobile-first • Premium Blue • Responsive
     ========================================================== */}
 
-    <div className="mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
+    <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
+
+      <div className="sm-dashboard-event-buttons hidden md:hidden">
+        <button type="button" onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><Trophy className="h-4 w-4" /> Event Saya</button>
+        <button type="button" onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><FileText className="h-4 w-4" /> Daftar Event</button>
+      </div>
 
       {/* ===================== HERO ===================== */}
-      <section className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] text-white shadow-[0_18px_48px_rgba(8,55,110,0.24)]">
+      <section className="sm-dashboard-hero relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] text-white shadow-[0_18px_48px_rgba(8,55,110,0.24)]">
         <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-28 left-[35%] h-56 w-56 rounded-full bg-blue-300/20 blur-3xl" />
         <div className="pointer-events-none absolute left-[-70px] top-[-80px] h-52 w-52 rounded-full bg-indigo-300/10 blur-3xl" />
@@ -3727,8 +3732,8 @@ const handleUpdatePlayerSubmit = async (e) => {
           <div className="absolute bottom-6 right-[7%] h-14 w-[2px] bg-white/60" />
         </div>
 
-        <div className="relative z-10 grid min-h-[220px] grid-cols-1 items-center gap-4 px-6 py-6 sm:px-7 md:grid-cols-[1.28fr_.72fr] md:px-9 md:py-7 lg:px-10 lg:py-7">
-          <div className="flex min-w-0 flex-col justify-center">
+        <div className="sm-dashboard-hero-inner relative z-10 grid min-h-[220px] grid-cols-1 items-center gap-4 px-6 py-6 sm:px-7 md:grid-cols-[1.28fr_.72fr] md:px-9 md:py-7 lg:px-10 lg:py-7">
+          <div className="sm-dashboard-hero-copy flex min-w-0 flex-col justify-center">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] backdrop-blur-md sm:text-xs">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-[#7CFF6B]" />
@@ -3744,15 +3749,17 @@ const handleUpdatePlayerSubmit = async (e) => {
               )}
             </div>
 
+            <div className="sm-dashboard-mobile-paddle hidden"><div className="sm-dashboard-mobile-glow" /><img src={heroPingpong} alt="SpinMatch Table Tennis" /></div>
+
             <h1 className="max-w-3xl text-[25px] font-black leading-[1.04] tracking-[-0.03em] sm:text-3xl md:text-[34px] lg:text-[38px]">
               {dashboardActiveEvent?.nama || 'Belum Ada Event'}
             </h1>
 
-            <p className="mt-2.5 max-w-2xl text-xs font-medium leading-relaxed text-blue-100/85 sm:text-sm">
+            <p className="sm-dashboard-hero-desc mt-2.5 max-w-2xl text-xs font-medium leading-relaxed text-blue-100/85 sm:text-sm">
               Kelola pertandingan tenis meja lebih cepat, terintegrasi dan real-time.
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold sm:text-xs">
+            <div className="sm-dashboard-hero-meta mt-4 flex flex-wrap gap-2 text-[10px] font-bold sm:text-xs">
               <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
                 <Calendar className="h-4 w-4 text-cyan-300" />
                 <span>{dashboardActiveEvent?.tanggal || 'Tanggal belum ditentukan'}</span>
@@ -3767,7 +3774,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2.5">
+            <div className="sm-dashboard-hero-actions mt-5 flex flex-wrap gap-2.5">
               <button
                 onClick={() => {
                   if (!dashboardActiveEvent) return;
@@ -3843,7 +3850,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== STATISTICS ===================== */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="sm-dashboard-stats grid grid-cols-2 gap-3 lg:grid-cols-4">
 
         <div className="group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
           <div className="flex items-start justify-between">
@@ -3920,7 +3927,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== QUICK MENU ===================== */}
-      <section className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
+      <section className="sm-dashboard-quick rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
         <div className="mb-4 text-center md:text-left">
           <div className="flex items-center justify-center gap-2 md:justify-start">
             <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
@@ -4006,7 +4013,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== LOWER CONTENT ===================== */}
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_.65fr]">
+      <section className="sm-dashboard-lower grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_.65fr]">
 
         {/* EVENTS */}
         <div id="dashboard-event-saya" className="scroll-mt-24 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
@@ -4014,7 +4021,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
             <div>
               <h2 className="text-base font-black text-slate-950">
-                Event Saya
+                Daftar Event Saya
               </h2>
               <p className="mt-0.5 text-[10px] font-medium text-slate-400 sm:text-xs">
                 Event dan turnamen yang sedang dikelola
@@ -6399,10 +6406,50 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-knockout .p-12 { padding:34px 16px !important; }
           .sm-knockout .overflow-x-auto { -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
 
+
+          /* DASHBOARD MOBILE FINAL COMPACT V2 */
+          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:10px !important; }
+          .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
+          .sm-dashboard-event-buttons button { min-height:38px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#0a3971 !important; background:#fff !important; border:1px solid #dbeafe !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
+          .sm-dashboard-hero { order:1 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
+          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:10px 14px 11px !important; }
+          .sm-dashboard-hero-copy { align-items:center !important; text-align:center !important; }
+          .sm-dashboard-hero-copy > div:first-child { align-self:flex-start !important; margin-bottom:0 !important; }
+          .sm-dashboard-hero-copy > div:first-child span { padding:4px 8px !important; font-size:8px !important; }
+          .sm-dashboard-mobile-paddle { display:flex !important; position:relative !important; height:52px !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
+          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:94px !important; height:60px !important; object-fit:contain !important; }
+          .sm-dashboard-mobile-glow { position:absolute !important; z-index:1 !important; width:112px !important; height:36px !important; border-radius:999px !important; background:rgba(255,255,255,.45) !important; filter:blur(18px) !important; }
+          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:17px !important; line-height:1.08 !important; margin-top:0 !important; }
+          .sm-dashboard-hero-desc { display:none !important; }
+          .sm-dashboard-hero-meta { margin-top:5px !important; justify-content:center !important; gap:4px !important; }
+          .sm-dashboard-hero-meta > div { padding:4px 7px !important; border-radius:9px !important; font-size:8px !important; }
+          .sm-dashboard-hero-meta > div:nth-child(2), .sm-dashboard-hero-meta > div:nth-child(3) { display:none !important; }
+          .sm-dashboard-hero-actions { margin-top:6px !important; justify-content:center !important; gap:5px !important; }
+          .sm-dashboard-hero-actions button { padding:6px 10px !important; border-radius:9px !important; font-size:9px !important; }
+          .sm-dashboard-hero > div:last-child { padding-bottom:5px !important; }
+          .sm-dashboard-stats { order:2 !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:5px !important; }
+          .sm-dashboard-stats > div { min-width:0 !important; height:58px !important; padding:6px 4px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
+          .sm-dashboard-stats > div > div:first-child { display:none !important; }
+          .sm-dashboard-stats > div > div:nth-child(2) { margin-top:0 !important; font-size:14px !important; line-height:1 !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+          .sm-dashboard-stats > div > div:nth-child(3) { margin-top:3px !important; font-size:7.5px !important; line-height:1 !important; }
+          .sm-dashboard-lower { order:3 !important; gap:8px !important; }
+          .sm-dashboard-lower > div:first-child { border-radius:18px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child { padding:10px 11px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child h2 { font-size:13px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child p { font-size:8px !important; }
+          .sm-dashboard-lower > div:first-child > div:nth-child(2) > div { padding:9px 11px !important; }
+          .sm-dashboard-lower > div:last-child { display:none !important; }
+          .sm-dashboard-quick { order:99 !important; padding:11px !important; border-radius:19px !important; margin-bottom:0 !important; }
+          .sm-dashboard-quick .mb-4 { margin-bottom:8px !important; }
+          .sm-dashboard-quick p { display:none !important; }
+          .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
+          .spinmatch-main-content { padding-bottom:8px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
-      `}</style>\n    </div>
+      `}</style>
+    </div>
   );
 };
 
