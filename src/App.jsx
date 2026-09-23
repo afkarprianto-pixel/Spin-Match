@@ -16,7 +16,9 @@ import {
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
+  const normalizedRole = String(role || '').toUpperCase();
+  const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
     { view: 'REGISTRATION', label: 'Pendaftaran', icon: Users },
@@ -25,7 +27,7 @@ const SpinMatchSidebar = ({ activeView, setActiveView }) => {
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
     { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
-  ];
+  ].filter(item => !isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view));
 
   return (
     <aside className="flex h-screen w-[268px] flex-col bg-gradient-to-b from-[#052a4a] via-[#063a67] to-[#052a4a] text-white shadow-2xl">
@@ -182,6 +184,8 @@ const SignaturePad = ({ value, onChange, label }) => {
 
 const MainContent = () => {
   const { user } = useAuth();
+  const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
+  const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
 
   // ============================================
   // SEMUA HOOKS HARUS DI SINI (SEBELUM RETURN APAPUN)
@@ -925,6 +929,12 @@ const MainContent = () => {
     window.addEventListener('click', handleClickOutside);
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user || !isPublic) return;
+    const publicAllowedViews = ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'];
+    if (!publicAllowedViews.includes(activeView)) setActiveView('DASHBOARD');
+  }, [user, isPublic, activeView]);
 
   useEffect(() => {
     if (!user) return;
@@ -3416,7 +3426,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   return (
     <div className="spinmatch-app flex h-[100dvh] bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <div className="hidden h-screen sticky top-0 shrink-0 md:block">
-        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} />
+        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} role={userRole} />
       </div>
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
@@ -3443,14 +3453,16 @@ const handleUpdatePlayerSubmit = async (e) => {
                     SA
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={handleOpenCreate}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#07101f] px-4 text-[11px] font-black text-white shadow-[0_5px_14px_rgba(2,6,23,.22)] transition hover:-translate-y-0.5 hover:bg-[#0a3971]"
-                  >
-                    <Plus className="h-4 w-4 text-[#8DFF63]" />
-                    Buat Event
-                  </button>
+                  {!isPublic && (
+                    <button
+                      type="button"
+                      onClick={handleOpenCreate}
+                      className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#07101f] px-4 text-[11px] font-black text-white shadow-[0_5px_14px_rgba(2,6,23,.22)] transition hover:-translate-y-0.5 hover:bg-[#0a3971]"
+                    >
+                      <Plus className="h-4 w-4 text-[#8DFF63]" />
+                      Buat Event
+                    </button>
+                  )}
                 </div>
 
                 {/* Tombol persiapan fitur berikutnya - sengaja belum diberi aksi */}
@@ -3528,7 +3540,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'REGISTRATION' && (
-            <div className="p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+            <div className="sm-mobile-page-header p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -3559,7 +3571,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'DRAW' && (
-            <div className="p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+            <div className="sm-mobile-page-header p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -3589,7 +3601,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'SCHEDULE' && (
-            <div className="relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 text-white">
+            <div className="sm-mobile-page-header relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 text-white">
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -3657,7 +3669,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'LIVE_SCORE' && (
-            <div className="p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+            <div className="sm-mobile-page-header p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -3687,7 +3699,12 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
         </div>
 
-        <div className="spinmatch-main-content flex-1 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8">
+        <div className="spinmatch-main-content flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8">
+{isPublic && (
+  <div className="mx-auto mb-3 w-full max-w-[1500px] rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700 md:mb-4 md:px-4 md:py-3 md:text-xs">
+    Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
+  </div>
+)}
 {activeView === 'DASHBOARD' ? (
   <>
     {/* =========================================================
@@ -3774,7 +3791,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             </div>
           </div>
 
-          <div className="relative min-h-[185px] items-center justify-center overflow-visible md:flex">
+          <div className="relative hidden min-h-[185px] items-center justify-center overflow-visible md:flex">
             <div className="absolute left-1/2 top-1/2 h-[180px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/15 blur-[58px]" />
             <img
               src={heroPingpong}
@@ -3904,27 +3921,24 @@ const handleUpdatePlayerSubmit = async (e) => {
 
       {/* ===================== QUICK MENU ===================== */}
       <section className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
-
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
-              <h2 className="text-base font-black text-slate-950">
-                Menu Cepat
-              </h2>
-            </div>
-            <p className="ml-3.5 mt-1 text-[10px] font-medium text-slate-400 sm:text-xs">
-              Akses pengelolaan turnamen
-            </p>
+        <div className="mb-4 text-center md:text-left">
+          <div className="flex items-center justify-center gap-2 md:justify-start">
+            <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
+            <h2 className="text-base font-black text-slate-950">Menu Cepat</h2>
           </div>
-
-          <span className="hidden rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-blue-600 sm:block">
-            SPINMATCH CONTROL
-          </span>
+          <p className="mt-1 text-[10px] font-medium text-slate-400 sm:text-xs md:ml-3.5">
+            Akses pengelolaan turnamen
+          </p>
         </div>
 
-
-        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:gap-4">
+        {/* Mobile: tombol berwarna, 2 kolom, Kelola Event di tengah */}
+        <div className="mx-auto grid max-w-[430px] grid-cols-2 gap-3 md:hidden">
+          <button
+            onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="col-span-2 mx-auto flex w-[calc(50%-6px)] min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
+          >
+            <Settings className="h-5 w-5" /> Kelola Event
+          </button>
 
           <button
             onClick={() => {
@@ -3932,16 +3946,10 @@ const handleUpdatePlayerSubmit = async (e) => {
               if (ev) setSelectedEventIdForReg(String(ev.id));
               setActiveView('REGISTRATION');
             }}
-            className="group flex flex-col items-center gap-2"
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
           >
-            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-emerald-50 to-emerald-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
-              <UserPlus className="h-7 w-7 text-emerald-600" />
-            </span>
-            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
-              Peserta
-            </span>
+            <Users className="h-5 w-5 shrink-0" /> Kelola Pemain
           </button>
-
 
           <button
             onClick={() => {
@@ -3949,16 +3957,10 @@ const handleUpdatePlayerSubmit = async (e) => {
               if (ev) setSelectedEventIdForDraw(String(ev.id));
               setActiveView('DRAW');
             }}
-            className="group flex flex-col items-center gap-2"
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
           >
-            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-cyan-50 to-blue-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
-              <Shuffle className="h-7 w-7 text-blue-600" />
-            </span>
-            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
-              Undian
-            </span>
+            <Shuffle className="h-5 w-5 shrink-0" /> Undian Pool
           </button>
-
 
           <button
             onClick={() => {
@@ -3966,33 +3968,10 @@ const handleUpdatePlayerSubmit = async (e) => {
               if (ev) setSelectedEventIdForSchedule(String(ev.id));
               setActiveView('SCHEDULE');
             }}
-            className="group flex flex-col items-center gap-2"
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98]"
           >
-            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-amber-50 to-orange-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
-              <Calendar className="h-7 w-7 text-orange-500" />
-            </span>
-            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
-              Jadwal
-            </span>
+            <Calendar className="h-5 w-5 shrink-0" /> Jadwal
           </button>
-
-
-          <button
-            onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForLive(String(ev.id));
-              setActiveView('LIVE_SCORE');
-            }}
-            className="group flex flex-col items-center gap-2"
-          >
-            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-rose-50 to-red-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
-              <Radio className="h-7 w-7 text-red-500" />
-            </span>
-            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
-              Live Score
-            </span>
-          </button>
-
 
           <button
             onClick={() => {
@@ -4000,16 +3979,28 @@ const handleUpdatePlayerSubmit = async (e) => {
               if (ev) setSelectedEventIdForKnockout(String(ev.id));
               setActiveView('KNOCKOUT');
             }}
-            className="group flex flex-col items-center gap-2"
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98]"
           >
-            <span className="flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br from-purple-50 to-violet-100 transition group-hover:-translate-y-1 group-hover:shadow-lg">
-              <Trophy className="h-7 w-7 text-purple-600" />
-            </span>
-            <span className="text-[10px] font-black text-slate-700 sm:text-xs">
-              Knockout
-            </span>
+            <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
+        </div>
 
+        {/* Tablet/Desktop: tetap rapi 5 menu sejajar */}
+        <div className="hidden grid-cols-5 gap-4 md:grid">
+          {[
+            { label: 'Kelola Event', icon: Settings, action: () => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
+            { label: 'Kelola Pemain', icon: Users, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForReg(String(ev.id)); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
+            { label: 'Undian Pool', icon: Shuffle, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForDraw(String(ev.id)); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
+            { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
+            { label: 'Knockout', icon: Trophy, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForKnockout(String(ev.id)); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
+          ].map(({ label, icon: Icon, action, box, iconColor }) => (
+            <button key={label} onClick={action} className="group flex flex-col items-center gap-2">
+              <span className={`flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg`}>
+                <Icon className={`h-7 w-7 ${iconColor}`} />
+              </span>
+              <span className="text-center text-xs font-black text-slate-700">{label}</span>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -4018,7 +4009,7 @@ const handleUpdatePlayerSubmit = async (e) => {
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_.65fr]">
 
         {/* EVENTS */}
-        <div className="overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
+        <div id="dashboard-event-saya" className="scroll-mt-24 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
 
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
             <div>
@@ -4329,7 +4320,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   </>
 
           ) : activeView === 'REGISTRATION' ? (
-            <div className="space-y-6">
+            <div className="sm-registration space-y-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div>
@@ -4352,7 +4343,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </button>
                   </div>
                 </div>
-                <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <div className="sm-participant-table overflow-x-auto rounded-2xl border border-slate-200">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-center">
@@ -4400,7 +4391,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
             </div>
           ) : activeView === 'DRAW' ? (
-            <div className="space-y-6">
+            <div className="sm-draw space-y-6">
               {selectedDrawEvent && (
                 <div className="bg-gradient-to-r from-emerald-50 to-lime-50 border border-emerald-200 rounded-3xl p-6">
                   <div className="flex items-center justify-between flex-wrap gap-4">
@@ -4574,7 +4565,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               )}
             </div>
           ) : activeView === 'SCHEDULE' ? (
-            <div className="space-y-6">
+            <div className="sm-schedule space-y-6">
               {selectedScheduleEvent && (
                 <div className="bg-white border border-slate-200 rounded-lg p-6 text-center">
                   <h2 className="text-lg font-black text-slate-900 mb-1">JADWAL PERTANDINGAN</h2>
@@ -4704,7 +4695,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               ) : null}
             </div>
           ) : activeView === 'KNOCKOUT' ? (
-            <div className="space-y-5">
+            <div className="sm-knockout space-y-5">
               {selectedKnockoutEvent && poolResults[selectedKnockoutEvent.id] ? (() => {
                 const ko = buildKnockoutBracket(selectedKnockoutEvent.id);
                 const divisi = selectedKnockoutEvent.divisiList?.[0]?.nama || '-';
@@ -4996,7 +4987,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               )}
             </div>
           ) : activeView === 'LIVE_SCORE' ? (
-            <div className="space-y-6">
+            <div className="sm-live space-y-6">
               {selectedLiveEvent && (
                 <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-3xl p-6">
                   <div className="flex items-center justify-between flex-wrap gap-4">
@@ -5403,33 +5394,7 @@ const handleUpdatePlayerSubmit = async (e) => {
       </main>
 
 
-      {/* MOBILE NAVIGATION - hanya tampil di HP; desktop tetap memakai Sidebar lama */}
-      <nav className="spinmatch-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-1.5 pb-[max(6px,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-md md:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-6 gap-0.5">
-          {[
-            { view: 'DASHBOARD', label: 'Home', icon: <Activity className="h-4 w-4" /> },
-            { view: 'REGISTRATION', label: 'Peserta', icon: <Users className="h-4 w-4" /> },
-            { view: 'DRAW', label: 'Undian', icon: <Dices className="h-4 w-4" /> },
-            { view: 'SCHEDULE', label: 'Jadwal', icon: <Calendar className="h-4 w-4" /> },
-            { view: 'LIVE_SCORE', label: 'Skor', icon: <Radio className="h-4 w-4" /> },
-            { view: 'KNOCKOUT', label: 'KO', icon: <Trophy className="h-4 w-4" /> },
-          ].map((item) => (
-            <button
-              type="button"
-              key={item.view}
-              onClick={() => setActiveView(item.view)}
-              className={`flex min-w-0 flex-col items-center justify-center rounded-xl px-0.5 py-1.5 text-[8px] font-black transition ${
-                activeView === item.view
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              {item.icon}
-              <span className="mt-0.5 max-w-full truncate">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      {/* MOBILE BOTTOM NAVIGATION DIHAPUS - menu utama HP sudah tersedia di Dashboard */}
 
       <style>{`
         /* =========================================================
@@ -6374,7 +6339,70 @@ const handleUpdatePlayerSubmit = async (e) => {
           </div>
         </div>
       )}
-    </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .sm-mobile-page-header { margin-top: 10px !important; padding: 14px !important; border-radius: 24px !important; gap: 10px !important; }
+          .sm-mobile-page-header > div { position: relative; z-index: 2; }
+          .sm-mobile-page-header button[title=\"Kembali ke Dashboard\"] { padding: 8px !important; border-radius: 13px !important; }
+          .sm-mobile-page-header h2 { font-size: 15px !important; line-height: 1.15 !important; }
+          .sm-mobile-page-header p { font-size: 10px !important; line-height: 1.2 !important; }
+          .sm-mobile-page-header > div:last-child { width: 100% !important; display: grid !important; grid-template-columns: 1fr auto !important; gap: 8px !important; justify-content: stretch !important; }
+          .sm-mobile-page-header > div:last-child > div { min-width: 0 !important; padding: 8px 10px !important; border-radius: 14px !important; }
+          .sm-mobile-page-header select { min-width: 0 !important; max-width: 100% !important; width: 100% !important; text-overflow: ellipsis !important; font-size: 10px !important; }
+          .sm-mobile-page-header span { font-size: 10px !important; }
+          .sm-mobile-page-header > div:last-child > button { padding: 9px 12px !important; border-radius: 13px !important; font-size: 11px !important; white-space: nowrap !important; }
+
+          .sm-registration, .sm-draw, .sm-schedule, .sm-live, .sm-knockout { margin-top: 12px !important; gap: 12px !important; }
+          .sm-registration > div, .sm-draw > div, .sm-schedule > div, .sm-live > div, .sm-knockout > div { border-radius: 22px !important; }
+          .sm-registration > div { padding: 14px !important; }
+          .sm-registration h3 { font-size: 15px !important; line-height: 1.25 !important; }
+          .sm-registration h3 + p { font-size: 9px !important; margin-top: 3px !important; }
+          .sm-registration > div > div:first-child { margin-bottom: 10px !important; gap: 8px !important; }
+          .sm-registration > div > div:first-child > div:last-child { display:grid !important; grid-template-columns:1fr 1fr !important; width:100% !important; gap:7px !important; }
+          .sm-registration > div > div:first-child > div:last-child > * { min-height:38px !important; padding:7px 9px !important; justify-content:center !important; border-radius:12px !important; font-size:10px !important; }
+          .sm-registration > div > div:first-child > div:last-child > *:first-child { grid-column:1 / -1 !important; }
+          .sm-participant-table { overflow:visible !important; border:0 !important; border-radius:0 !important; }
+          .sm-participant-table table, .sm-participant-table tbody { display:block !important; width:100% !important; }
+          .sm-participant-table thead { display:none !important; }
+          .sm-participant-table tbody { display:grid !important; gap:8px !important; }
+          .sm-participant-table tr { display:grid !important; grid-template-columns:54px 1fr auto !important; gap:4px 9px !important; padding:11px 12px !important; border:1px solid #e2e8f0 !important; border-radius:15px !important; background:#fff !important; box-shadow:0 4px 14px rgba(15,23,42,.04) !important; }
+          .sm-participant-table td { display:block !important; padding:0 !important; border:0 !important; text-align:left !important; font-size:10px !important; }
+          .sm-participant-table td:nth-child(1) { display:none !important; }
+          .sm-participant-table td:nth-child(2) { grid-column:1; grid-row:1 / span 2; align-self:center; font-size:9px !important; line-height:1.2; word-break:break-word; }
+          .sm-participant-table td:nth-child(3) { grid-column:2; grid-row:1; font-size:13px !important; }
+          .sm-participant-table td:nth-child(4) { grid-column:2; grid-row:2; color:#64748b !important; }
+          .sm-participant-table td:nth-child(5) { grid-column:3; grid-row:2; color:#64748b !important; }
+          .sm-participant-table td:nth-child(6) { grid-column:3; grid-row:1; font-weight:800 !important; }
+          .sm-participant-table td:nth-child(7), .sm-participant-table td:nth-child(8) { display:none !important; }
+
+          .sm-draw > div { padding:14px !important; }
+          .sm-draw h2 { font-size:18px !important; }
+          .sm-draw h3 { font-size:15px !important; }
+          .sm-draw .grid { gap:9px !important; }
+          .sm-draw .rounded-2xl { border-radius:14px !important; }
+          .sm-draw .p-4 { padding:11px !important; }
+          .sm-draw .p-6 { padding:14px !important; }
+          .sm-draw button { min-height:38px; }
+
+          .sm-schedule > div { padding:14px !important; }
+          .sm-schedule h2 { font-size:18px !important; }
+          .sm-schedule input { min-height:42px !important; font-size:13px !important; }
+          .sm-schedule .p-12 { padding:34px 16px !important; }
+
+          .sm-live > div { padding:14px !important; }
+          .sm-live h2 { font-size:18px !important; }
+          .sm-live .text-2xl { font-size:20px !important; }
+          .sm-live .p-12 { padding:34px 16px !important; }
+
+          .sm-knockout > div { padding:14px !important; }
+          .sm-knockout .p-12 { padding:34px 16px !important; }
+          .sm-knockout .overflow-x-auto { -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+
+          /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
+          img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
+        }
+      `}</style>\n    </div>
   );
 };
 
