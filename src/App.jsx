@@ -3780,28 +3780,20 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="sm-dashboard-mobile-brand-name">SpinMatch</div>
             <div className="sm-dashboard-mobile-brand-page">DASHBOARD</div>
           </div>
-          <button type="button" onClick={() => setMobileMainMenuOpen(true)} className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/15 text-white shadow-sm" aria-label="Buka menu SpinMatch"><Settings className="h-4 w-4" /></button>
+          <button type="button" onClick={() => setMobileMainMenuOpen(v => !v)} className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/15 text-white shadow-sm" aria-label="Buka menu SpinMatch"><Settings className="h-4 w-4" /></button>
         </div>
       </div>
 
-      {mobileMainMenuOpen && (
-        <div className="fixed inset-0 z-[160] md:hidden">
-          <button type="button" aria-label="Tutup menu" onClick={() => setMobileMainMenuOpen(false)} className="absolute inset-0 bg-slate-950/35 backdrop-blur-[2px]" />
-          <aside className="absolute right-0 top-0 h-full w-[84%] max-w-[330px] overflow-y-auto bg-white shadow-2xl">
-            <div className="flex items-center gap-3 bg-gradient-to-r from-[#0a3971] to-[#0874c9] px-4 py-4 text-white">
-              <img src={logoSpinMatch} alt="SpinMatch" className="h-11 w-11 rounded-xl bg-white object-contain" /><div className="min-w-0 flex-1"><div className="text-base font-black">SpinMatch</div><div className="text-[9px] font-bold text-blue-100">TABLE TENNIS PLATFORM</div></div><button type="button" onClick={() => setMobileMainMenuOpen(false)} className="rounded-lg p-2"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="space-y-1 p-3">
-              <button onClick={() => {setActiveView('DASHBOARD');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Activity className="h-5 w-5 text-[#0a3971]"/>Dashboard</button>
-              <button onClick={() => {setDashboardEventBrowser('MINE');setActiveView('DASHBOARD');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Trophy className="h-5 w-5 text-[#0a3971]"/>Event Saya</button>
-              <button onClick={() => {setDashboardEventBrowser('ALL');setActiveView('DASHBOARD');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><FileText className="h-5 w-5 text-[#0a3971]"/>Semua Event</button>
-              <div className="my-2 border-t border-slate-100"/>
-              <button onClick={() => {setActiveView('NEWS');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><FileText className="h-5 w-5 text-violet-600"/>Berita Pingpong</button>
-              <button onClick={() => {setActiveView('COACH');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Search className="h-5 w-5 text-teal-600"/>Cari Pelatih</button>
-              {(isEO || isSuperAdmin) && <><div className="my-2 border-t border-slate-100"/><button onClick={() => {setSettingsSection('HOME');setActiveView('SETTINGS');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Settings className="h-5 w-5 text-[#0a3971]"/>Pengaturan<span className="ml-auto">›</span></button><div className="ml-8 border-l border-blue-100 pl-3 text-[11px] font-bold text-slate-500"><div className="py-1">Pengaturan Pertandingan</div><div className="py-1">Pengaturan Wasit</div><div className="py-1">Pengaturan Keuangan</div></div></>}
-            </div>
-          </aside>
-        </div>
+      {mobileMainMenuOpen && (isEO || isSuperAdmin) && (
+        <>
+          <button type="button" aria-label="Tutup Pengaturan" onClick={() => setMobileMainMenuOpen(false)} className="fixed inset-0 z-[158] bg-transparent md:hidden" />
+          <div className="sm-settings-glass fixed right-5 top-[82px] z-[160] w-[270px] rounded-[20px] border border-white/70 p-2.5 shadow-[0_18px_45px_rgba(15,23,42,.22)] backdrop-blur-xl md:hidden">
+            <div className="mb-1 flex items-center gap-2 px-2 py-1"><Settings className="h-4 w-4 text-[#0a3971]"/><div><div className="text-[11px] font-black text-slate-900">Pengaturan</div><div className="text-[8px] font-bold text-slate-400">Pilih pengaturan SpinMatch</div></div></div>
+            <button type="button" onClick={() => { setMobileMainMenuOpen(false); const ev=events.find(e=>e.status==='Aktif')||events[0]; if(ev) handleRowClick(ev); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-white/80"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#0a3971]"><Trophy className="h-4 w-4"/></div><div><div className="text-[11px] font-black text-slate-800">Pengaturan Pertandingan</div><div className="text-[8px] font-semibold text-slate-400">Event, meja, waktu & sistem</div></div></button>
+            <button type="button" onClick={() => { setMobileMainMenuOpen(false); const ev=events.find(e=>e.status==='Aktif')||events[0]; if(ev)setSelectedEventIdForSettings(String(ev.id)); setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-white/80"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Users className="h-4 w-4"/></div><div><div className="text-[11px] font-black text-slate-800">Pengaturan Wasit</div><div className="text-[8px] font-semibold text-slate-400">Wasit, penugasan & meja</div></div></button>
+            <button type="button" onClick={() => { setMobileMainMenuOpen(false); const ev=events.find(e=>e.status==='Aktif')||events[0]; if(ev)setSelectedEventIdForSettings(String(ev.id)); setSettingsSection('FINANCE'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-white/80"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Wallet className="h-4 w-4"/></div><div><div className="text-[11px] font-black text-slate-800">Pengaturan Keuangan</div><div className="text-[8px] font-semibold text-slate-400">Pemasukan, pengeluaran & laporan</div></div></button>
+          </div>
+        </>
       )}
 
       <div className="sm-dashboard-event-buttons hidden md:hidden">
@@ -4131,9 +4123,6 @@ const handleUpdatePlayerSubmit = async (e) => {
           >
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
-          <button onClick={() => setActiveView('NEWS')} className="flex min-h-[36px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-500 px-3 py-2 text-[10px] font-black text-white"><FileText className="h-4 w-4"/> Berita Pingpong</button>
-          <button onClick={() => setActiveView('COACH')} className="flex min-h-[36px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-500 px-3 py-2 text-[10px] font-black text-white"><Search className="h-4 w-4"/> Cari Pelatih</button>
-          {(isEO || isSuperAdmin) && <button onClick={() => {setSettingsSection('HOME');setActiveView('SETTINGS')}} className="col-span-2 flex min-h-[36px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0a3971] to-[#0874c9] px-3 py-2 text-[10px] font-black text-white"><Settings className="h-4 w-4"/> Pengaturan</button>}
         </div>
 
         {/* Tablet/Desktop: tetap rapi 5 menu sejajar */}
@@ -6642,6 +6631,12 @@ const handleUpdatePlayerSubmit = async (e) => {
             .sm-dashboard-hero{margin-top:-2px!important;}
             .sm-dashboard-quick{margin-top:4px!important;}
             .sm-dashboard-lower>div:first-child>div:nth-child(2),.sm-event-browser>div:last-child{overflow-y:auto!important;scrollbar-width:thin!important;}
+          }
+
+          /* FINAL: Segoe UI Dashboard + glass settings */
+          @media (max-width:767px){
+            .sm-dashboard-mobile-brand-page{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif!important;font-size:15px!important;line-height:1!important;font-weight:800!important;letter-spacing:-.025em!important;color:#fff!important;transform:none!important;-webkit-text-stroke:.15px rgba(0,0,0,.48)!important;text-shadow:0 .35px .45px rgba(0,0,0,.30)!important;}
+            .sm-settings-glass{background:linear-gradient(145deg,rgba(255,255,255,.90),rgba(240,248,255,.70))!important;-webkit-backdrop-filter:blur(18px) saturate(145%)!important;backdrop-filter:blur(18px) saturate(145%)!important;}
           }
       `}</style>
     </div>
