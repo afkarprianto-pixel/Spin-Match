@@ -197,6 +197,7 @@ const MainContent = () => {
   // ============================================
   
   const [activeView, setActiveView] = useState('DASHBOARD');
+  const [mobileMainMenuOpen, setMobileMainMenuOpen] = useState(false);
   const [heroEventIndex, setHeroEventIndex] = useState(0);
   const [selectedEventIdForReg, setSelectedEventIdForReg] = useState('');
   const [selectedEventIdForDraw, setSelectedEventIdForDraw] = useState('');
@@ -3775,12 +3776,33 @@ const handleUpdatePlayerSubmit = async (e) => {
       <div className="sm-dashboard-mobile-title hidden md:hidden">
         <div className="sm-dashboard-mobile-brand">
           <img src={logoSpinMatch} alt="SpinMatch" />
-          <div>
+          <div className="min-w-0">
             <div className="sm-dashboard-mobile-brand-name">SpinMatch</div>
             <div className="sm-dashboard-mobile-brand-page">DASHBOARD</div>
           </div>
+          <button type="button" onClick={() => setMobileMainMenuOpen(true)} className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/15 text-white shadow-sm" aria-label="Buka menu SpinMatch"><Settings className="h-4 w-4" /></button>
         </div>
       </div>
+
+      {mobileMainMenuOpen && (
+        <div className="fixed inset-0 z-[160] md:hidden">
+          <button type="button" aria-label="Tutup menu" onClick={() => setMobileMainMenuOpen(false)} className="absolute inset-0 bg-slate-950/35 backdrop-blur-[2px]" />
+          <aside className="absolute right-0 top-0 h-full w-[84%] max-w-[330px] overflow-y-auto bg-white shadow-2xl">
+            <div className="flex items-center gap-3 bg-gradient-to-r from-[#0a3971] to-[#0874c9] px-4 py-4 text-white">
+              <img src={logoSpinMatch} alt="SpinMatch" className="h-11 w-11 rounded-xl bg-white object-contain" /><div className="min-w-0 flex-1"><div className="text-base font-black">SpinMatch</div><div className="text-[9px] font-bold text-blue-100">TABLE TENNIS PLATFORM</div></div><button type="button" onClick={() => setMobileMainMenuOpen(false)} className="rounded-lg p-2"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-1 p-3">
+              <button onClick={() => {setActiveView('DASHBOARD');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Activity className="h-5 w-5 text-[#0a3971]"/>Dashboard</button>
+              <button onClick={() => {setDashboardEventBrowser('MINE');setActiveView('DASHBOARD');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Trophy className="h-5 w-5 text-[#0a3971]"/>Event Saya</button>
+              <button onClick={() => {setDashboardEventBrowser('ALL');setActiveView('DASHBOARD');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><FileText className="h-5 w-5 text-[#0a3971]"/>Semua Event</button>
+              <div className="my-2 border-t border-slate-100"/>
+              <button onClick={() => {setActiveView('NEWS');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><FileText className="h-5 w-5 text-violet-600"/>Berita Pingpong</button>
+              <button onClick={() => {setActiveView('COACH');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Search className="h-5 w-5 text-teal-600"/>Cari Pelatih</button>
+              {(isEO || isSuperAdmin) && <><div className="my-2 border-t border-slate-100"/><button onClick={() => {setSettingsSection('HOME');setActiveView('SETTINGS');setMobileMainMenuOpen(false)}} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-black"><Settings className="h-5 w-5 text-[#0a3971]"/>Pengaturan<span className="ml-auto">›</span></button><div className="ml-8 border-l border-blue-100 pl-3 text-[11px] font-bold text-slate-500"><div className="py-1">Pengaturan Pertandingan</div><div className="py-1">Pengaturan Wasit</div><div className="py-1">Pengaturan Keuangan</div></div></>}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <div className="sm-dashboard-event-buttons hidden md:hidden">
         <button type="button" className="sm-btn-my-events" onClick={() => {
@@ -4109,6 +4131,9 @@ const handleUpdatePlayerSubmit = async (e) => {
           >
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
+          <button onClick={() => setActiveView('NEWS')} className="flex min-h-[36px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-500 px-3 py-2 text-[10px] font-black text-white"><FileText className="h-4 w-4"/> Berita Pingpong</button>
+          <button onClick={() => setActiveView('COACH')} className="flex min-h-[36px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-500 px-3 py-2 text-[10px] font-black text-white"><Search className="h-4 w-4"/> Cari Pelatih</button>
+          {(isEO || isSuperAdmin) && <button onClick={() => {setSettingsSection('HOME');setActiveView('SETTINGS')}} className="col-span-2 flex min-h-[36px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0a3971] to-[#0874c9] px-3 py-2 text-[10px] font-black text-white"><Settings className="h-4 w-4"/> Pengaturan</button>}
         </div>
 
         {/* Tablet/Desktop: tetap rapi 5 menu sejajar */}
@@ -5323,6 +5348,10 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
             </div>
 
+          ) : activeView === 'NEWS' ? (
+            <div className="mx-auto w-full max-w-[1100px] space-y-4"><div className="rounded-[24px] bg-gradient-to-r from-violet-700 to-purple-500 p-5 text-white shadow-lg"><button onClick={() => setActiveView('DASHBOARD')} className="mb-3 rounded-xl bg-white/15 p-2"><ArrowLeft className="h-4 w-4"/></button><div className="flex items-center gap-3"><FileText className="h-7 w-7"/><div><h2 className="text-lg font-black">Berita Pingpong</h2><p className="text-[10px] font-semibold text-white/75">Berita, artikel, turnamen dan informasi tenis meja.</p></div></div></div><div className="grid gap-3 md:grid-cols-3">{['Berita Terbaru','Info Turnamen','Artikel & Tips'].map(title=><div key={title} className="rounded-[20px] border bg-white p-5 shadow-sm"><FileText className="mb-3 h-5 w-5 text-violet-600"/><h3 className="text-sm font-black">{title}</h3><p className="mt-2 text-[10px] font-semibold text-slate-400">Area konten siap dihubungkan ke sumber berita SpinMatch.</p></div>)}</div></div>
+          ) : activeView === 'COACH' ? (
+            <div className="mx-auto w-full max-w-[1100px] space-y-4"><div className="rounded-[24px] bg-gradient-to-r from-teal-700 to-cyan-500 p-5 text-white shadow-lg"><button onClick={() => setActiveView('DASHBOARD')} className="mb-3 rounded-xl bg-white/15 p-2"><ArrowLeft className="h-4 w-4"/></button><div className="flex items-center gap-3"><Search className="h-7 w-7"/><div><h2 className="text-lg font-black">Cari Pelatih</h2><p className="text-[10px] font-semibold text-white/75">Cari pelatih berdasarkan nama, lokasi dan keahlian.</p></div></div></div><div className="rounded-[20px] border bg-white p-4 shadow-sm"><div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input placeholder="Cari nama pelatih atau lokasi..." className="w-full rounded-xl border py-3 pl-10 pr-4 text-xs font-semibold outline-none"/></div></div><div className="rounded-[20px] border border-dashed bg-white p-10 text-center"><Users className="mx-auto h-8 w-8 text-teal-400"/><h3 className="mt-3 text-sm font-black">Direktori Pelatih SpinMatch</h3><p className="mt-1 text-[10px] font-semibold text-slate-400">Siap dihubungkan ke data profil pelatih di Supabase.</p></div></div>
           ) : activeView === 'SETTINGS' ? (
             <div className="mx-auto w-full max-w-[1500px] space-y-4">
               {!selectedSettingsEvent ? (
@@ -6603,6 +6632,17 @@ const handleUpdatePlayerSubmit = async (e) => {
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
+
+          /* SPINMATCH APPROVED MOBILE HEADER */
+          @media (max-width:767px){
+            .sm-dashboard-mobile-title{border-radius:0!important;min-height:48px!important;background:linear-gradient(180deg,#07579b 0%,#1688cf 42%,#b9d8e8 78%,#e5e7eb 100%)!important;padding:5px 10px!important;}
+            .sm-dashboard-mobile-brand-page{font-family:"Segoe UI",Arial,sans-serif!important;font-size:15px!important;line-height:1!important;font-weight:800!important;letter-spacing:-.035em!important;color:#fff!important;transform:none!important;-webkit-text-stroke:.35px rgba(0,0,0,.72)!important;text-shadow:0 .5px .5px rgba(0,0,0,.45)!important;}
+            .sm-dashboard-mobile-brand-name{font-family:"Segoe UI",Arial,sans-serif!important;font-size:9px!important;color:#fff!important;}
+            .sm-dashboard-mobile-paddle{display:none!important;}
+            .sm-dashboard-hero{margin-top:-2px!important;}
+            .sm-dashboard-quick{margin-top:4px!important;}
+            .sm-dashboard-lower>div:first-child>div:nth-child(2),.sm-event-browser>div:last-child{overflow-y:auto!important;scrollbar-width:thin!important;}
+          }
       `}</style>
     </div>
   );
