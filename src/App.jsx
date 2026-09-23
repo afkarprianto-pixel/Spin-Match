@@ -505,6 +505,8 @@ const MainContent = () => {
   const [regUsia, setRegUsia] = useState('');
   const [regStatusBayar, setRegStatusBayar] = useState('Bayar');
   const [regNilaiBayar, setRegNilaiBayar] = useState(50000);
+  const [regBuktiBayar, setRegBuktiBayar] = useState('');
+  const [participantSearch, setParticipantSearch] = useState('');
 
   const [showEditPlayerModal, setShowEditPlayerModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState(null);
@@ -3774,8 +3776,8 @@ const handleUpdatePlayerSubmit = async (e) => {
         <div className="sm-dashboard-mobile-brand">
           <img src={logoSpinMatch} alt="SpinMatch" />
           <div>
-            <div className="sm-dashboard-mobile-brand-name">SPINMATCH</div>
-            <div className="sm-dashboard-mobile-brand-page">Dashboard</div>
+            <div className="sm-dashboard-mobile-brand-name">SpinMatch</div>
+            <div className="sm-dashboard-mobile-brand-page">DASHBOARD</div>
           </div>
         </div>
       </div>
@@ -4147,7 +4149,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
             {!isPublic && (isEO || isSuperAdmin) && <button
               onClick={handleOpenCreate}
-              className="sm-new-event-btn flex shrink-0 items-center gap-1.5 rounded-xl border border-white/80 bg-white/75 px-3 py-2 text-[10px] font-black text-[#0a3971] shadow-md backdrop-blur-sm transition hover:bg-white sm:px-4 sm:text-xs"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a3971] px-3 py-2 text-[10px] font-black text-white shadow-md transition hover:bg-[#0874c9] sm:px-4 sm:text-xs"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Buat Event</span>
@@ -4462,12 +4464,23 @@ const handleUpdatePlayerSubmit = async (e) => {
                       <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} className="hidden" />
                     </label>
                     <span className="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-2 rounded-xl border border-slate-200">Total: {currentEventParticipants.length} Pemain</span>
-                    <button onClick={handleDeleteAllParticipants} disabled={currentEventParticipants.length === 0} className="flex items-center gap-1.5 px-3.5 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm border border-red-600">
-                      <Trash2 className="w-4 h-4" /> Hapus Semua
+                    <button onClick={handleDeleteAllParticipants} disabled={currentEventParticipants.length === 0} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm border border-red-600">
+                      <Trash2 className="w-3.5 h-3.5" /> Hapus Semua
                     </button>
                   </div>
                 </div>
-                <div className="sm-participant-table overflow-x-auto rounded-2xl border border-slate-200">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input value={participantSearch} onChange={(e) => setParticipantSearch(e.target.value)} placeholder="Cari pemain / ID / PTM..." className="w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-xs outline-none focus:border-blue-400" />
+                  </div>
+                </div>
+                <div className="sm-player-list-shell overflow-hidden rounded-[20px] border border-slate-200">
+                  <div className="sm-player-list-header flex items-center justify-between px-4 py-3">
+                    <div><h3 className="text-sm font-black text-white">Daftar Pemain</h3><p className="text-[9px] font-semibold text-white/85">No. ID | Nama Pemain | PTM | Divisi | Status Bayar</p></div>
+                    <button type="button" onClick={() => window.print()} className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/70 bg-white/80 text-[#0a3971] shadow"><Printer className="h-4 w-4" /></button>
+                  </div>
+                <div className="sm-participant-table max-h-[420px] overflow-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-gradient-to-r from-[#073a72] via-[#0874c9] to-[#1598e8] border-b border-blue-700 font-bold text-white text-center">
@@ -4485,7 +4498,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                       {(!selectedEventItem || currentEventParticipants.length === 0) ? (
                         <tr><td colSpan="8" className="py-12 text-center text-slate-400">Belum ada peserta terdaftar untuk event ini.</td></tr>
                       ) : (
-                        currentEventParticipants.map((p, idx) => (
+                        currentEventParticipants.filter((p) => { const q=participantSearch.trim().toLowerCase(); return !q || [p.customId,p.nama,p.ptm,p.divisi,p.statusBayar].some(v=>String(v||'').toLowerCase().includes(q)); }).map((p, idx) => (
                           <tr key={p.id} onClick={() => handlePlayerLeftClick(p)} onContextMenu={(e) => handlePlayerContextMenu(e, p)} className="hover:bg-lime-50/60 cursor-pointer text-center select-none transition-colors">
                             <td className="py-3.5 px-3 text-slate-400 font-medium">{idx + 1}</td>
                             <td className="py-3.5 px-4 text-left font-mono font-bold text-indigo-700">{p.customId}</td>
@@ -4511,6 +4524,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                       )}
                     </tbody>
                   </table>
+                </div>
                 </div>
               </div>
             </div>
@@ -5995,11 +6009,11 @@ const handleUpdatePlayerSubmit = async (e) => {
 
       {showRegModal && (
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl relative border border-slate-100">
+          <div className="bg-white w-full max-w-md rounded-[22px] p-4 shadow-2xl relative border border-slate-100">
             <button onClick={() => setShowRegModal(false)} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
               <X className="w-5 h-5" />
             </button>
-            <form onSubmit={handleAddParticipant} className="space-y-4">
+            <form onSubmit={handleAddParticipant} className="space-y-2.5">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-lime-600" /> Tambah Peserta Baru
@@ -6043,11 +6057,17 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                   <div>
                     <label className="block mb-1">Nilai Bayar (Rp)</label>
-                    <input type="number" value={regNilaiBayar} onChange={(e) => setRegNilaiBayar(e.target.value)} className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800 font-mono font-normal" />
+                    <input type="text" inputMode="numeric" value={`${Number(regNilaiBayar || 0).toLocaleString('id-ID')},-`} onChange={(e) => setRegNilaiBayar(Number(String(e.target.value).replace(/\D/g, '')) || 0)} className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800 font-mono font-normal" />
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 justify-end pt-4 border-t border-slate-100 mt-6">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-2.5">
+                <label className="mb-1 block text-[10px] font-black text-slate-600">Bukti Bayar</label>
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2 text-[10px] font-black text-blue-700"><Upload className="h-4 w-4" />{regBuktiBayar ? 'Ganti Foto Bukti Bayar' : 'Upload Foto Bukti Bayar'}<input type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>setRegBuktiBayar(String(r.result||''));r.readAsDataURL(f);}} /></label>
+                {regBuktiBayar && <img src={regBuktiBayar} alt="Bukti bayar" className="mt-2 h-16 w-full rounded-lg border object-cover" />}
+                <p className="mt-1 text-[9px] text-slate-400">Status Bayar dikonfirmasi oleh EO.</p>
+              </div>
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-100 mt-3">
                 <button type="button" onClick={() => setShowRegModal(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">Batal</button>
                 <button type="submit" className="px-5 py-2.5 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm">Simpan Peserta</button>
               </div>
@@ -6577,33 +6597,6 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
           .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
           .spinmatch-main-content { padding-bottom:8px !important; }
-          /* PREMIUM COMPACT MOBILE OVERRIDE */
-          .sm-dashboard-layout { gap:4px !important; }
-          .sm-dashboard-mobile-title { margin:0 0 1px !important; }
-          .sm-dashboard-mobile-brand { justify-content:flex-start !important; gap:9px !important; padding:0 8px 2px !important; }
-          .sm-dashboard-mobile-brand img { width:38px !important; height:38px !important; border-radius:10px !important; }
-          .sm-dashboard-mobile-brand-name { font-size:9px !important; letter-spacing:.18em !important; font-weight:950 !important; color:#0781cf !important; }
-          .sm-dashboard-mobile-brand-page { margin-top:1px !important; font-size:21px !important; letter-spacing:-.035em !important; line-height:.95 !important; font-weight:950 !important; color:#08233f !important; }
-          .sm-dashboard-event-buttons { gap:7px !important; margin:0 !important; }
-          .sm-dashboard-event-buttons button { min-height:27px !important; border-radius:12px !important; font-size:9.5px !important; }
-          .sm-dashboard-hero { margin-top:1px !important; border-radius:19px !important; }
-          .sm-dashboard-hero-inner { padding:5px 9px 3px !important; }
-          .sm-dashboard-mobile-paddle { display:none !important; }
-          .sm-dashboard-hero h1 { margin-top:3px !important; font-size:14px !important; }
-          .sm-dashboard-hero-meta { margin-top:4px !important; }
-          .sm-dashboard-hero-actions { margin-top:4px !important; }
-          .sm-dashboard-hero > div:last-child { padding-bottom:3px !important; gap:8px !important; }
-          .sm-dashboard-hero > div:last-child button { width:27px !important; height:27px !important; }
-          .sm-dashboard-stats > div { height:32px !important; border-radius:11px !important; }
-          .sm-dashboard-lower { gap:5px !important; }
-          .sm-dashboard-lower > div:first-child > div:first-child { padding:7px 10px !important; }
-          .sm-dashboard-lower > div:first-child > div:nth-child(2) > div { padding:6px 10px !important; }
-          .sm-new-event-btn { background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(226,232,240,.90)) !important; color:#0a3971 !important; border:1px solid rgba(255,255,255,.92) !important; box-shadow:0 4px 12px rgba(15,23,42,.10) !important; }
-          .sm-dashboard-quick { padding:8px 10px 6px !important; }
-          .sm-dashboard-quick .mb-4 { margin-bottom:5px !important; }
-          .sm-dashboard-quick .mx-auto.grid { gap:5px !important; }
-          .sm-dashboard-quick .mx-auto.grid button { min-height:38px !important; padding:6px 8px !important; }
-
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
