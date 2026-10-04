@@ -12,155 +12,73 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, FileText, Radio, LogOut
+  Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onLogout }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout }) => {
+  const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
+  const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
+  const handleDesktopLogout = () => {
+    setShowDesktopMoreMenu(false);
+    onLogout?.();
+  };
   const normalizedRole = String(role || '').toUpperCase();
   const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const accountMenuRef = useRef(null);
+
+  const openView = (view) => {
+    const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS'];
+    if (isPublicRole && publicBlocked.includes(view)) {
+      alert('Akun Public hanya dapat melihat event. Untuk mencari pertandingan, silakan pilih Semua Event.');
+      return;
+    }
+    setActiveView(view);
+  };
 
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
-    { view: 'REGISTRATION', label: 'Pendaftaran', icon: Users },
+    { view: 'REGISTRATION', label: 'Kelola Pemain', icon: Users },
     { view: 'DRAW', label: 'Undian Pool', icon: Dices },
     { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
     { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
-  ].filter(item => !isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view));
-
-  useEffect(() => {
-    const closeAccountMenu = (event) => {
-      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
-        setAccountMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', closeAccountMenu);
-    return () => document.removeEventListener('mousedown', closeAccountMenu);
-  }, []);
-
-  const handleLogoutClick = async () => {
-    setAccountMenuOpen(false);
-
-    const confirmed = window.confirm('Keluar dari akun SpinMatch?');
-    if (!confirmed) return;
-
-    try {
-      if (typeof onLogout === 'function') {
-        await onLogout();
-      }
-    } catch (error) {
-      console.error('Gagal logout:', error);
-      alert('Logout gagal. Silakan coba lagi.');
-    }
-  };
+  ];
 
   return (
     <aside className="flex h-screen w-[268px] flex-col bg-gradient-to-b from-[#052a4a] via-[#063a67] to-[#052a4a] text-white shadow-2xl">
-      <div className="flex min-h-[112px] items-center gap-3.5 border-b border-white/10 px-5">
-        <img
-          src={logoSpinMatch}
-          alt="SpinMatch"
-          className="h-[58px] w-[58px] shrink-0 rounded-[14px] object-contain"
-        />
+      <div className="flex min-h-[82px] items-center gap-3 border-b border-white/10 px-4">
+        <img src={logoSpinMatch} alt="SpinMatch" className="h-[48px] w-[48px] shrink-0 rounded-[12px] object-contain" />
         <div className="min-w-0">
-          <div className="whitespace-nowrap text-[20px] font-black leading-none tracking-[-0.03em]">
-            <span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span>
-          </div>
-          <div className="mt-2 flex items-start gap-1.5">
-            <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" />
-            <div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]">
-              <div>TABLE TENNIS</div>
-              <div>PLATFORM</div>
-            </div>
-          </div>
+          <div className="whitespace-nowrap text-[18px] font-black leading-none tracking-[-0.03em]"><span className="text-white">Spin</span><span className="text-[#16e49b]">Match</span></div>
+          <div className="mt-2 flex items-start gap-1.5"><span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#22e89d] shadow-[0_0_8px_rgba(34,232,157,.75)]" /><div className="text-[9px] font-black uppercase leading-[1.25] tracking-[.14em] text-[#9abbd2]"><div>TABLE TENNIS</div><div>PLATFORM</div></div></div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-2 overflow-y-auto px-3.5 py-5">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
         {menu.map(({ view, label, icon: Icon }) => (
-          <button
-            key={view}
-            type="button"
-            onClick={() => {
-              setAccountMenuOpen(false);
-              setActiveView(view);
-            }}
-            className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
-              activeView === view
-                ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
-                : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} />
-            <span>{label}</span>
+          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === view ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
         ))}
+
+        <div className="my-1.5 border-t border-white/10" />
+        <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>
+        <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>
       </nav>
 
-      <div ref={accountMenuRef} className="relative border-t border-white/10 p-3.5">
-        {accountMenuOpen && (
-          <div className="absolute bottom-[72px] left-3.5 right-3.5 z-[300] overflow-hidden rounded-[14px] border border-slate-200 bg-white p-1.5 text-slate-800 shadow-2xl">
-            <div className="px-3 pb-1.5 pt-2 text-[10px] font-black uppercase tracking-[.08em] text-slate-400">
-              Akun SpinMatch
-            </div>
-            <button
-              type="button"
-              onClick={handleLogoutClick}
-              className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-extrabold text-red-600 transition hover:bg-red-50"
-            >
-              <LogOut className="h-[17px] w-[17px] shrink-0" />
-              <span>Keluar dari Akun</span>
-            </button>
+      <div className="relative border-t border-white/10 p-2.5">
+        <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+          <Settings className="h-[17px] w-[17px] shrink-0" /><span>Pengaturan</span>
+        </button>
+
+        {showDesktopMoreMenu && (
+          <div className="absolute bottom-[48px] right-2 z-50 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-[#07345c] p-1.5 shadow-2xl">
+            <button type="button" onClick={handleDesktopRestart} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><RefreshCw className="h-4 w-4" />Restart</button>
+            <button type="button" onClick={handleDesktopLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-red-200 hover:bg-red-500/10"><LogOut className="h-4 w-4" />Keluar</button>
           </div>
         )}
-
-        <div className="flex items-stretch gap-2">
-          {!isPublicRole ? (
-            <button
-              type="button"
-              onClick={() => {
-                setAccountMenuOpen(false);
-                setActiveView('SETTINGS');
-              }}
-              className={`flex min-w-0 flex-1 items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
-                activeView === 'SETTINGS'
-                  ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
-                  : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <Settings className="h-[18px] w-[18px] shrink-0" />
-              <span className="flex-1">Pengaturan</span>
-            </button>
-          ) : (
-            <div className="flex min-w-0 flex-1 items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-[14px] font-extrabold text-[#d5e3ed]">
-              <Settings className="h-[18px] w-[18px] shrink-0" />
-              <span className="flex-1">Akun</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setAccountMenuOpen(open => !open);
-            }}
-            className={`flex w-[46px] shrink-0 items-center justify-center rounded-[13px] text-[24px] font-black leading-none transition ${
-              accountMenuOpen
-                ? 'bg-white text-[#0a3971] shadow-lg'
-                : 'bg-[#0b67b2] text-white hover:bg-[#0a86d8]'
-            }`}
-            title="Menu akun"
-            aria-label="Buka menu akun"
-            aria-expanded={accountMenuOpen}
-          >
-            ⋮
-          </button>
-        </div>
+        <button type="button" aria-label="Menu lainnya" onClick={() => setShowDesktopMoreMenu(v => !v)} className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"><MoreVertical className="h-4 w-4" /></button>
       </div>
     </aside>
   );
@@ -267,6 +185,17 @@ const MainContent = () => {
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
   const isEO = userRole === 'EO';
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+
+  const handleMobileRestart = () => {
+    setShowMobileMoreMenu(false);
+    window.location.reload();
+  };
+
+  const handleMobileLogout = () => {
+    setShowMobileMoreMenu(false);
+    logout();
+  };
   const currentUserId = String(user?.id || user?.user_id || user?.uid || '');
   const currentUserName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.name || user?.email || 'EO');
 
@@ -275,7 +204,6 @@ const MainContent = () => {
   // ============================================
   
   const [activeView, setActiveView] = useState('DASHBOARD');
-  const [mobileMainMenuOpen, setMobileMainMenuOpen] = useState(false);
   const [heroEventIndex, setHeroEventIndex] = useState(0);
   const [selectedEventIdForReg, setSelectedEventIdForReg] = useState('');
   const [selectedEventIdForDraw, setSelectedEventIdForDraw] = useState('');
@@ -321,23 +249,8 @@ const MainContent = () => {
     if (savedEvents) {
       try { return JSON.parse(savedEvents); } catch (e) { console.error(e); }
     }
-    return [
-      {
-        id: 1,
-        nama: 'Kejuaraan Piala Gubernur 2026',
-        tanggal: 'Dari Tanggal 21 Sept sd 22 Sept 2026',
-        status: 'Aktif',
-        peserta: 12,
-        durasiMatch: '20 Menit',
-        jamMulai: '08:00',
-        jamSelesai: '18:00',
-        jumlahMeja: 4,
-        metodePengundian: 'PER_DIVISI',
-        divisiList: [
-          { nama: 'Divisi 5', sistemMatch: 'Best of 5', jumlahPool: '1 Pool isi 3 Orang', lolosPool: '2 Pemain' }
-        ]
-      },
-    ];
+    // Tidak ada lagi event contoh bawaan. Data utama mengikuti Supabase.
+    return [];
   });
 
   const [participants, setParticipants] = useState(() => {
@@ -345,22 +258,8 @@ const MainContent = () => {
     if (savedParticipants) {
       try { return JSON.parse(savedParticipants); } catch (e) { console.error(e); }
     }
-    return {
-      1: [
-        { id: 101, customId: 'D5-260001', nama: 'Rio Saputra', ptm: 'PTM White Ball', noTelp: '08123456789', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 24 },
-        { id: 102, customId: 'D5-260002', nama: 'Yoga Firmansyah', ptm: 'PTM Putra Mandiri', noTelp: '08987654321', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 28 },
-        { id: 103, customId: 'D5-260003', nama: 'Bayu Kresna', ptm: 'PTM Galaxy', noTelp: '08123456780', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 26 },
-        { id: 104, customId: 'D5-260004', nama: 'Farel Mahesa', ptm: 'PTM Master Spin', noTelp: '08123456781', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 25 },
-        { id: 105, customId: 'D5-260005', nama: 'Reza Kurniawan', ptm: 'PTM Topspin', noTelp: '08123456782', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 27 },
-        { id: 106, customId: 'D5-260006', nama: 'Rendi Gunawan', ptm: 'PTM Power Smash', noTelp: '08123456783', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 29 },
-        { id: 107, customId: 'D5-260007', nama: 'Farhan Akbar', ptm: 'PTM Fast Ball', noTelp: '08123456784', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 23 },
-        { id: 108, customId: 'D5-260008', nama: 'Rizky Pratama', ptm: 'PTM Satria Pingpong', noTelp: '08123456785', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 26 },
-        { id: 109, customId: 'D5-260009', nama: 'Aditiya Surya', ptm: 'PTM Garuda Smash', noTelp: '08123456786', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 28 },
-        { id: 110, customId: 'D5-260010', nama: 'Haris Kurnia', ptm: 'PTM Strong Bat', noTelp: '08123456787', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 24 },
-        { id: 111, customId: 'D5-260011', nama: 'Hendra Kusuma', ptm: 'PTM Lautan Smash', noTelp: '08123456788', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 30 },
-        { id: 112, customId: 'D5-260012', nama: 'Reza Prakoso', ptm: 'PTM Rally Point', noTelp: '08123456789', divisi: 'Divisi 5', statusBayar: 'Bayar', nilaiBayar: 50000, usia: 25 },
-      ]
-    };
+    // Tidak ada lagi peserta contoh bawaan. Data utama mengikuti Supabase.
+    return {};
   });
 
   const [seededPlayers, setSeededPlayers] = useState(() => {
@@ -479,14 +378,17 @@ const MainContent = () => {
         return;
       }
 
-      // Jangan menghapus data lokal lama hanya karena tabel online masih kosong.
+      // Supabase adalah sumber data utama. Jika tabel online kosong,
+      // state dan cache lokal juga harus kosong agar event lama tidak muncul kembali.
       if (Array.isArray(data) && data.length > 0) {
         const onlineEvents = data.map(eventFromSupabase);
         setEvents(onlineEvents);
         localStorage.setItem('spinmatch_events', JSON.stringify(onlineEvents));
         console.log(`✅ ${onlineEvents.length} Event dimuat dari Supabase`);
       } else {
-        console.log('ℹ️ Tabel Events Supabase masih kosong; data lokal tetap dipakai.');
+        setEvents([]);
+        localStorage.setItem('spinmatch_events', JSON.stringify([]));
+        console.log('ℹ️ Tabel Events Supabase kosong; event lokal ikut dikosongkan.');
       }
     };
 
@@ -540,7 +442,9 @@ const MainContent = () => {
         localStorage.setItem('spinmatch_participants', JSON.stringify(groupedParticipants));
         console.log(`✅ ${data.length} Participant dimuat dari Supabase`);
       } else {
-        console.log('ℹ️ Tabel Participants Supabase masih kosong; data lokal tetap dipakai.');
+        setParticipants({});
+        localStorage.setItem('spinmatch_participants', JSON.stringify({}));
+        console.log('ℹ️ Tabel Participants Supabase kosong; peserta lokal ikut dikosongkan.');
       }
     };
 
@@ -584,8 +488,6 @@ const MainContent = () => {
   const [regUsia, setRegUsia] = useState('');
   const [regStatusBayar, setRegStatusBayar] = useState('Bayar');
   const [regNilaiBayar, setRegNilaiBayar] = useState(50000);
-  const [regBuktiBayar, setRegBuktiBayar] = useState('');
-  const [participantSearch, setParticipantSearch] = useState('');
 
   const [showEditPlayerModal, setShowEditPlayerModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState(null);
@@ -3548,31 +3450,67 @@ const handleUpdatePlayerSubmit = async (e) => {
   return (
     <div className="spinmatch-app flex h-[100dvh] bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <div className="hidden h-screen sticky top-0 shrink-0 md:block">
-        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} role={userRole} onLogout={logout} />
-        <button
-          type="button"
-          onClick={() => {
-            if (isPublicRole) {
-              alert('Akun Public hanya dapat melihat data. Pengaturan hanya tersedia untuk EO dan Super Admin.');
-              return;
-            }
-            setActiveView('SETTINGS');
+        <SpinMatchSidebar
+          activeView={activeView}
+          setActiveView={setActiveView}
+          role={userRole}
+          onMyEvents={() => {
+            if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
+            setActiveView('DASHBOARD');
+            setDashboardEventBrowser('MINE');
           }}
-          className="fixed bottom-5 right-4 z-[90] flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#0a3971] to-[#0874c9] text-[26px] font-black leading-none text-white shadow-xl shadow-blue-950/25 md:hidden"
-          title="Pengaturan"
-          aria-label="Buka Pengaturan"
-        >
-          ⋮
-        </button>
+          onAllEvents={() => { setActiveView('DASHBOARD'); setDashboardEventBrowser('ALL'); }}
+          onLogout={logout}
+        />
       </div>
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <div className="spinmatch-page-head shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-10 border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
+          <div className="relative z-50 flex justify-end md:hidden">
+            <button
+              type="button"
+              onClick={() => setShowMobileMoreMenu(prev => !prev)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm active:scale-95"
+              aria-label="Menu lainnya"
+              title="Menu lainnya"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+
+            {showMobileMoreMenu && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Tutup menu"
+                  onClick={() => setShowMobileMoreMenu(false)}
+                  className="fixed inset-0 z-40 cursor-default bg-transparent"
+                />
+                <div className="absolute right-0 top-11 z-50 w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,.18)]">
+                  <button
+                    type="button"
+                    onClick={handleMobileRestart}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"
+                  >
+                    <RefreshCw className="h-4 w-4 text-blue-600" />
+                    Restart
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleMobileLogout}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Keluar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <div className="hidden md:block">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0 pt-0.5">
                 <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">
-                  SEPTEMBER 2026 • SUPER ADMIN WORKSPACE
+                  SEPTEMBER 2026 • {String(userRole || 'USER').replace('_', ' ')} WORKSPACE
                 </p>
                 <h1 className="mt-1 text-[22px] font-black tracking-tight text-slate-950">
                   Selamat datang di SpinMatch
@@ -3587,7 +3525,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </span>
 
                   <span className="flex h-9 min-w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-3 text-[10px] font-black text-slate-700 shadow-sm">
-                    SA
+                    {isPublic ? 'PU' : String(userRole || 'US').toUpperCase().slice(0, 2)}
                   </span>
 
                   {!isPublic && (
@@ -3695,7 +3633,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3728,7 +3666,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3758,7 +3696,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3793,7 +3731,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="relative z-10 flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
                     {events.map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
@@ -3826,7 +3764,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-extrabold text-orange-400">Pilih Event:</span>
+                  <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForLive} onChange={(e) => setSelectedEventIdForLive(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -3851,29 +3789,6 @@ const handleUpdatePlayerSubmit = async (e) => {
 
     <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
 
-      <div className="sm-dashboard-mobile-title hidden md:hidden">
-        <div className="sm-dashboard-mobile-brand">
-          <img src={logoSpinMatch} alt="SpinMatch" />
-          <div className="min-w-0">
-            <div className="sm-dashboard-mobile-brand-name">SpinMatch</div>
-            <div className="sm-dashboard-mobile-brand-page">DASHBOARD</div>
-          </div>
-          <button type="button" onClick={() => setMobileMainMenuOpen(v => !v)} className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/55 bg-white/15 text-white shadow-sm" aria-label="Buka menu SpinMatch"><Settings className="h-4 w-4" /></button>
-        </div>
-      </div>
-
-      {mobileMainMenuOpen && (isEO || isSuperAdmin) && (
-        <>
-          <button type="button" aria-label="Tutup Pengaturan" onClick={() => setMobileMainMenuOpen(false)} className="fixed inset-0 z-[158] bg-transparent md:hidden" />
-          <div className="sm-settings-glass fixed right-5 top-[82px] z-[160] w-[270px] rounded-[20px] border border-white/70 p-2.5 shadow-[0_18px_45px_rgba(15,23,42,.22)] backdrop-blur-xl md:hidden">
-            <div className="mb-1 flex items-center gap-2 px-2 py-1"><Settings className="h-4 w-4 text-[#0a3971]"/><div><div className="text-[11px] font-black text-slate-900">Pengaturan</div><div className="text-[8px] font-bold text-slate-400">Pilih pengaturan SpinMatch</div></div></div>
-            <button type="button" onClick={() => { setMobileMainMenuOpen(false); const ev=events.find(e=>e.status==='Aktif')||events[0]; if(ev) handleRowClick(ev); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-white/80"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#0a3971]"><Trophy className="h-4 w-4"/></div><div><div className="text-[11px] font-black text-slate-800">Pengaturan Pertandingan</div><div className="text-[8px] font-semibold text-slate-400">Event, meja, waktu & sistem</div></div></button>
-            <button type="button" onClick={() => { setMobileMainMenuOpen(false); const ev=events.find(e=>e.status==='Aktif')||events[0]; if(ev)setSelectedEventIdForSettings(String(ev.id)); setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-white/80"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Users className="h-4 w-4"/></div><div><div className="text-[11px] font-black text-slate-800">Pengaturan Wasit</div><div className="text-[8px] font-semibold text-slate-400">Wasit, penugasan & meja</div></div></button>
-            <button type="button" onClick={() => { setMobileMainMenuOpen(false); const ev=events.find(e=>e.status==='Aktif')||events[0]; if(ev)setSelectedEventIdForSettings(String(ev.id)); setSettingsSection('FINANCE'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-white/80"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Wallet className="h-4 w-4"/></div><div><div className="text-[11px] font-black text-slate-800">Pengaturan Keuangan</div><div className="text-[8px] font-semibold text-slate-400">Pemasukan, pengeluaran & laporan</div></div></button>
-          </div>
-        </>
-      )}
-
       <div className="sm-dashboard-event-buttons hidden md:hidden">
         <button type="button" className="sm-btn-my-events" onClick={() => {
           if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
@@ -3882,21 +3797,9 @@ const handleUpdatePlayerSubmit = async (e) => {
         <button type="button" className="sm-btn-all-events" onClick={() => setDashboardEventBrowser('ALL')}><FileText className="h-4 w-4" /> Semua Event</button>
       </div>
 
-      <div className="sm-news-coach-glass md:hidden">
-        <button type="button" onClick={() => setActiveView('NEWS')} className="sm-news-coach-item">
-          <FileText className="h-3.5 w-3.5" />
-          <span>Berita Pingpong</span>
-        </button>
-        <span className="sm-news-coach-divider" aria-hidden="true" />
-        <button type="button" onClick={() => setActiveView('COACH')} className="sm-news-coach-item">
-          <Search className="h-3.5 w-3.5" />
-          <span>Cari Pelatih</span>
-        </button>
-      </div>
-
       {dashboardEventBrowser && (
         <section className="sm-event-browser order-[1] overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm md:order-none">
-          <div className="sm-event-browser-header flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
+          <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
             <div>
               <h2 className="text-[13px] font-black text-slate-900">{dashboardEventBrowser === 'MINE' ? 'Event Saya' : 'Semua Event'}</h2>
               <p className="text-[9px] font-semibold text-slate-400">Pilih event untuk ditampilkan di Dashboard</p>
@@ -4071,7 +3974,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== STATISTICS ===================== */}
-      <section className="sm-dashboard-stats grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className={`sm-dashboard-stats grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
 
         <div className="group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
           <div className="flex items-start justify-between">
@@ -4241,7 +4144,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         {/* EVENTS */}
         <div id="dashboard-event-saya" className="scroll-mt-24 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
 
-          <div className="sm-my-events-header flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
             <div>
               <h2 className="text-base font-black text-slate-950">
                 Event Saya
@@ -4253,7 +4156,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
             {!isPublic && (isEO || isSuperAdmin) && <button
               onClick={handleOpenCreate}
-              className="sm-new-event-btn flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black shadow-md transition sm:px-4 sm:text-xs"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a3971] px-3 py-2 text-[10px] font-black text-white shadow-md transition hover:bg-[#0874c9] sm:px-4 sm:text-xs"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Buat Event</span>
@@ -4568,26 +4471,15 @@ const handleUpdatePlayerSubmit = async (e) => {
                       <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} className="hidden" />
                     </label>
                     <span className="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-2 rounded-xl border border-slate-200">Total: {currentEventParticipants.length} Pemain</span>
-                    <button onClick={handleDeleteAllParticipants} disabled={currentEventParticipants.length === 0} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm border border-red-600">
-                      <Trash2 className="w-3.5 h-3.5" /> Hapus Semua
+                    <button onClick={handleDeleteAllParticipants} disabled={currentEventParticipants.length === 0} className="flex items-center gap-1.5 px-3.5 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm border border-red-600">
+                      <Trash2 className="w-4 h-4" /> Hapus Semua
                     </button>
                   </div>
                 </div>
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input value={participantSearch} onChange={(e) => setParticipantSearch(e.target.value)} placeholder="Cari pemain / ID / PTM..." className="w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-xs outline-none focus:border-blue-400" />
-                  </div>
-                </div>
-                <div className="sm-player-list-shell overflow-hidden rounded-[20px] border border-slate-200">
-                  <div className="sm-player-list-header flex items-center justify-between px-4 py-3">
-                    <div><h3 className="text-sm font-black text-white">Daftar Pemain</h3><p className="text-[9px] font-semibold text-white/85">No. ID | Nama Pemain | PTM | Divisi | Status Bayar</p></div>
-                    <button type="button" onClick={() => window.print()} className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/70 bg-white/80 text-[#0a3971] shadow"><Printer className="h-4 w-4" /></button>
-                  </div>
-                <div className="sm-participant-table max-h-[420px] overflow-auto">
+                <div className="sm-participant-table overflow-x-auto rounded-2xl border border-slate-200">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-gradient-to-r from-[#073a72] via-[#0874c9] to-[#1598e8] border-b border-blue-700 font-bold text-white text-center">
+                      <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-center">
                         <th className="py-3.5 px-3 w-12">No</th>
                         <th className="py-3.5 px-4 text-left">ID Peserta</th>
                         <th className="py-3.5 px-4 text-left">Nama Lengkap</th>
@@ -4602,7 +4494,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                       {(!selectedEventItem || currentEventParticipants.length === 0) ? (
                         <tr><td colSpan="8" className="py-12 text-center text-slate-400">Belum ada peserta terdaftar untuk event ini.</td></tr>
                       ) : (
-                        currentEventParticipants.filter((p) => { const q=participantSearch.trim().toLowerCase(); return !q || [p.customId,p.nama,p.ptm,p.divisi,p.statusBayar].some(v=>String(v||'').toLowerCase().includes(q)); }).map((p, idx) => (
+                        currentEventParticipants.map((p, idx) => (
                           <tr key={p.id} onClick={() => handlePlayerLeftClick(p)} onContextMenu={(e) => handlePlayerContextMenu(e, p)} className="hover:bg-lime-50/60 cursor-pointer text-center select-none transition-colors">
                             <td className="py-3.5 px-3 text-slate-400 font-medium">{idx + 1}</td>
                             <td className="py-3.5 px-4 text-left font-mono font-bold text-indigo-700">{p.customId}</td>
@@ -4628,7 +4520,6 @@ const handleUpdatePlayerSubmit = async (e) => {
                       )}
                     </tbody>
                   </table>
-                </div>
                 </div>
               </div>
             </div>
@@ -5427,10 +5318,6 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
             </div>
 
-          ) : activeView === 'NEWS' ? (
-            <div className="mx-auto w-full max-w-[1100px] space-y-4"><div className="rounded-[24px] bg-gradient-to-r from-violet-700 to-purple-500 p-5 text-white shadow-lg"><button onClick={() => setActiveView('DASHBOARD')} className="mb-3 rounded-xl bg-white/15 p-2"><ArrowLeft className="h-4 w-4"/></button><div className="flex items-center gap-3"><FileText className="h-7 w-7"/><div><h2 className="text-lg font-black">Berita Pingpong</h2><p className="text-[10px] font-semibold text-white/75">Berita, artikel, turnamen dan informasi tenis meja.</p></div></div></div><div className="grid gap-3 md:grid-cols-3">{['Berita Terbaru','Info Turnamen','Artikel & Tips'].map(title=><div key={title} className="rounded-[20px] border bg-white p-5 shadow-sm"><FileText className="mb-3 h-5 w-5 text-violet-600"/><h3 className="text-sm font-black">{title}</h3><p className="mt-2 text-[10px] font-semibold text-slate-400">Area konten siap dihubungkan ke sumber berita SpinMatch.</p></div>)}</div></div>
-          ) : activeView === 'COACH' ? (
-            <div className="mx-auto w-full max-w-[1100px] space-y-4"><div className="rounded-[24px] bg-gradient-to-r from-teal-700 to-cyan-500 p-5 text-white shadow-lg"><button onClick={() => setActiveView('DASHBOARD')} className="mb-3 rounded-xl bg-white/15 p-2"><ArrowLeft className="h-4 w-4"/></button><div className="flex items-center gap-3"><Search className="h-7 w-7"/><div><h2 className="text-lg font-black">Cari Pelatih</h2><p className="text-[10px] font-semibold text-white/75">Cari pelatih berdasarkan nama, lokasi dan keahlian.</p></div></div></div><div className="rounded-[20px] border bg-white p-4 shadow-sm"><div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input placeholder="Cari nama pelatih atau lokasi..." className="w-full rounded-xl border py-3 pl-10 pr-4 text-xs font-semibold outline-none"/></div></div><div className="rounded-[20px] border border-dashed bg-white p-10 text-center"><Users className="mx-auto h-8 w-8 text-teal-400"/><h3 className="mt-3 text-sm font-black">Direktori Pelatih SpinMatch</h3><p className="mt-1 text-[10px] font-semibold text-slate-400">Siap dihubungkan ke data profil pelatih di Supabase.</p></div></div>
           ) : activeView === 'SETTINGS' ? (
             <div className="mx-auto w-full max-w-[1500px] space-y-4">
               {!selectedSettingsEvent ? (
@@ -6117,11 +6004,11 @@ const handleUpdatePlayerSubmit = async (e) => {
 
       {showRegModal && (
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-md rounded-[22px] p-4 shadow-2xl relative border border-slate-100">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl relative border border-slate-100">
             <button onClick={() => setShowRegModal(false)} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
               <X className="w-5 h-5" />
             </button>
-            <form onSubmit={handleAddParticipant} className="space-y-2.5">
+            <form onSubmit={handleAddParticipant} className="space-y-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-lime-600" /> Tambah Peserta Baru
@@ -6165,17 +6052,11 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                   <div>
                     <label className="block mb-1">Nilai Bayar (Rp)</label>
-                    <input type="text" inputMode="numeric" value={`${Number(regNilaiBayar || 0).toLocaleString('id-ID')},-`} onChange={(e) => setRegNilaiBayar(Number(String(e.target.value).replace(/\D/g, '')) || 0)} className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800 font-mono font-normal" />
+                    <input type="number" value={regNilaiBayar} onChange={(e) => setRegNilaiBayar(e.target.value)} className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800 font-mono font-normal" />
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-2.5">
-                <label className="mb-1 block text-[10px] font-black text-slate-600">Bukti Bayar</label>
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2 text-[10px] font-black text-blue-700"><Upload className="h-4 w-4" />{regBuktiBayar ? 'Ganti Foto Bukti Bayar' : 'Upload Foto Bukti Bayar'}<input type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>setRegBuktiBayar(String(r.result||''));r.readAsDataURL(f);}} /></label>
-                {regBuktiBayar && <img src={regBuktiBayar} alt="Bukti bayar" className="mt-2 h-16 w-full rounded-lg border object-cover" />}
-                <p className="mt-1 text-[9px] text-slate-400">Status Bayar dikonfirmasi oleh EO.</p>
-              </div>
-              <div className="flex gap-2 justify-end pt-3 border-t border-slate-100 mt-3">
+              <div className="flex gap-2 justify-end pt-4 border-t border-slate-100 mt-6">
                 <button type="button" onClick={() => setShowRegModal(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">Batal</button>
                 <button type="submit" className="px-5 py-2.5 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm">Simpan Peserta</button>
               </div>
@@ -6593,9 +6474,6 @@ const handleUpdatePlayerSubmit = async (e) => {
       )}
 
       <style>{`
-
-        .sm-participant-table thead tr { background:linear-gradient(90deg,#073a72 0%,#0874c9 58%,#1598e8 100%) !important; color:#fff !important; }
-        .sm-participant-table thead th { color:#fff !important; }
         @media (max-width: 767px) {
           .sm-mobile-page-header { margin-top: 10px !important; padding: 14px !important; border-radius: 24px !important; gap: 10px !important; }
           .sm-mobile-page-header > div { position: relative; z-index: 2; }
@@ -6615,7 +6493,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-registration h3 + p { font-size: 9px !important; margin-top: 3px !important; }
           .sm-registration > div > div:first-child { margin-bottom: 10px !important; gap: 8px !important; }
           .sm-registration > div > div:first-child > div:last-child { display:grid !important; grid-template-columns:1fr 1fr !important; width:100% !important; gap:7px !important; }
-          .sm-registration > div > div:first-child > div:last-child > * { min-height:30px !important; padding:7px 9px !important; justify-content:center !important; border-radius:12px !important; font-size:10px !important; }
+          .sm-registration > div > div:first-child > div:last-child > * { min-height:38px !important; padding:7px 9px !important; justify-content:center !important; border-radius:12px !important; font-size:10px !important; }
           .sm-registration > div > div:first-child > div:last-child > *:first-child { grid-column:1 / -1 !important; }
           .sm-participant-table { overflow:visible !important; border:0 !important; border-radius:0 !important; }
           .sm-participant-table table, .sm-participant-table tbody { display:block !important; width:100% !important; }
@@ -6655,31 +6533,22 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-knockout .overflow-x-auto { -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
 
 
-          /* DASHBOARD MOBILE FINAL COMPACT V3 */
-          .sm-dashboard-mobile-title { display:flex !important; order:-1 !important; width:100% !important; min-height:46px !important; align-items:center !important; justify-content:center !important; margin:0 !important; padding:4px 10px !important; border-radius:20px !important; background:linear-gradient(180deg,#07579b 0%,#1688cf 38%,#bfe3f7 76%,#ffffff 100%) !important; box-shadow:0 7px 18px rgba(8,57,113,.10) !important; }
-          .sm-dashboard-mobile-brand { display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:8px !important; width:100% !important; padding:0 !important; }
-          .sm-dashboard-mobile-brand img { width:34px !important; height:34px !important; border-radius:9px !important; object-fit:contain !important; background:#fff !important; box-shadow:0 4px 12px rgba(8,57,113,.12) !important; }
-          .sm-dashboard-mobile-brand-name { font-size:10px !important; line-height:1 !important; font-weight:900 !important; color:#eaf7ff !important; letter-spacing:.02em !important; }
-          .sm-dashboard-mobile-brand-page { margin-top:1px !important; font-family:"Arial Black","Segoe UI Black","Segoe UI",sans-serif !important; font-size:18px !important; line-height:.88 !important; font-weight:900 !important; letter-spacing:-.075em !important; color:#071b3b !important; transform:scaleX(.88) !important; transform-origin:left center !important; }
-          .sm-event-browser-header, .sm-my-events-header { background:linear-gradient(90deg,#0a3971 0%,#0874c9 42%,#dcefff 78%,#ffffff 100%) !important; }
-          .sm-event-browser-header h2, .sm-my-events-header h2 { color:#ffffff !important; text-shadow:0 1px 2px rgba(0,0,0,.12) !important; }
-          .sm-event-browser-header p, .sm-my-events-header p { color:rgba(255,255,255,.86) !important; }
-          .sm-event-browser-header button { background:rgba(255,255,255,.72) !important; color:#0a3971 !important; }
-          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:6px !important; }
+          /* DASHBOARD MOBILE FINAL COMPACT V2 */
+          .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:10px !important; }
           .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
-          .sm-dashboard-event-buttons button { min-height:29px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:10px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
+          .sm-dashboard-event-buttons button { min-height:32px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
           .sm-btn-my-events { background:linear-gradient(135deg,#0a3971,#0874c9) !important; }
           .sm-btn-all-events { background:linear-gradient(135deg,#f97316,#fb923c) !important; }
           .sm-event-browser { width:100% !important; }
-          .sm-dashboard-hero { order:2 !important; width:100% !important; margin:-3px auto 0 !important; border-radius:22px !important; }
-          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:4px 10px 5px !important; }
+          .sm-dashboard-hero { order:2 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
+          .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:6px 12px 7px !important; }
           .sm-dashboard-hero-copy { align-items:center !important; text-align:center !important; }
           .sm-dashboard-hero-copy > div:first-child { align-self:flex-start !important; margin-bottom:0 !important; }
           .sm-dashboard-hero-copy > div:first-child span { padding:4px 8px !important; font-size:8px !important; }
           .sm-dashboard-mobile-paddle { display:flex !important; position:relative !important; height:38px !important; width:100% !important; align-items:center !important; justify-content:center !important; margin:0 !important; }
-          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:62px !important; height:34px !important; object-fit:contain !important; }
+          .sm-dashboard-mobile-paddle img { position:relative !important; z-index:2 !important; width:76px !important; height:44px !important; object-fit:contain !important; }
           .sm-dashboard-mobile-glow { position:absolute !important; z-index:1 !important; width:112px !important; height:36px !important; border-radius:999px !important; background:rgba(255,255,255,.45) !important; filter:blur(18px) !important; }
-          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:14px !important; line-height:1.05 !important; margin-top:0 !important; }
+          .sm-dashboard-hero h1 { width:100% !important; max-width:none !important; text-align:center !important; font-size:15px !important; line-height:1.08 !important; margin-top:0 !important; }
           .sm-dashboard-hero-desc { display:none !important; }
           .sm-dashboard-hero-meta { margin-top:5px !important; justify-content:center !important; gap:4px !important; }
           .sm-dashboard-hero-meta > div { padding:4px 7px !important; border-radius:9px !important; font-size:8px !important; }
@@ -6688,7 +6557,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-hero-actions button { padding:6px 10px !important; border-radius:9px !important; font-size:9px !important; }
           .sm-dashboard-hero > div:last-child { padding-bottom:5px !important; }
           .sm-dashboard-stats { order:2 !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:5px !important; }
-          .sm-dashboard-stats > div { min-width:0 !important; height:36px !important; padding:3px 2px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
+          .sm-dashboard-stats > div { min-width:0 !important; height:42px !important; padding:4px 3px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
           .sm-dashboard-stats > div > div:first-child { display:none !important; }
           .sm-dashboard-stats > div > div:nth-child(2) { margin-top:0 !important; font-size:12px !important; line-height:1 !important; overflow:hidden !important; text-overflow:ellipsis !important; }
           .sm-dashboard-stats > div > div:nth-child(3) { margin-top:3px !important; font-size:7.5px !important; line-height:1 !important; }
@@ -6699,79 +6568,15 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-lower > div:first-child > div:first-child p { font-size:8px !important; }
           .sm-dashboard-lower > div:first-child > div:nth-child(2) > div { padding:9px 11px !important; }
           .sm-dashboard-lower > div:last-child { display:none !important; }
-          .sm-dashboard-quick { order:99 !important; padding:9px 10px !important; border-radius:19px !important; margin:-3px 0 0 !important; }
-          .sm-dashboard-quick .mb-4 { margin-bottom:6px !important; }
+          .sm-dashboard-quick { order:99 !important; padding:11px !important; border-radius:19px !important; margin-bottom:0 !important; }
+          .sm-dashboard-quick .mb-4 { margin-bottom:8px !important; }
           .sm-dashboard-quick p { display:none !important; }
-          .sm-dashboard-quick .mx-auto.grid { gap:5px !important; }
-          .sm-dashboard-quick .mx-auto.grid button { min-height:29px !important; height:29px !important; padding:3px 8px !important; border-radius:13px !important; font-size:9px !important; line-height:1 !important; }
-          .sm-dashboard-quick .mx-auto.grid button svg { width:15px !important; height:15px !important; }
-          .sm-new-event-btn { background:linear-gradient(135deg,#f8fbff 0%,#e7eef6 52%,#cbd8e6 100%) !important; color:#0a3971 !important; border:1px solid rgba(10,57,113,.16) !important; box-shadow:0 4px 12px rgba(10,57,113,.10) !important; }
-          .sm-new-event-btn:hover { background:linear-gradient(135deg,#ffffff 0%,#edf4fa 52%,#d6e2ed 100%) !important; color:#0874c9 !important; }
+          .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
           .spinmatch-main-content { padding-bottom:8px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
-
-          /* SPINMATCH APPROVED MOBILE HEADER */
-          @media (max-width:767px){
-            .sm-dashboard-mobile-title{border-radius:0!important;min-height:48px!important;background:linear-gradient(180deg,#07579b 0%,#1688cf 42%,#b9d8e8 78%,#e5e7eb 100%)!important;padding:5px 10px!important;}
-            .sm-dashboard-mobile-brand-page{font-family:"Segoe UI",Arial,sans-serif!important;font-size:15px!important;line-height:1!important;font-weight:800!important;letter-spacing:-.035em!important;color:#fff!important;transform:none!important;-webkit-text-stroke:.35px rgba(0,0,0,.72)!important;text-shadow:0 .5px .5px rgba(0,0,0,.45)!important;}
-            .sm-dashboard-mobile-brand-name{font-family:"Segoe UI",Arial,sans-serif!important;font-size:9px!important;color:#fff!important;}
-            .sm-dashboard-mobile-paddle{display:none!important;}
-            .sm-dashboard-hero{margin-top:-2px!important;}
-            .sm-dashboard-quick{margin-top:4px!important;}
-            .sm-dashboard-lower>div:first-child>div:nth-child(2),.sm-event-browser>div:last-child{overflow-y:auto!important;scrollbar-width:thin!important;}
-          }
-
-          /* FINAL: Segoe UI Dashboard + glass settings */
-          @media (max-width:767px){
-            .sm-dashboard-mobile-brand-page{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif!important;font-size:15px!important;line-height:1!important;font-weight:800!important;letter-spacing:-.025em!important;color:#fff!important;transform:none!important;-webkit-text-stroke:.15px rgba(0,0,0,.48)!important;text-shadow:0 .35px .45px rgba(0,0,0,.30)!important;}
-            .sm-settings-glass{background:linear-gradient(145deg,rgba(255,255,255,.90),rgba(240,248,255,.70))!important;-webkit-backdrop-filter:blur(18px) saturate(145%)!important;backdrop-filter:blur(18px) saturate(145%)!important;}
-          }
-
-          /* BERITA PINGPONG | CARI PELATIH — GLASS MENU */
-          @media (max-width:767px){
-            .sm-news-coach-glass{
-              width:fit-content;
-              max-width:calc(100% - 44px);
-              margin:6px auto 0;
-              padding:3px 5px;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              gap:2px;
-              border:1px solid rgba(255,255,255,.82);
-              border-radius:999px;
-              background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(231,244,252,.60));
-              box-shadow:0 5px 15px rgba(15,57,92,.09), inset 0 1px 0 rgba(255,255,255,.9);
-              -webkit-backdrop-filter:blur(14px) saturate(140%);
-              backdrop-filter:blur(14px) saturate(140%);
-            }
-            .sm-news-coach-item{
-              height:25px;
-              padding:0 10px;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              gap:5px;
-              border:0;
-              border-radius:999px;
-              background:transparent;
-              color:#0a3971;
-              font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
-              font-size:9px;
-              line-height:1;
-              font-weight:700;
-              white-space:nowrap;
-            }
-            .sm-news-coach-item:active{background:rgba(255,255,255,.72);}
-            .sm-news-coach-divider{
-              width:1px;
-              height:15px;
-              flex:0 0 1px;
-              background:rgba(10,57,113,.18);
-            }
-          }
       `}</style>
     </div>
   );
