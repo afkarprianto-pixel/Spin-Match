@@ -12,13 +12,16 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, FileText, Radio
+  Printer, Search, FileText, Radio, LogOut
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onLogout }) => {
   const normalizedRole = String(role || '').toUpperCase();
   const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef(null);
+
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
     { view: 'REGISTRATION', label: 'Pendaftaran', icon: Users },
@@ -28,6 +31,33 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
     { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
   ].filter(item => !isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view));
+
+  useEffect(() => {
+    const closeAccountMenu = (event) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeAccountMenu);
+    return () => document.removeEventListener('mousedown', closeAccountMenu);
+  }, []);
+
+  const handleLogoutClick = async () => {
+    setAccountMenuOpen(false);
+
+    const confirmed = window.confirm('Keluar dari akun SpinMatch?');
+    if (!confirmed) return;
+
+    try {
+      if (typeof onLogout === 'function') {
+        await onLogout();
+      }
+    } catch (error) {
+      console.error('Gagal logout:', error);
+      alert('Logout gagal. Silakan coba lagi.');
+    }
+  };
 
   return (
     <aside className="flex h-screen w-[268px] flex-col bg-gradient-to-b from-[#052a4a] via-[#063a67] to-[#052a4a] text-white shadow-2xl">
@@ -56,7 +86,10 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
           <button
             key={view}
             type="button"
-            onClick={() => setActiveView(view)}
+            onClick={() => {
+              setAccountMenuOpen(false);
+              setActiveView(view);
+            }}
             className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
               activeView === view
                 ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
@@ -69,21 +102,66 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '' }) => {
         ))}
       </nav>
 
-      {!isPublicRole && <div className="border-t border-white/10 p-3.5">
-        <button
-          type="button"
-          onClick={() => setActiveView('SETTINGS')}
-          className={`flex w-full items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
-            activeView === 'SETTINGS'
-              ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
-              : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
-          }`}
-        >
-          <Settings className="h-[18px] w-[18px] shrink-0" />
-          <span className="flex-1">Pengaturan</span>
-          <span className="ml-auto text-[22px] font-black leading-none text-white" aria-hidden="true">⋮</span>
-        </button>
-      </div>}
+      <div ref={accountMenuRef} className="relative border-t border-white/10 p-3.5">
+        {accountMenuOpen && (
+          <div className="absolute bottom-[72px] left-3.5 right-3.5 z-[300] overflow-hidden rounded-[14px] border border-slate-200 bg-white p-1.5 text-slate-800 shadow-2xl">
+            <div className="px-3 pb-1.5 pt-2 text-[10px] font-black uppercase tracking-[.08em] text-slate-400">
+              Akun SpinMatch
+            </div>
+            <button
+              type="button"
+              onClick={handleLogoutClick}
+              className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-extrabold text-red-600 transition hover:bg-red-50"
+            >
+              <LogOut className="h-[17px] w-[17px] shrink-0" />
+              <span>Keluar dari Akun</span>
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-stretch gap-2">
+          {!isPublicRole ? (
+            <button
+              type="button"
+              onClick={() => {
+                setAccountMenuOpen(false);
+                setActiveView('SETTINGS');
+              }}
+              className={`flex min-w-0 flex-1 items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-left text-[14px] font-extrabold transition ${
+                activeView === 'SETTINGS'
+                  ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20'
+                  : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Settings className="h-[18px] w-[18px] shrink-0" />
+              <span className="flex-1">Pengaturan</span>
+            </button>
+          ) : (
+            <div className="flex min-w-0 flex-1 items-center gap-3.5 rounded-[13px] px-4 py-3.5 text-[14px] font-extrabold text-[#d5e3ed]">
+              <Settings className="h-[18px] w-[18px] shrink-0" />
+              <span className="flex-1">Akun</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setAccountMenuOpen(open => !open);
+            }}
+            className={`flex w-[46px] shrink-0 items-center justify-center rounded-[13px] text-[24px] font-black leading-none transition ${
+              accountMenuOpen
+                ? 'bg-white text-[#0a3971] shadow-lg'
+                : 'bg-[#0b67b2] text-white hover:bg-[#0a86d8]'
+            }`}
+            title="Menu akun"
+            aria-label="Buka menu akun"
+            aria-expanded={accountMenuOpen}
+          >
+            ⋮
+          </button>
+        </div>
+      </div>
     </aside>
   );
 };
@@ -184,7 +262,7 @@ const SignaturePad = ({ value, onChange, label }) => {
 };
 
 const MainContent = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
@@ -3470,7 +3548,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   return (
     <div className="spinmatch-app flex h-[100dvh] bg-slate-50 font-sans text-slate-800 overflow-hidden">
       <div className="hidden h-screen sticky top-0 shrink-0 md:block">
-        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} role={userRole} />
+        <SpinMatchSidebar activeView={activeView} setActiveView={setActiveView} role={userRole} onLogout={logout} />
         <button
           type="button"
           onClick={() => {
