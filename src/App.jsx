@@ -1122,6 +1122,45 @@ const MainContent = () => {
     return `${prefix}${String(nextSeq).padStart(4, '0')}`;
   };
 
+  // Tanggal form selalu disimpan sebagai YYYY-MM-DD agar aman untuk <input type="date">.
+  // Format Indonesia hanya dibuat saat data Event akan disimpan/ditampilkan.
+  const formatEventDate = (isoDate) => {
+    if (!isoDate) return '';
+    const [year, month, day] = String(isoDate).split('-').map(Number);
+    if (!year || !month || !day) return String(isoDate);
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return `${day} ${monthNames[month - 1]} ${year}`;
+  };
+
+  const eventDateToInputValue = (dateText) => {
+    const value = String(dateText || '').trim();
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+    const monthMap = {
+      jan: 1, januari: 1,
+      feb: 2, februari: 2,
+      mar: 3, maret: 3,
+      apr: 4, april: 4,
+      mei: 5, may: 5,
+      jun: 6, juni: 6,
+      jul: 7, juli: 7,
+      agu: 8, agt: 8, agustus: 8, aug: 8,
+      sep: 9, sept: 9, september: 9,
+      okt: 10, oktober: 10, oct: 10,
+      nov: 11, november: 11,
+      des: 12, desember: 12, dec: 12
+    };
+
+    const match = value.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+    if (!match) return '';
+    const day = Number(match[1]);
+    const month = monthMap[match[2].toLowerCase()];
+    const year = Number(match[3]);
+    if (!day || !month || !year) return '';
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
   const handleOpenCreate = () => {
     if (isPublic) { alert('Akun Public tidak dapat membuat event. Silakan pilih Semua Event.'); return; }
     if (!isEO && !isSuperAdmin) { alert('Hanya akun EO atau Super Admin yang dapat membuat event.'); return; }
@@ -1151,11 +1190,11 @@ const MainContent = () => {
     if (eventItem.tanggal.includes('sd') || eventItem.tanggal.includes('-')) {
       setIsMultiDate(true);
       const dates = eventItem.tanggal.replace('Dari Tanggal ', '').split(' sd ');
-      setFormStartDate(dates[0] || '');
-      setFormEndDate(dates[1] || '');
+      setFormStartDate(eventDateToInputValue(dates[0] || ''));
+      setFormEndDate(eventDateToInputValue(dates[1] || ''));
     } else {
       setIsMultiDate(false);
-      setFormSingleDate(eventItem.tanggal.replace('Dari Tanggal ', ''));
+      setFormSingleDate(eventDateToInputValue(eventItem.tanggal.replace('Dari Tanggal ', '')));
     }
     setDurasiMatch(eventItem.durasiMatch || '20 Menit');
     setJamMulai(eventItem.jamMulai || '08:00');
@@ -1209,9 +1248,9 @@ const MainContent = () => {
     e.preventDefault();
     if (guardPublicMutation()) return;
     if (!isEO && !isSuperAdmin) { alert('Akses ditolak.'); return; }
-    let formattedTanggal = isMultiDate
-      ? `Dari Tanggal ${formStartDate} sd ${formEndDate}`
-      : (formSingleDate || '21 Sep 2026');
+    const formattedTanggal = isMultiDate
+      ? `Dari Tanggal ${formatEventDate(formStartDate)} sd ${formatEventDate(formEndDate)}`
+      : formatEventDate(formSingleDate);
 
     if (isEditMode && selectedEventIdForReg) {
       const eventId = Number(selectedEventIdForReg);
@@ -1288,22 +1327,76 @@ const MainContent = () => {
 
   const handleDeleteEvent = async (id, nama) => {
     if (guardPublicMutation()) return;
-    const targetEvent = events.find(ev => Number(ev.id) === Number(id));
-    if (!canManageEvent(targetEvent)) { alert('Anda tidak dapat menghapus event milik EO lain.'); return; }
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus event "${nama}"?`)) return;
 
-    const { error } = await supabase
-      .from('Events')
-      .delete()
-      .eq('id', Number(id));
-
-    if (error) {
-      console.error('❌ Gagal menghapus Event di Supabase:', error);
-      alert(`Event belum dapat dihapus dari Supabase: ${error.message}`);
+    const eventId = Number(id);
+    const targetEvent = events.find(ev => Number(ev.id) === eventId);
+    if (!canManageEvent(targetEvent)) {
+      alert('Anda tidak dapat menghapus event milik EO lain.');
       return;
     }
 
-    setEvents(prev => prev.filter(item => Number(item.id) !== Number(id)));
+    const confirmed = window.confirm(
+      `Hapus event "${nama}"?\n\nEvent beserta peserta, pool, hasil pertandingan, ranking, dan knockout lokal akan dibersihkan.`
+    );
+    if (!confirmed) return;
+
+    // Hapus peserta lebih dahulu agar aman bila Participants memiliki foreign key ke Events.
+    const { error: participantsError } = await supabase
+      .from('Participants')
+      .delete()
+      .eq('event_id', eventId);
+
+    if (participantsError) {
+      console.error('❌ Gagal menghapus Participants event di Supabase:', participantsError);
+      alert(`Peserta event belum dapat dihapus dari Supabase: ${participantsError.message}`);
+      return;
+    }
+
+    const { error: eventError } = await supabase
+      .from('Events')
+      .delete()
+      .eq('id', eventId);
+
+    if (eventError) {
+      console.error('❌ Gagal menghapus Event di Supabase:', eventError);
+      alert(`Event belum dapat dihapus dari Supabase: ${eventError.message}`);
+      return;
+    }
+
+    // Bersihkan state/cache yang terikat ke event tersebut.
+    const withoutEventKey = (source) => {
+      const next = { ...(source || {}) };
+      delete next[eventId];
+      delete next[String(eventId)];
+      return next;
+    };
+
+    setEvents(prev => prev.filter(item => Number(item.id) !== eventId));
+    setParticipants(prev => withoutEventKey(prev));
+    setSeededPlayers(prev => withoutEventKey(prev));
+    setPoolResults(prev => withoutEventKey(prev));
+    setMatchResults(prev => withoutEventKey(prev));
+    setPoolRankings(prev => withoutEventKey(prev));
+    setKnockoutResults(prev => withoutEventKey(prev));
+
+    // Kosongkan pilihan UI bila sedang menunjuk event yang dihapus.
+    const clearIfDeleted = (value, setter) => {
+      if (String(value) === String(eventId)) setter('');
+    };
+    clearIfDeleted(selectedEventIdForReg, setSelectedEventIdForReg);
+    clearIfDeleted(selectedEventIdForDraw, setSelectedEventIdForDraw);
+    clearIfDeleted(selectedEventIdForSchedule, setSelectedEventIdForSchedule);
+    clearIfDeleted(selectedEventIdForLive, setSelectedEventIdForLive);
+    clearIfDeleted(selectedEventIdForKnockout, setSelectedEventIdForKnockout);
+    clearIfDeleted(selectedEventIdForRanking, setSelectedEventIdForRanking);
+    clearIfDeleted(selectedEventIdForSettings, setSelectedEventIdForSettings);
+
+    if (String(publicViewedEventId) === String(eventId)) {
+      setPublicViewedEventId('');
+      sessionStorage.removeItem('spinmatch_public_view_event');
+    }
+
+    alert(`Event "${nama}" berhasil dihapus.`);
   };
 
 const handleDeleteAllParticipants = async () => {
@@ -4222,12 +4315,28 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {item.status}
                   </span>
 
-                  {canManageEvent(item) && <button
-                    onClick={() => handleRowClick(item)}
-                    className="hidden rounded-lg bg-slate-100 px-2.5 py-1.5 text-[9px] font-black text-slate-600 transition hover:bg-blue-600 hover:text-white sm:block"
-                  >
-                    Edit
-                  </button>}
+                  {canManageEvent(item) && (
+                    <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+                      <button
+                        type="button"
+                        onClick={() => handleRowClick(item)}
+                        className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-[9px] font-black text-slate-600 transition hover:bg-blue-600 hover:text-white"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteEvent(item.id, item.nama);
+                        }}
+                        className="flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[9px] font-black text-red-600 transition hover:bg-red-600 hover:text-white"
+                        title="Hapus event"
+                      >
+                        <Trash2 className="h-3 w-3" /> Hapus
+                      </button>
+                    </div>
+                  )}
 
                 </div>
 
@@ -6158,17 +6267,17 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </div>
                 {!isMultiDate ? (
                   <div className="relative">
-                    <input type="date" required value={formSingleDate ? new Date(formSingleDate).toISOString().split('T')[0] : ''} onChange={(e) => { const date = new Date(e.target.value); const formatted = `${date.getDate()} ${date.toLocaleString('id-ID', { month: 'short' })} ${date.getFullYear()}`; setFormSingleDate(formatted); }} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-slate-800 text-sm" />
+                    <input type="date" required value={formSingleDate} onChange={(e) => setFormSingleDate(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-slate-800 text-sm" />
                     <Calendar className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="relative">
-                      <input type="date" required value={formStartDate ? new Date(formStartDate).toISOString().split('T')[0] : ''} onChange={(e) => { const date = new Date(e.target.value); const formatted = `${date.getDate()} ${date.toLocaleString('id-ID', { month: 'short' })} ${date.getFullYear()}`; setFormStartDate(formatted); }} placeholder="Mulai" className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm" />
+                      <input type="date" required value={formStartDate} onChange={(e) => setFormStartDate(e.target.value)} placeholder="Mulai" className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm" />
                       <Calendar className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
                     <div className="relative">
-                      <input type="date" required value={formEndDate ? new Date(formEndDate).toISOString().split('T')[0] : ''} onChange={(e) => { const date = new Date(e.target.value); const formatted = `${date.getDate()} ${date.toLocaleString('id-ID', { month: 'short' })} ${date.getFullYear()}`; setFormEndDate(formatted); }} placeholder="Selesai" className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm" />
+                      <input type="date" required value={formEndDate} onChange={(e) => setFormEndDate(e.target.value)} placeholder="Selesai" className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm" />
                       <Calendar className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
                   </div>
