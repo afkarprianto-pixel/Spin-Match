@@ -46,30 +46,24 @@ export const LoginPage = ({ onCancel }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     resetMessage();
-
-    const result = await register({
-      name: regName,
-      username: regUsername,
-      password: regPassword,
-      phone: regPhone,
-      email: regEmail,
-      role: regRole
-    });
-
-    if (!result.success) {
-      setError(result.message);
-      return;
+    if (regRole !== 'EO') { setError('Pendaftaran Public belum tersedia. Gunakan Masuk Public.'); return; }
+    setSubmitting(true);
+    try {
+      const result = await register({
+        name: regName, username: regUsername, password: regPassword,
+        phone: regPhone, email: regEmail, role: regRole,
+      });
+      if (!result.success) { setError(result.message); return; }
+      setMode('LOGIN');
+      setUsername(regEmail.trim());
+      setPassword('');
+      setNotice(result.message);
+      setRegPassword('');
+    } catch (err) {
+      setError(err?.message || 'Pendaftaran gagal.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setNotice(result.message);
-    setUsername(regUsername);
-    setPassword('');
-    setRegName('');
-    setRegUsername('');
-    setRegPassword('');
-    setRegPhone('');
-    setRegEmail('');
-    setMode('LOGIN');
   };
 
   const handlePublic = async () => {
@@ -186,8 +180,8 @@ export const LoginPage = ({ onCancel }) => {
                 </button>
               </div>
 
-              <button onClick={() => openRegister('PUBLIC')} className="relative mt-2.5 w-full text-[11px] text-blue-100/55 hover:text-emerald-300 transition cursor-pointer">
-                Belum punya akun? <span className="font-bold">Daftar Akun SpinMatch</span>
+              <button onClick={handlePublic} className="relative mt-2.5 w-full text-[11px] text-blue-100/55 hover:text-emerald-300 transition cursor-pointer">
+                Ingin melihat pertandingan? <span className="font-bold">Masuk sebagai Public</span>
                 <span className="text-blue-100/35"> — untuk fitur Public/latihan ke depan</span>
               </button>
 
@@ -231,11 +225,11 @@ export const LoginPage = ({ onCancel }) => {
 
               <input value={regName} onChange={e => setRegName(e.target.value)} placeholder="Nama lengkap" className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" required />
               <input value={regUsername} onChange={e => setRegUsername(e.target.value)} placeholder="Username" className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" required />
-              <input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} placeholder="Password minimal 6 karakter" className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" required />
+              <input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} placeholder="Password minimal 8 karakter" className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" required />
               <input value={regPhone} onChange={e => setRegPhone(e.target.value)} placeholder="No. HP (opsional)" className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" />
-              <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Email (opsional)" className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" />
+              <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Email aktif (wajib untuk verifikasi)" required className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[13px] px-4 py-2.5 outline-none focus:border-emerald-400" />
 
-              <button type="submit" className="w-full bg-gradient-to-r from-emerald-500 to-lime-300 text-[#04110b] font-extrabold text-sm py-3 rounded-[13px] cursor-pointer">
+              <button type="submit" disabled={submitting} className="w-full bg-gradient-to-r from-emerald-500 to-lime-300 text-[#04110b] font-extrabold text-sm py-3 rounded-[13px] cursor-pointer">
                 {regRole === 'EO' ? 'Daftar sebagai EO' : 'Daftar Akun Public'}
               </button>
 
