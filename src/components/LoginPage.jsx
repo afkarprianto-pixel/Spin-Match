@@ -12,6 +12,7 @@ export const LoginPage = ({ onCancel }) => {
   const [mode, setMode] = useState('LOGIN');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -28,18 +29,25 @@ export const LoginPage = ({ onCancel }) => {
     setNotice('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     resetMessage();
-    const result = login(username, password);
-    if (!result.success) setError(result.message);
+    setSubmitting(true);
+    try {
+      const result = await login(username, password);
+      if (!result.success) setError(result.message);
+    } catch (err) {
+      setError(err?.message || 'Login gagal.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     resetMessage();
 
-    const result = register({
+    const result = await register({
       name: regName,
       username: regUsername,
       password: regPassword,
@@ -64,9 +72,9 @@ export const LoginPage = ({ onCancel }) => {
     setMode('LOGIN');
   };
 
-  const handlePublic = () => {
+  const handlePublic = async () => {
     resetMessage();
-    loginAsPublic();
+    await loginAsPublic();
   };
 
   const openRegister = (role) => {
@@ -131,14 +139,14 @@ export const LoginPage = ({ onCancel }) => {
             <>
               <form onSubmit={handleSubmit} className="relative space-y-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Username / ID</label>
+                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Email Supabase</label>
                   <div className="relative">
                     <User className="w-[17px] h-[17px] text-blue-200/45 absolute left-4 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Super Admin / EO / ID Wasit"
+                      placeholder="Email akun Supabase"
                       className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[14px] pl-11 pr-4 py-2.5 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10"
                       required
                     />
@@ -163,7 +171,7 @@ export const LoginPage = ({ onCancel }) => {
                   </div>
                 </div>
 
-                <button type="submit" className="group w-full bg-gradient-to-r from-emerald-500 via-green-400 to-lime-300 hover:from-emerald-400 hover:to-lime-200 text-[#04110b] font-extrabold text-sm py-2.5 rounded-[14px] transition-all shadow-[0_8px_25px_rgba(16,185,129,0.18)] flex items-center justify-center gap-2 cursor-pointer">
+                <button type="submit" disabled={submitting} className="group w-full bg-gradient-to-r from-emerald-500 via-green-400 to-lime-300 hover:from-emerald-400 hover:to-lime-200 text-[#04110b] font-extrabold text-sm py-2.5 rounded-[14px] transition-all shadow-[0_8px_25px_rgba(16,185,129,0.18)] flex items-center justify-center gap-2 cursor-pointer">
                   Masuk Sekarang
                   <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-1" />
                 </button>

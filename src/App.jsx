@@ -328,7 +328,7 @@ const MainContent = () => {
     jumlahMeja: Number(row.jumlahmeja || row.jumlahMeja || 4),
     metodePengundian: row.metodeundian || 'PER_DIVISI',
     divisiList: Array.isArray(row.divisilist) ? row.divisilist : [],
-    ownerId: String(row.owner_id || row.ownerid || row.created_by || row.owner || ''),
+    ownerId: String(row.eo_auth_id || row.owner_id || row.ownerid || row.created_by || row.owner || ''),
     ownerName: row.owner_name || row.ownername || row.eo_name || row.eo || '',
     lokasi: row.lokasi || row.location || '',
     contactPerson: row.contact_person || row.contactperson || row.kontak || ''
@@ -344,7 +344,8 @@ const MainContent = () => {
     jammulai: eventItem.jamMulai || '08:00',
     jamselesai: eventItem.jamSelesai || '18:00',
     metodeundian: eventItem.metodePengundian || 'PER_DIVISI',
-    divisilist: Array.isArray(eventItem.divisiList) ? eventItem.divisiList : []
+    divisilist: Array.isArray(eventItem.divisiList) ? eventItem.divisiList : [],
+    ...(eventItem.ownerId ? { eo_auth_id: eventItem.ownerId } : {})
   });
 
 
@@ -1271,18 +1272,27 @@ const MainContent = () => {
         divisiList
       };
 
-      const { error } = await supabase
+      // UPDATE tidak boleh dianggap berhasil hanya karena error=null.
+      // Jika RLS menolak baris, Supabase bisa mengembalikan [] tanpa error.
+      const payload = eventToSupabase(updatedEvent);
+      delete payload.id; // primary key tidak perlu diubah
+      const { data: savedRows, error } = await supabase
         .from('Events')
-        .update(eventToSupabase(updatedEvent))
-        .eq('id', eventId);
+        .update(payload)
+        .eq('id', eventId)
+        .select('*');
 
-      if (error) {
-        console.error('❌ Gagal memperbarui Event di Supabase:', error);
-        alert(`Event belum tersimpan ${error.message}`);
+      if (error || !Array.isArray(savedRows) || savedRows.length !== 1) {
+        console.error('❌ UPDATE Events tidak terkonfirmasi:', { error, savedRows, eventId });
+        alert(error
+          ? `Event gagal disimpan ke Supabase: ${error.message}`
+          : 'Perubahan belum tersimpan di Supabase. Izin UPDATE/RLS mungkin belum aktif atau event belum memiliki EO pemilik. Data lama tidak diubah.');
         return;
       }
 
-      const updatedEvents = events.map(ev => Number(ev.id) === eventId ? updatedEvent : ev);
+      // Gunakan hasil server, bukan asumsi bahwa data lokal sudah tersimpan.
+      const confirmedEvent = eventFromSupabase(savedRows[0]);
+      const updatedEvents = events.map(ev => Number(ev.id) === eventId ? confirmedEvent : ev);
       setEvents(updatedEvents);
       localStorage.setItem('spinmatch_events', JSON.stringify(updatedEvents));
       alert('Event berhasil diperbarui dan disimpan');
