@@ -4260,7 +4260,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
           {myEvents.length === 0 ? (
 
-            <div className="flex min-h-[220px] flex-col items-center justify-center p-8 text-center">
+            <div className="flex min-h-[140px] flex-col items-center justify-center px-5 py-5 text-center sm:min-h-[220px] sm:p-8">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
                 <Trophy className="h-7 w-7 text-blue-300" />
               </div>
@@ -6683,6 +6683,34 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
           .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
           .spinmatch-main-content { padding-bottom:8px !important; }
+          /* SPINMATCH MOBILE DASHBOARD V3: kontras abu-abu & ruang lebih efisien */
+          .spinmatch-app { background:#cbd2dc !important; }
+          .spinmatch-page-head { background:#cbd2dc !important; padding:4px 12px 3px !important; min-height:0 !important; }
+          .spinmatch-page-head > div:first-child button { height:32px !important; width:32px !important; }
+          .spinmatch-main-content { background:#cbd2dc !important; padding:7px 12px 18px !important; }
+          .sm-dashboard-layout { gap:9px !important; }
+          .sm-dashboard-event-buttons button { min-height:40px !important; font-size:12px !important; }
+          .sm-dashboard-hero { order:2 !important; border-radius:21px !important; }
+          .sm-dashboard-hero-inner { padding:9px 12px 10px !important; }
+          .sm-dashboard-mobile-paddle { height:43px !important; }
+          .sm-dashboard-mobile-paddle img { height:47px !important; }
+          .sm-dashboard-hero h1 { font-size:16px !important; }
+          .sm-dashboard-hero-actions button { min-height:34px !important; font-size:10px !important; }
+          .sm-dashboard-stats { order:3 !important; gap:6px !important; }
+          .sm-dashboard-stats > div { height:49px !important; background:#fff !important; border-radius:15px !important; }
+          .sm-dashboard-stats > div > div:nth-child(2) { font-size:14px !important; }
+          .sm-dashboard-stats > div > div:nth-child(3) { font-size:8px !important; }
+          .sm-dashboard-lower { order:4 !important; }
+          .sm-dashboard-lower > div:first-child { background:#fff !important; border-radius:20px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child { padding:12px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child h2 { font-size:14px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child p { font-size:9px !important; }
+          .sm-dashboard-lower #dashboard-event-saya > div:nth-child(2):has(> div.flex-col) > div { min-height:0 !important; }
+          .sm-dashboard-quick { order:5 !important; padding:12px !important; border-radius:20px !important; background:#fff !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-height:46px !important; font-size:11px !important; }
+          .sm-dashboard-quick .mx-auto.grid button:first-child { min-height:43px !important; }
+          .sm-dashboard-lower #dashboard-event-saya .group { flex-wrap:wrap !important; }
+          .sm-dashboard-lower #dashboard-event-saya .group > div:last-child { margin-left:auto !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
