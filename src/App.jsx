@@ -4280,7 +4280,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
                 <div
                   key={item.id}
-                  className="group flex items-center gap-3 p-4 transition hover:bg-slate-50 sm:p-5"
+                  className="group flex flex-wrap items-center gap-3 p-4 transition hover:bg-slate-50 sm:flex-nowrap sm:p-5"
                 >
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
@@ -4316,7 +4316,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </span>
 
                   {canManageEvent(item) && (
-                    <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => handleRowClick(item)}
