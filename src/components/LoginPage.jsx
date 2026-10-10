@@ -133,14 +133,14 @@ export const LoginPage = ({ onCancel }) => {
             <>
               <form onSubmit={handleSubmit} className="relative space-y-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Email Supabase</label>
+                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Email</label>
                   <div className="relative">
                     <User className="w-[17px] h-[17px] text-blue-200/45 absolute left-4 top-1/2 -translate-y-1/2" />
                     <input
-                      type="text"
+                      type="email"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Email akun Supabase"
+                      placeholder="Masukkan alamat email"
                       className="w-full bg-[#07182d]/90 border border-blue-300/20 text-white placeholder:text-blue-100/30 text-sm rounded-[14px] pl-11 pr-4 py-2.5 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10"
                       required
                     />
