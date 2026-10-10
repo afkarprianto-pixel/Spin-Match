@@ -175,8 +175,8 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-space:before{content:'';position:absolute;width:155%;height:31%;left:-26%;top:1%;border-top:2px solid #ff9c56;border-radius:50%;transform:rotate(-15deg);box-shadow:0 -9px 25px #f58b4d66;}
         .sm-login .sm-planet{position:absolute;right:5%;top:5%;width:clamp(92px,23vw,160px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 28% 23%,#ffd6ae 0%,#b1b6e6 24%,#4777c9 49%,#172d69 76%,#091b44 100%);box-shadow:-9px -6px 18px #ffb77766,0 0 40px #3b8dff99;}
         .sm-login .sm-planet:after{content:'';position:absolute;inset:43% -25%;border:9px solid #62b1ff77;border-left-color:transparent;border-top-color:transparent;border-radius:50%;transform:rotate(-18deg);}
-        .sm-login .sm-arc{position:absolute;left:-44%;bottom:-11%;width:133%;height:34%;border-radius:50%;transform:rotate(21deg);background:radial-gradient(ellipse at 48% 12%,#ffe18d 0%,#ffb24e 24%,#ed733b 50%,transparent 73%);box-shadow:0 -4px 12px #ffae68;}
-        .sm-login .sm-arc:after{content:'';position:absolute;inset:-3px;border-top:3px solid #ffd17c;border-radius:50%;filter:drop-shadow(0 0 12px #ff9c43);}
+        .sm-login .sm-arc{position:absolute;left:-48%;bottom:-17%;width:112%;height:23%;border-radius:50%;transform:rotate(12deg);background:linear-gradient(180deg,transparent 0%,rgba(27,93,187,.16) 52%,rgba(255,149,76,.18) 78%,transparent 100%);box-shadow:none;}
+        .sm-login .sm-arc:after{content:'';position:absolute;inset:-3px;border-top:2px solid rgba(255,168,92,.88);border-radius:50%;filter:drop-shadow(0 0 5px rgba(255,156,67,.55));}
         .sm-login .sm-panel{border:2px solid transparent;background:linear-gradient(160deg,#103f80f5,#062b60f7 56%,#0a2346f5) padding-box,linear-gradient(130deg,#ffbf70,#329dff 48%,#249bff 73%,#ffa65c) border-box;box-shadow:0 0 32px #1b8fff3d,0 25px 65px #0008,inset 0 0 28px #208bff16;}
         .sm-login .sm-primary{background:linear-gradient(100deg,#ff8f60 0%,#ffb45c 54%,#ffe16c 100%);box-shadow:0 8px 26px #ff974c50;}
         .sm-login .sm-primary:hover{filter:brightness(1.07)}
@@ -475,15 +475,15 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-        <div className="text-center mt-3">
+        <div className="relative z-10 text-center mt-5 pb-2">
 
-          <p className="text-[10px] font-black tracking-[0.35em] text-white/45">
+          <p className="text-[12px] font-black tracking-[0.35em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
 
-            SPIN<span className="text-orange-400/70">MATCH</span>
+            SPIN<span className="text-[#ffb06e]">MATCH</span>
 
           </p>
 
-          <p className="text-[8px] tracking-[0.3em] text-blue-100/25 mt-1">TABLE TENNIS PLATFORM</p>
+          <p className="text-[9px] tracking-[0.3em] text-blue-100/85 mt-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">TABLE TENNIS PLATFORM</p>
 
         </div>
 
