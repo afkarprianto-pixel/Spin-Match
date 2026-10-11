@@ -4232,6 +4232,16 @@ const handleUpdatePlayerSubmit = async (e) => {
           >
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
+
+          {!isPublic && (
+            <button
+              type="button"
+              onClick={() => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }}
+              className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6857d9] to-[#9581ef] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+            >
+              <Users className="h-5 w-5 shrink-0" /> Kelola Wasit
+            </button>
+          )}
         </div>
 
         {/* Tablet/Desktop: tetap rapi 5 menu sejajar */}
@@ -6734,6 +6744,20 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick .mx-auto.grid button:first-child { min-height:43px !important; }
           .sm-dashboard-lower #dashboard-event-saya .group { flex-wrap:wrap !important; }
           .sm-dashboard-lower #dashboard-event-saya .group > div:last-child { margin-left:auto !important; }
+          /* Mobile refinement: ringkas area atas, perlihatkan menu cepat lebih awal */
+          .sm-dashboard-layout { gap:6px !important; }
+          .sm-dashboard-hero-inner { padding:5px 12px 6px !important; }
+          .sm-dashboard-mobile-paddle { height:30px !important; }
+          .sm-dashboard-mobile-paddle img { height:38px !important; }
+          .sm-dashboard-hero h1 { font-size:15px !important; }
+          .sm-dashboard-hero-actions { margin-top:4px !important; }
+          .sm-dashboard-hero-actions button { min-height:29px !important; padding:5px 9px !important; }
+          .sm-dashboard-stats > div { height:43px !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child { padding:8px 11px !important; }
+          .sm-dashboard-quick { order:4 !important; padding:10px !important; }
+          .sm-dashboard-lower { order:5 !important; }
+          .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-height:40px !important; padding:7px 8px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
