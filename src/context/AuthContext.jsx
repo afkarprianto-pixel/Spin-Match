@@ -43,16 +43,40 @@ export const AuthProvider = ({ children }) => {
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
-  const login = async (email, password) => {
-    const cleanEmail = String(email || '').trim().toLowerCase();
-    if (!cleanEmail.includes('@')) return { success: false, message: 'Untuk sementara gunakan email. Login username akan ditambahkan setelah pendaftaran EO stabil.' };
-    const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-    if (error) {
-      const msg = String(error.message || '');
-      if (/email not confirmed/i.test(msg)) return { success: false, message: 'Email belum diverifikasi. Periksa Inbox/Spam dan klik tautan verifikasi.' };
-      if (/invalid login credentials/i.test(msg)) return { success: false, message: 'Email atau password tidak cocok. Pastikan akun sudah terdaftar dan email telah diverifikasi.' };
-      return { success: false, message: `Login gagal: ${msg}` };
+  const login = async (usernameOrEmail, password) => {
+    const identifier = String(usernameOrEmail || '').trim();
+    if (!identifier || !password) {
+      return { success: false, message: 'Masukkan username dan password.' };
     }
+
+    if (identifier.includes('@')) {
+      // Login email lama dipertahankan sementara sebagai cadangan pengujian.
+      const { error } = await supabase.auth.signInWithPassword({
+        email: identifier.toLowerCase(), password,
+      });
+      if (error) {
+        const msg = String(error.message || '');
+        if (/email not confirmed/i.test(msg)) return { success: false, message: 'Email belum diverifikasi. Periksa Inbox/Spam dan klik tautan verifikasi.' };
+        if (/invalid login credentials/i.test(msg)) return { success: false, message: 'Email atau password tidak cocok.' };
+        return { success: false, message: `Login gagal: ${msg}` };
+      }
+    } else {
+      // Username diverifikasi di server; email akun tidak dikirim ke browser.
+      const { data, error } = await supabase.functions.invoke('spinmatch-login', {
+        body: { username: identifier, password },
+      });
+      if (error || !data?.success || !data?.access_token || !data?.refresh_token) {
+        return { success: false, message: data?.error || 'Username atau password tidak cocok. Jika fungsi belum dapat diakses, hubungi administrator.' };
+      }
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+      if (sessionError) {
+        return { success: false, message: 'Sesi login gagal disimpan. Silakan coba lagi.' };
+      }
+    }
+
     const { data: verified, error: verifyError } = await supabase.auth.getUser();
     const verifiedUser = !verifyError ? fromAuthUser(verified?.user) : null;
     if (!verifiedUser) {
