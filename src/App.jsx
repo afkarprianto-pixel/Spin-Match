@@ -4507,11 +4507,11 @@ const handleUpdatePlayerSubmit = async (e) => {
           </p>
         </div>
 
-        {/* Mobile: tombol berwarna, 2 kolom, Kelola Event di tengah */}
-        <div className="mx-auto grid max-w-[430px] grid-cols-2 gap-3 md:hidden">
+        {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
+        <div className="mx-auto grid w-full grid-cols-3 gap-2 md:hidden">
           <button
             onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="col-span-2 mx-auto flex w-[calc(50%-6px)] min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
+            className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
           >
             <Settings className="h-5 w-5" /> Kelola Event
           </button>
@@ -6755,10 +6755,13 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-hero-actions button { min-height:29px !important; padding:5px 9px !important; }
           .sm-dashboard-stats > div { height:43px !important; }
           .sm-dashboard-lower > div:first-child > div:first-child { padding:8px 11px !important; }
-          .sm-dashboard-quick { order:4 !important; padding:10px !important; }
-          .sm-dashboard-lower { order:5 !important; }
+          .sm-dashboard-quick { order:5 !important; padding:10px !important; }
+          .sm-dashboard-lower { order:4 !important; }
           .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
-          .sm-dashboard-quick .mx-auto.grid button { min-height:40px !important; padding:7px 8px !important; }
+          .sm-dashboard-quick .mx-auto.grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+          .sm-dashboard-quick .mx-auto.grid button { min-width:0 !important; min-height:55px !important; padding:7px 3px !important; flex-direction:column !important; gap:4px !important; font-size:10px !important; line-height:1.15 !important; text-align:center !important; }
+          .sm-dashboard-quick .mx-auto.grid button:first-child { min-width:0 !important; width:100% !important; min-height:55px !important; }
+          .sm-dashboard-quick .mx-auto.grid button svg { width:19px !important; height:19px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
