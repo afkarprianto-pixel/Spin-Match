@@ -7098,7 +7098,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-hero-actions button { min-height:29px !important; padding:5px 9px !important; }
           .sm-dashboard-stats > div { height:43px !important; }
           .sm-dashboard-lower > div:first-child > div:first-child { padding:8px 11px !important; }
-          .sm-dashboard-quick { order:5 !important; padding:10px !important; }
+          .sm-dashboard-quick { order:5 !important; padding:10px !important; margin-top:38px !important; }
           .sm-dashboard-lower { order:4 !important; }
           .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
           .sm-dashboard-quick .mx-auto.grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
