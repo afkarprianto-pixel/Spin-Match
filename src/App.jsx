@@ -4232,16 +4232,36 @@ const handleUpdatePlayerSubmit = async (e) => {
           >
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
+
+          {!isPublic && (
+            <button
+              type="button"
+              onClick={() => {
+                const ev = myEvents.find(e => e.status === 'Aktif') || myEvents[0];
+                if (!ev) {
+                  alert('Buat atau pilih event terlebih dahulu untuk mengelola penugasan wasit.');
+                  return;
+                }
+                setSelectedEventIdForSettings(String(ev.id));
+                setSettingsSection('REFEREE');
+                setActiveView('SETTINGS');
+              }}
+              className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#7652e8] to-[#a16af4] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(118,82,232,.20)] active:scale-[.98]"
+            >
+              <ShieldCheck className="h-5 w-5 shrink-0" /> Kelola Wasit
+            </button>
+          )}
         </div>
 
-        {/* Tablet/Desktop: tetap rapi 5 menu sejajar */}
-        <div className="hidden grid-cols-5 gap-4 md:grid">
+        {/* Tablet/Desktop: enam menu untuk EO / Super Admin */}
+        <div className="hidden grid-cols-3 gap-4 md:grid lg:grid-cols-6">
           {[
             { label: 'Kelola Event', icon: Settings, action: () => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
             { label: 'Kelola Pemain', icon: Users, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForReg(String(ev.id)); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
             { label: 'Undian Pool', icon: Shuffle, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForDraw(String(ev.id)); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForKnockout(String(ev.id)); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
+            ...(!isPublic ? [{ label: 'Kelola Wasit', icon: ShieldCheck, action: () => { const ev = myEvents.find(e => e.status === 'Aktif') || myEvents[0]; if (!ev) { alert('Buat atau pilih event terlebih dahulu untuk mengelola penugasan wasit.'); return; } setSelectedEventIdForSettings(String(ev.id)); setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
           ].map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className="group flex flex-col items-center gap-2">
               <span className={`flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg`}>
@@ -6736,6 +6756,36 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-lower #dashboard-event-saya .group > div:last-child { margin-left:auto !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
+          /* V4: prioritaskan enam tombol Menu Cepat pada layar HP */
+          .spinmatch-main-content { padding-top:4px !important; }
+          .sm-dashboard-layout { gap:5px !important; }
+          .sm-dashboard-event-buttons { margin-bottom:0 !important; }
+          .sm-dashboard-event-buttons button { min-height:35px !important; }
+          .sm-dashboard-hero { order:1 !important; }
+          .sm-dashboard-hero-inner { padding:6px 10px 9px !important; }
+          .sm-dashboard-hero-copy { position:relative !important; }
+          .sm-dashboard-hero-copy > div:first-child { margin-bottom:2px !important; }
+          .sm-dashboard-mobile-paddle { position:absolute !important; top:-4px !important; right:0 !important; width:68px !important; height:55px !important; pointer-events:none !important; }
+          .sm-dashboard-mobile-paddle img { width:65px !important; height:54px !important; }
+          .sm-dashboard-mobile-glow { width:55px !important; height:34px !important; }
+          .sm-dashboard-hero h1 { margin-top:8px !important; padding:0 7px !important; font-size:15px !important; line-height:1.12 !important; }
+          .sm-dashboard-hero-meta { margin-top:5px !important; }
+          .sm-dashboard-hero-actions { margin-top:8px !important; margin-bottom:4px !important; gap:8px !important; }
+          .sm-dashboard-hero-actions button { min-height:31px !important; padding:5px 10px !important; font-size:9px !important; }
+          .sm-dashboard-stats { order:2 !important; gap:5px !important; }
+          .sm-dashboard-stats > div { height:43px !important; }
+          .sm-dashboard-quick { order:3 !important; padding:9px 10px !important; }
+          .sm-dashboard-quick .mb-4 { margin-bottom:5px !important; }
+          .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
+          .sm-dashboard-quick .mx-auto.grid button,
+          .sm-dashboard-quick .mx-auto.grid button:first-child { width:100% !important; min-width:0 !important; min-height:37px !important; padding:6px 5px !important; font-size:10px !important; border-radius:11px !important; }
+          .sm-dashboard-quick .mx-auto.grid button:first-child { grid-column:auto !important; }
+          .sm-dashboard-quick .mx-auto.grid button svg { width:16px !important; height:16px !important; }
+          .sm-dashboard-lower { order:4 !important; }
+          .sm-dashboard-lower > div:first-child > div:first-child { padding:9px 11px !important; }
+          .sm-dashboard-lower #dashboard-event-saya > div:nth-child(2):has(> div.flex-col) { min-height:0 !important; padding:12px 10px !important; }
+          .sm-dashboard-lower #dashboard-event-saya > div:nth-child(2):has(> div.flex-col) > div { height:40px !important; width:40px !important; }
+          .sm-dashboard-lower #dashboard-event-saya > div:nth-child(2):has(> div.flex-col) p { margin-top:4px !important; }
         }
       `}</style>
     </div>
