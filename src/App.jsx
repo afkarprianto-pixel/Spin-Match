@@ -4168,102 +4168,6 @@ const handleUpdatePlayerSubmit = async (e) => {
       </section>
 
 
-      {/* ===================== QUICK MENU ===================== */}
-      <section className="sm-dashboard-quick rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
-        <div className="mb-4 text-center md:text-left">
-          <div className="flex items-center justify-center gap-2 md:justify-start">
-            <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
-            <h2 className="text-base font-black text-slate-950">Menu Cepat</h2>
-          </div>
-          <p className="mt-1 text-[10px] font-medium text-slate-400 sm:text-xs md:ml-3.5">
-            Akses pengelolaan turnamen
-          </p>
-        </div>
-
-        {/* Mobile: tombol berwarna, 2 kolom, Kelola Event di tengah */}
-        <div className="mx-auto grid max-w-[430px] grid-cols-2 gap-3 md:hidden">
-          <button
-            onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="col-span-2 mx-auto flex w-[calc(50%-6px)] min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
-          >
-            <Settings className="h-5 w-5" /> Kelola Event
-          </button>
-
-          <button
-            onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForReg(String(ev.id));
-              setActiveView('REGISTRATION');
-            }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
-          >
-            <Users className="h-5 w-5 shrink-0" /> Kelola Pemain
-          </button>
-
-          <button
-            onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForDraw(String(ev.id));
-              setActiveView('DRAW');
-            }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
-          >
-            <Shuffle className="h-5 w-5 shrink-0" /> Undian Pool
-          </button>
-
-          <button
-            onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForSchedule(String(ev.id));
-              setActiveView('SCHEDULE');
-            }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98]"
-          >
-            <Calendar className="h-5 w-5 shrink-0" /> Jadwal
-          </button>
-
-          <button
-            onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForKnockout(String(ev.id));
-              setActiveView('KNOCKOUT');
-            }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98]"
-          >
-            <Trophy className="h-5 w-5 shrink-0" /> Knockout
-          </button>
-
-          {!isPublic && (
-            <button
-              type="button"
-              onClick={() => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }}
-              className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6857d9] to-[#9581ef] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
-            >
-              <Users className="h-5 w-5 shrink-0" /> Kelola Wasit
-            </button>
-          )}
-        </div>
-
-        {/* Tablet/Desktop: tetap rapi 5 menu sejajar */}
-        <div className="hidden grid-cols-5 gap-4 md:grid">
-          {[
-            { label: 'Kelola Event', icon: Settings, action: () => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
-            { label: 'Kelola Pemain', icon: Users, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForReg(String(ev.id)); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
-            { label: 'Undian Pool', icon: Shuffle, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForDraw(String(ev.id)); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
-            { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
-            { label: 'Knockout', icon: Trophy, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForKnockout(String(ev.id)); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
-          ].map(({ label, icon: Icon, action, box, iconColor }) => (
-            <button key={label} onClick={action} className="group flex flex-col items-center gap-2">
-              <span className={`flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg`}>
-                <Icon className={`h-7 w-7 ${iconColor}`} />
-              </span>
-              <span className="text-center text-xs font-black text-slate-700">{label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-
       {/* ===================== LOWER CONTENT ===================== */}
       <section className="sm-dashboard-lower grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_.65fr]">
 
@@ -4590,6 +4494,103 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
 
       </section>
+
+      {/* ===================== QUICK MENU ===================== */}
+      <section className="sm-dashboard-quick rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
+        <div className="mb-4 text-center md:text-left">
+          <div className="flex items-center justify-center gap-2 md:justify-start">
+            <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
+            <h2 className="text-base font-black text-slate-950">Menu Cepat</h2>
+          </div>
+          <p className="mt-1 text-[10px] font-medium text-slate-400 sm:text-xs md:ml-3.5">
+            Akses pengelolaan turnamen
+          </p>
+        </div>
+
+        {/* Mobile: tombol berwarna, 2 kolom, Kelola Event di tengah */}
+        <div className="mx-auto grid max-w-[430px] grid-cols-2 gap-3 md:hidden">
+          <button
+            onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="col-span-2 mx-auto flex w-[calc(50%-6px)] min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
+          >
+            <Settings className="h-5 w-5" /> Kelola Event
+          </button>
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForReg(String(ev.id));
+              setActiveView('REGISTRATION');
+            }}
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
+          >
+            <Users className="h-5 w-5 shrink-0" /> Kelola Pemain
+          </button>
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForDraw(String(ev.id));
+              setActiveView('DRAW');
+            }}
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
+          >
+            <Shuffle className="h-5 w-5 shrink-0" /> Undian Pool
+          </button>
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForSchedule(String(ev.id));
+              setActiveView('SCHEDULE');
+            }}
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98]"
+          >
+            <Calendar className="h-5 w-5 shrink-0" /> Jadwal
+          </button>
+
+          <button
+            onClick={() => {
+              const ev = events.find(e => e.status === 'Aktif') || events[0];
+              if (ev) setSelectedEventIdForKnockout(String(ev.id));
+              setActiveView('KNOCKOUT');
+            }}
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98]"
+          >
+            <Trophy className="h-5 w-5 shrink-0" /> Knockout
+          </button>
+
+          {!isPublic && (
+            <button
+              type="button"
+              onClick={() => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }}
+              className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6857d9] to-[#9581ef] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+            >
+              <Users className="h-5 w-5 shrink-0" /> Kelola Wasit
+            </button>
+          )}
+        </div>
+
+        {/* Tablet/Desktop: 6 menu termasuk Kelola Wasit untuk EO/Admin */}
+        <div className="hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6">
+          {[
+            { label: 'Kelola Event', icon: Settings, action: () => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
+            { label: 'Kelola Pemain', icon: Users, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForReg(String(ev.id)); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
+            { label: 'Undian Pool', icon: Shuffle, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForDraw(String(ev.id)); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
+            { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
+            { label: 'Knockout', icon: Trophy, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForKnockout(String(ev.id)); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
+            ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
+          ].map(({ label, icon: Icon, action, box, iconColor }) => (
+            <button key={label} onClick={action} className="group flex flex-col items-center gap-2">
+              <span className={`flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg`}>
+                <Icon className={`h-7 w-7 ${iconColor}`} />
+              </span>
+              <span className="text-center text-xs font-black text-slate-700">{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
 
     </div>
   </>
