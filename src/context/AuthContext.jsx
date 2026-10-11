@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 const AuthContext = createContext(null);
 const fromAuthUser = (authUser) => {
   if (!authUser) return null;
-  const role = String(authUser.app_metadata?.spinmatch_role || '').toUpperCase();
+  const role = String(authUser.app_metadata?.spinmatch_role || (authUser.app_metadata?.role === 'WASIT' ? 'WASIT' : '')).toUpperCase();
   if (!['SUPER_ADMIN', 'EO', 'WASIT'].includes(role)) return null;
   return {
     id: authUser.id, email: authUser.email || '',

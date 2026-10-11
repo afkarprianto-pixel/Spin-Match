@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false }) => {
   const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
   const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
   const handleDesktopLogout = () => {
@@ -25,19 +25,26 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
   };
   const normalizedRole = String(role || '').toUpperCase();
   const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
+  const isWasitRole = normalizedRole === 'WASIT';
 
   const openView = (view) => {
-    const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS'];
+    const publicBlocked = ['REGISTRATION', 'SETTINGS', 'REFEREE_MANAGEMENT'];
+    if (isWasitRole && !['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(view)) {
+      alert('Akun Wasit hanya dapat mengelola skor meja tugasnya dan melihat informasi pertandingan.');
+      return;
+    }
     if (isPublicRole && publicBlocked.includes(view)) {
       alert('Akun Public hanya dapat melihat event. Untuk mencari pertandingan, silakan pilih Semua Event.');
       return;
     }
+    if (view === 'REFEREE_MANAGEMENT') { onManageReferees?.(); return; }
     setActiveView(view);
   };
 
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
     { view: 'REGISTRATION', label: 'Kelola Pemain', icon: Users },
+    { view: 'REFEREE_MANAGEMENT', label: 'Kelola Wasit', icon: Users },
     { view: 'DRAW', label: 'Undian Pool', icon: Dices },
     { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
@@ -56,21 +63,21 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-        {menu.map(({ view, label, icon: Icon }) => (
-          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === view ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
-            <Icon className={`h-[18px] w-[18px] shrink-0 ${activeView === view ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
+        {menu.filter(item => (item.view !== 'REFEREE_MANAGEMENT' || !isPublicRole) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
+          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive)) ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive)) ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
         ))}
 
         <div className="my-1.5 border-t border-white/10" />
-        <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>
-        <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>
+        {!isWasitRole && <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>}
+        {!isWasitRole && <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>}
       </nav>
 
       <div className="relative border-t border-white/10 p-2.5">
-        <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+        {!isWasitRole && <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
           <Settings className="h-[17px] w-[17px] shrink-0" /><span>Pengaturan</span>
-        </button>
+        </button>}
 
         {showDesktopMoreMenu && (
           <div className="absolute bottom-[48px] right-2 z-50 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-[#07345c] p-1.5 shadow-2xl">
@@ -81,6 +88,103 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
         <button type="button" aria-label="Menu lainnya" onClick={() => setShowDesktopMoreMenu(v => !v)} className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"><MoreVertical className="h-4 w-4" /></button>
       </div>
     </aside>
+  );
+};
+
+
+// Akun login wasit online. Terpisah dari Master Wasit lokal agar Live Score lama tetap aman.
+const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [nama, setNama] = useState('');
+  const [meja, setMeja] = useState('1');
+  const [password, setPassword] = useState('');
+  const [created, setCreated] = useState(null);
+  const [errorText, setErrorText] = useState('');
+
+  const refresh = async () => {
+    if (!eventItem?.id) return;
+    setLoading(true);
+    const { data, error } = await supabase.from('spinmatch_wasit_event')
+      .select('id, kode_wasit, nama_wasit, nomor_meja, status')
+      .eq('event_id', Number(eventItem.id)).order('nomor_meja');
+    if (error) setErrorText(error.message);
+    else { setRows(data || []); setErrorText(''); onAccountsChanged?.(data || []); }
+    setLoading(false);
+  };
+  useEffect(() => { setCreated(null); setMeja('1'); refresh(); }, [eventItem?.id]);
+
+  const createAccount = async (e) => {
+    e.preventDefault();
+    if (saving || !eventItem?.id) return;
+    setCreated(null);
+    setErrorText('');
+    if (!nama.trim() || password.length < 8) {
+      setErrorText('Isi nama wasit dan password minimal 8 karakter.'); return;
+    }
+    const nomor = Number(meja);
+    if (!Number.isInteger(nomor) || nomor < 1 || nomor > tableCount) {
+      setErrorText('Nomor meja tidak sesuai jumlah meja event.'); return;
+    }
+    setSaving(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Sesi EO tidak ditemukan. Silakan login ulang.');
+      const { data, error } = await supabase.functions.invoke('spinmatch-create-wasit', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { event_id: Number(eventItem.id), nama_wasit: nama.trim(), nomor_meja: nomor, password }
+      });
+      if (error || !data?.success) {
+        let message = data?.error || error?.message || 'Gagal membuat akun wasit.';
+        if (error?.context?.json) {
+          try { const detail = await error.context.json(); message = detail?.error || message; } catch (_) {}
+        }
+        throw new Error(message);
+      }
+      setCreated({ loginId: data.login_id, kode: data.wasit?.kode_wasit, nama: nama.trim(), meja: nomor });
+      setNama(''); setPassword('');
+      await refresh();
+    } catch (err) { setErrorText(err?.message || 'Gagal membuat akun.'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="overflow-hidden rounded-[24px] border border-violet-100 bg-white shadow-sm">
+      <div className="border-b border-violet-100 bg-violet-50 p-5">
+        <h4 className="text-sm font-black text-violet-950">Akun Login Wasit (Supabase)</h4>
+        <p className="mt-1 text-[11px] text-violet-800">Akun terikat ke event ini dan satu meja. ID login unik dibuat otomatis; kode WST dapat berulang pada event berbeda.</p>
+      </div>
+      <form onSubmit={createAccount} className="grid grid-cols-1 gap-3 p-5 md:grid-cols-4">
+        <label className="text-xs font-bold text-slate-700">Nama Wasit
+          <input required maxLength={100} value={nama} onChange={e => setNama(e.target.value)} placeholder="Nama wasit" className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm" />
+        </label>
+        <label className="text-xs font-bold text-slate-700">Meja
+          <select value={meja} onChange={e => setMeja(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm">
+            {Array.from({ length: tableCount }, (_, i) => i + 1).map(n => <option key={n} value={n}>Meja {n}</option>)}
+          </select>
+        </label>
+        <label className="text-xs font-bold text-slate-700">Password dari EO
+          <input required minLength={8} maxLength={128} type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimal 8 karakter" className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm" />
+        </label>
+        <button type="submit" disabled={saving} className="self-end rounded-xl bg-violet-700 p-3 text-sm font-black text-white disabled:opacity-50">{saving ? 'Membuat...' : '+ Buat Akun Login'}</button>
+      </form>
+      {errorText && <p role="alert" className="mx-5 mb-4 rounded-lg bg-red-50 p-3 text-xs font-bold text-red-700">{errorText}</p>}
+      {created && <div className="mx-5 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+        <div className="font-black">Akun berhasil dibuat — simpan ID login sekarang</div>
+        <div className="mt-2">{created.nama} • {created.kode} • Meja {created.meja}</div>
+        <div className="mt-1 break-all font-mono font-bold">ID Login: {created.loginId}</div>
+        <p className="mt-2 text-xs">Berikan ID Login dan password yang tadi diisi kepada wasit. Password tidak dapat dilihat kembali dari halaman ini.</p>
+        <button type="button" onClick={() => navigator.clipboard?.writeText(created.loginId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white">Salin ID Login</button>
+      </div>}
+      <div className="border-t border-slate-100 p-5">
+        <div className="mb-2 flex items-center justify-between"><h5 className="text-xs font-black">Daftar Akun Online</h5><button type="button" onClick={refresh} className="text-xs font-bold text-violet-700">Muat ulang</button></div>
+        {loading ? <p className="text-xs text-slate-500">Memuat...</p> : rows.length === 0 ? <p className="text-xs text-slate-500">Belum ada akun login wasit untuk event ini.</p> :
+          <div className="overflow-x-auto"><table className="w-full min-w-[460px] text-left text-xs"><thead><tr className="border-b"><th className="py-2">Kode</th><th>Nama</th><th>Meja</th><th>Status</th></tr></thead><tbody>{rows.map(r => <tr key={r.id} className="border-b"><td className="py-2 font-bold">{r.kode_wasit}</td><td>{r.nama_wasit}</td><td>{r.nomor_meja}</td><td>{r.status}</td></tr>)}</tbody></table></div>}
+        <p className="mt-3 text-[10px] text-amber-700">Tahap awal: akun online belum otomatis tersambung ke Live Score lokal. Jangan gunakan untuk pertandingan resmi sebelum akses skor dan login wasit diuji.</p>
+      </div>
+    </div>
   );
 };
 
@@ -185,6 +289,7 @@ const MainContent = () => {
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
   const isEO = userRole === 'EO';
+  const isWasit = userRole === 'WASIT';
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : userRole === 'WASIT' ? 'Wasit' : 'Pengguna';
@@ -211,6 +316,31 @@ const MainContent = () => {
   const [selectedEventIdForDraw, setSelectedEventIdForDraw] = useState('');
   const [selectedEventIdForSchedule, setSelectedEventIdForSchedule] = useState('');
   const [selectedEventIdForLive, setSelectedEventIdForLive] = useState('');
+  const [publicLiveTable, setPublicLiveTable] = useState('ALL');
+  const [wasitAssignment, setWasitAssignment] = useState(null);
+  const [wasitAssignmentLoading, setWasitAssignmentLoading] = useState(true);
+  useEffect(() => {
+    if (!isWasit) { setWasitAssignmentLoading(false); return; }
+    let cancelled = false;
+    setWasitAssignmentLoading(true);
+    const load = async () => {
+      const { data, error } = await supabase.from('spinmatch_wasit_event')
+        .select('event_id, nomor_meja, nama_wasit, status')
+        .eq('auth_user_id', currentUserId).eq('status', 'AKTIF').limit(1);
+      if (cancelled) return;
+      if (error) console.error('Penugasan wasit gagal dimuat:', error);
+      setWasitAssignment(!error ? (data?.[0] || null) : null);
+      setWasitAssignmentLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [isWasit, currentUserId]);
+  useEffect(() => {
+    if (!isWasit) return;
+    setActiveView('LIVE_SCORE');
+    setSelectedEventIdForLive(wasitAssignment?.event_id ? String(wasitAssignment.event_id) : '');
+  }, [isWasit, wasitAssignment?.event_id]);
+
   const [selectedEventIdForKnockout, setSelectedEventIdForKnockout] = useState('');
   const [dashboardEventBrowser, setDashboardEventBrowser] = useState(null); // null | 'MINE' | 'ALL'
   const [publicViewedEventId, setPublicViewedEventId] = useState(() => sessionStorage.getItem('spinmatch_public_view_event') || '');
@@ -238,6 +368,41 @@ const MainContent = () => {
     try { return JSON.parse(localStorage.getItem('spinmatch_referee_registry') || '[]'); }
     catch { return []; }
   });
+  // Akun online dipisahkan dari Master Wasit lokal agar tidak mencampur event.
+  const [onlineReferees, setOnlineReferees] = useState([]);
+  // Penugasan online lintas halaman: jadwal Pool dan seluruh ronde Knockout.
+  const [refereesByEvent, setRefereesByEvent] = useState({});
+  useEffect(() => {
+    let cancelled = false;
+    const loadReferees = async () => {
+      const { data, error } = await supabase.from('spinmatch_wasit_event')
+        .select('event_id, nama_wasit, nomor_meja, status');
+      if (cancelled) return;
+      if (error) {
+        console.warn('Nama wasit belum dapat dimuat:', error.message);
+        return;
+      }
+      const grouped = {};
+      (data || []).forEach(r => {
+        const eventKey = String(r.event_id);
+        if (!grouped[eventKey]) grouped[eventKey] = [];
+        grouped[eventKey].push(r);
+      });
+      setRefereesByEvent(grouped);
+    };
+    loadReferees();
+    return () => { cancelled = true; };
+  }, [user?.id, selectedEventIdForSchedule, selectedEventIdForKnockout, settingsSection]);
+  const getScheduledReferee = (eventId, tableValue) => {
+    const tableNo = Number(String(tableValue ?? '').match(/\d+/)?.[0]);
+    if (!Number.isFinite(tableNo) || tableNo < 1) return 'Belum ditugaskan';
+    const rows = refereesByEvent[String(eventId)] || [];
+    const found = rows.find(r => Number(r.nomor_meja) === tableNo && String(r.status || '').toUpperCase() === 'AKTIF');
+    return found?.nama_wasit || 'Belum ditugaskan';
+  };
+
+  const [onlineRefereesError, setOnlineRefereesError] = useState('');
+  const [onlineRefereesLoading, setOnlineRefereesLoading] = useState(false);
   const [refereeModalOpen, setRefereeModalOpen] = useState(false);
   const [newRefereeName, setNewRefereeName] = useState('');
   const [newRefereeStatus, setNewRefereeStatus] = useState('AKTIF');
@@ -311,6 +476,58 @@ const MainContent = () => {
   useEffect(() => { localStorage.setItem('spinmatch_match_results', JSON.stringify(matchResults)); }, [matchResults]);
   useEffect(() => { localStorage.setItem('spinmatch_pool_rankings', JSON.stringify(poolRankings)); }, [poolRankings]);
   useEffect(() => { localStorage.setItem('spinmatch_knockout_results', JSON.stringify(knockoutResults)); }, [knockoutResults]);
+
+  // Data undian dan skor online: Supabase adalah sumber bersama antar perangkat.
+  // Jangan mengunggah cache lokal otomatis saat login (dapat menimpa data EO).
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const loadOnlineResults = async () => {
+      const { data, error } = await supabase.from('spinmatch_event_data')
+        .select('event_id, pool_results, match_results');
+      if (cancelled) return;
+      if (error) { console.error('Gagal membaca data undian/skor online:', error); return; }
+      const onlinePools = {};
+      const onlineMatches = {};
+      (data || []).forEach(row => {
+        if (row.pool_results && Object.keys(row.pool_results).length) {
+          onlinePools[String(row.event_id)] = row.pool_results;
+        }
+        Object.assign(onlineMatches, row.match_results || {});
+      });
+      // Data online didahulukan, cache lama tetap ada untuk migrasi pertama.
+      setPoolResults(prev => ({ ...prev, ...onlinePools }));
+      setMatchResults(prev => ({ ...prev, ...onlineMatches }));
+    };
+    loadOnlineResults();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const saveOnlinePool = async (eventId, poolData) => {
+    const { data: existing, error: readError } = await supabase.from('spinmatch_event_data')
+      .select('match_results').eq('event_id', Number(eventId)).maybeSingle();
+    if (readError) throw readError;
+    const { error } = await supabase.from('spinmatch_event_data').upsert({
+      event_id: Number(eventId), pool_results: poolData,
+      match_results: existing?.match_results || {}, updated_at: new Date().toISOString()
+    }, { onConflict: 'event_id' });
+    if (error) throw error;
+  };
+
+  const saveOnlineMatch = async (eventId, matchId, result) => {
+    const { data: existing, error: readError } = await supabase.from('spinmatch_event_data')
+      .select('pool_results, match_results').eq('event_id', Number(eventId)).maybeSingle();
+    if (readError) throw readError;
+    const nextMatches = { ...(existing?.match_results || {}) };
+    if (result === null) delete nextMatches[matchId];
+    else nextMatches[matchId] = result;
+    const { error } = await supabase.from('spinmatch_event_data').upsert({
+      event_id: Number(eventId), pool_results: existing?.pool_results || {},
+      match_results: nextMatches, updated_at: new Date().toISOString()
+    }, { onConflict: 'event_id' });
+    if (error) throw error;
+  };
+
 
 
   // ============================================
@@ -445,9 +662,10 @@ const MainContent = () => {
         localStorage.setItem('spinmatch_participants', JSON.stringify(groupedParticipants));
         console.log(`✅ ${data.length} Participant dimuat dari Supabase`);
       } else {
-        setParticipants({});
-        localStorage.setItem('spinmatch_participants', JSON.stringify({}));
-        console.log('ℹ️ Tabel Participants Supabase kosong; peserta lokal ikut dikosongkan.');
+        // Jangan hapus cache pemain hanya karena query Supabase mengembalikan 0 baris.
+        // Bisa terjadi karena RLS, masalah sinkronisasi, atau data server belum dipulihkan.
+        // Penghapusan pemain harus dilakukan melalui aksi hapus yang disengaja.
+        console.warn('⚠️ Supabase mengembalikan 0 peserta. Cache lokal dipertahankan; periksa tabel Participants dan RLS.');
       }
     };
 
@@ -497,7 +715,9 @@ const MainContent = () => {
 
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, player: null });
 
+  const [simulationSaving, setSimulationSaving] = useState(false);
   const [showMatchResultModal, setShowMatchResultModal] = useState(false);
+  const [ratioDetail, setRatioDetail] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
 
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -539,7 +759,7 @@ const MainContent = () => {
   const selectedEventItem = events.find(e => String(e.id) === String(selectedEventIdForReg));
   const selectedDrawEvent = events.find(e => String(e.id) === String(selectedEventIdForDraw));
   const selectedScheduleEvent = events.find(e => String(e.id) === String(selectedEventIdForSchedule));
-  const selectedLiveEvent = events.find(e => String(e.id) === String(selectedEventIdForLive));
+  const selectedLiveEvent = events.find(e => String(e.id) === String(selectedEventIdForLive) && (!isWasit || String(e.id) === String(wasitAssignment?.event_id)));
   const selectedKnockoutEvent = events.find(e => String(e.id) === String(selectedEventIdForKnockout));
 
   // Update ref pemain live. Hook tetap dipanggil pada setiap render.
@@ -954,16 +1174,16 @@ const MainContent = () => {
       setSelectedEventIdForReg(String(events[0].id));
     }
     if (activeView === 'DRAW' && !selectedEventIdForDraw && events.length > 0) {
-      setSelectedEventIdForDraw(String(events[0].id));
+      setSelectedEventIdForDraw(String(isWasit ? (wasitAssignment?.event_id || events[0].id) : events[0].id));
     }
     if (activeView === 'SCHEDULE' && !selectedEventIdForSchedule && events.length > 0) {
       setSelectedEventIdForSchedule(String(events[0].id));
     }
-    if (activeView === 'LIVE_SCORE' && !selectedEventIdForLive && events.length > 0) {
+    if (!isWasit && activeView === 'LIVE_SCORE' && !selectedEventIdForLive && events.length > 0) {
       setSelectedEventIdForLive(String(events[0].id));
     }
     if (activeView === 'KNOCKOUT' && !selectedEventIdForKnockout && events.length > 0) {
-      setSelectedEventIdForKnockout(String(events[0].id));
+      setSelectedEventIdForKnockout(String(isWasit ? (wasitAssignment?.event_id || events[0].id) : events[0].id));
     }
     if (activeView === 'RANKING' && !selectedEventIdForRanking && events.length > 0) {
       setSelectedEventIdForRanking(String(events[0].id));
@@ -1165,6 +1385,7 @@ const MainContent = () => {
   };
 
   const handleOpenCreate = () => {
+    if (isWasit || isPublic) { alert('Hanya EO atau Super Admin yang boleh membuat event.'); return; }
     if (isPublic) { alert('Akun Public tidak dapat membuat event. Silakan pilih Semua Event.'); return; }
     if (!isEO && !isSuperAdmin) { alert('Hanya akun EO atau Super Admin yang dapat membuat event.'); return; }
     setIsEditMode(false);
@@ -1875,24 +2096,14 @@ const handleUpdatePlayerSubmit = async (e) => {
       }
     });
 
-    setPoolResults({
-      ...poolResults,
-      [selectedDrawEvent.id]: {
-        pools: results,
-        seededPools,
-        config: {
-          poolSize,
-          lolosCount,
-          totalPlayers,
-          numPools,
-          knockoutPlayers,
-          bracketSize,
-          byeCount,
-          requiredSeeds: numPools,
-          byePrioritySeeds: byeCount
-        }
-      }
-    });
+    const newPoolData = {
+      pools: results, seededPools,
+      config: { poolSize, lolosCount, totalPlayers, numPools, knockoutPlayers,
+        bracketSize, byeCount, requiredSeeds: numPools, byePrioritySeeds: byeCount }
+    };
+    setPoolResults(prev => ({ ...prev, [selectedDrawEvent.id]: newPoolData }));
+    saveOnlinePool(selectedDrawEvent.id, newPoolData)
+      .catch(error => alert('Undian tersimpan di browser, tetapi gagal sinkron ke Supabase: ' + error.message));
     setDrawPhase('done');
   };
 
@@ -1914,6 +2125,8 @@ const handleUpdatePlayerSubmit = async (e) => {
         }
       });
       setMatchResults(matchUpdated);
+      saveOnlinePool(selectedDrawEvent.id, {})
+        .catch(error => alert('Gagal reset undian online: ' + error.message));
       const rankingUpdated = { ...poolRankings };
       delete rankingUpdated[selectedDrawEvent.id];
       setPoolRankings(rankingUpdated);
@@ -1936,129 +2149,242 @@ const handleUpdatePlayerSubmit = async (e) => {
     return timeInMinutes + minutesToAdd;
   };
 
+  // Parser tanggal lokal Indonesia, tanpa bergantung pada interpretasi browser.
+  // Mendukung YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, dan '24 Oktober 2026'.
+  const parseEventDate = (input) => {
+    const raw = String(input || '').trim()
+      .replace(/^Dari Tanggal\s+/i, '').split(/\s+sd\s+/i)[0].trim();
+    let year, month, day;
+    let m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) { year = +m[1]; month = +m[2]; day = +m[3]; }
+    else {
+      m = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+      if (m) { day = +m[1]; month = +m[2]; year = +m[3]; }
+      else {
+        m = raw.match(/^(\d{1,2})[\s/-]+([a-zA-Z]+)[\s/-]+(\d{2}|\d{4})$/);
+        if (m) {
+          const monthNames = ['januari','februari','maret','april','mei','juni',
+            'juli','agustus','september','oktober','november','desember'];
+          const aliases = {jan:1,feb:2,mar:3,apr:4,mei:5,jun:6,jul:7,
+            agu:8,ags:8,sep:9,okt:10,nov:11,des:12};
+          const name = m[2].toLowerCase();
+          month = monthNames.indexOf(name) + 1 || aliases[name];
+          day = +m[1]; year = +m[3]; if (year < 100) year += 2000;
+        }
+      }
+    }
+    if (!year || !month || !day) return null;
+    const d = new Date(year, month - 1, day);
+    return d.getFullYear() === year && d.getMonth() === month - 1 &&
+      d.getDate() === day ? d : null;
+  };
+
   const getDayName = (dateStr) => {
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '-';
-    return days[date.getDay()];
+    const date = parseEventDate(dateStr);
+    if (!date) return '-';
+    return ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][date.getDay()];
   };
 
   const formatDateShort = (dateStr) => {
+    const date = parseEventDate(dateStr);
+    if (!date) return String(dateStr || '-');
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
     return `${date.getDate()}-${months[date.getMonth()]}-${String(date.getFullYear()).slice(-2)}`;
   };
 
-  const calculatePoolRankings = (eventId) => {
+  // ITTF group ranking: match points, head-to-head among tied players,
+  // then ratios of games and individual points (only among tied players).
+  const buildPoolRankings = (eventId) => {
     const poolData = poolResults[eventId];
-    if (!poolData) return {};
-    const rankings = {};
-
-    // WAJIB mengikuti pengaturan Event yang sedang dihitung, bukan event lain
-    // yang kebetulan sedang tersimpan di selectedScheduleEvent.
+    if (!poolData?.pools) return {};
     const eventData = events.find(e => String(e.id) === String(eventId));
-    const divisiConfig = eventData?.divisiList?.[0] || {};
-
-    // poolData.config.lolosCount disimpan saat Undian dan menjadi fallback
-    // agar aturan "1 Pemain / 2 Pemain" tetap konsisten sampai Jadwal.
-    const configuredLolos = Number(poolData?.config?.lolosCount || 0);
-    const lolosCount = configuredLolos > 0
-      ? configuredLolos
-      : (divisiConfig.lolosPool === '2 Pemain' ? 2 : 1);
+    const division = eventData?.divisiList?.[0] || {};
+    const configured = Number(poolData?.config?.lolosCount || 0);
+    const qualifyCount = configured > 0 ? configured : (division.lolosPool === '2 Pemain' ? 2 : 1);
+    const rankings = {};
     Object.entries(poolData.pools).forEach(([poolName, players]) => {
-      const poolMatches = Object.entries(matchResults).filter(([key]) =>
-        key.startsWith(`${eventId}_${poolName}_`)
-      );
-      const playerStats = {};
-      players.forEach(p => {
-        playerStats[p.id] = {
-          id: p.id,
-          nama: p.nama,
-          ptm: p.ptm,
-          playerCode: p.customId,
-          wins: 0,
-          losses: 0,
-          points: 0,
-          gamesWon: 0,
-          gamesLost: 0,
-          totalPoints: 0
-        };
-      });
-      // Hitung ranking berdasarkan PEMAIN YANG BENAR-BENAR BERTANDING.
-      // Seed hanya menentukan posisi undian/Pool, BUKAN menentukan siapa yang lolos.
-      const m1Result = matchResults[`${eventId}_${poolName}_M1`];
-
-      poolMatches.forEach(([matchKey, result]) => {
-        if (!result || !result.winner) return;
-
-        const parts = matchKey.split('_');
-        const matchRef = parts[parts.length - 1];
-        let player1 = null;
-        let player2 = null;
-
+      const matches = [];
+      const m1 = matchResults[`${eventId}_${poolName}_M1`];
+      Object.entries(matchResults).forEach(([key, result]) => {
+        if (!key.startsWith(`${eventId}_${poolName}_`) || !result?.winner) return;
+        const ref = key.slice(`${eventId}_${poolName}_`.length);
+        let p1 = result.player1, p2 = result.player2;
         if (players.length === 3) {
-          if (matchRef === 'M1') {
-            // M1 = pemain posisi 2 vs posisi 3
-            player1 = players[1] || null;
-            player2 = players[2] || null;
-          } else if (matchRef === 'M2') {
-            // M2 = yang kalah M1 vs pemain posisi 1
-            if (!m1Result?.winner) return;
-            player1 = m1Result.winner === 'player1' ? players[2] : players[1];
-            player2 = players[0] || null;
-          } else if (matchRef === 'M3') {
-            // M3 = yang menang M1 vs pemain posisi 1
-            if (!m1Result?.winner) return;
-            player1 = m1Result.winner === 'player1' ? players[1] : players[2];
-            player2 = players[0] || null;
-          }
-        } else {
-          // Fallback untuk format selain Pool 3 pemain:
-          // gunakan data pemain yang tersimpan pada hasil bila tersedia.
-          player1 = result.player1 || null;
-          player2 = result.player2 || null;
+          if (ref === 'M1') { p1=players[1]; p2=players[2]; }
+          if (ref === 'M2' && m1?.winner) { p1=m1.winner === 'player1' ? players[2] : players[1]; p2=players[0]; }
+          if (ref === 'M3' && m1?.winner) { p1=m1.winner === 'player1' ? players[1] : players[2]; p2=players[0]; }
         }
-
-        if (!player1?.id || !player2?.id) return;
-
-        const winnerPlayer = result.winner === 'player1' ? player1 : player2;
-        const loserPlayer  = result.winner === 'player1' ? player2 : player1;
-
-        if (playerStats[winnerPlayer.id]) playerStats[winnerPlayer.id].wins++;
-        if (playerStats[loserPlayer.id]) playerStats[loserPlayer.id].losses++;
-
-        // Statistik game/set dan poin harus mengikuti sisi player1/player2,
-        // bukan mengikuti status seeded.
-        if (playerStats[player1.id]) {
-          playerStats[player1.id].gamesWon += Number(result.player1Score || 0);
-          playerStats[player1.id].gamesLost += Number(result.player2Score || 0);
-          playerStats[player1.id].totalPoints += Number(result.point1 || 0);
-        }
-        if (playerStats[player2.id]) {
-          playerStats[player2.id].gamesWon += Number(result.player2Score || 0);
-          playerStats[player2.id].gamesLost += Number(result.player1Score || 0);
-          playerStats[player2.id].totalPoints += Number(result.point2 || 0);
-        }
+        if (!p1?.id || !p2?.id) return;
+        const games = Array.isArray(result.gameHistory) ? result.gameHistory.filter(g =>
+          g && g.p1 !== '' && g.p2 !== '' && g.p1 != null && g.p2 != null &&
+          Number.isFinite(Number(g.p1)) && Number.isFinite(Number(g.p2)) && Number(g.p1) !== Number(g.p2)
+        ) : [];
+        const validPoints = games.length === Number(result.player1Score || 0) + Number(result.player2Score || 0);
+        matches.push({p1:String(p1.id),p2:String(p2.id),result,games,validPoints,key});
       });
-
-      const sortedPlayers = Object.values(playerStats).sort((a, b) => {
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
-        return (b.gamesWon - b.gamesLost) - (a.gamesWon - a.gamesLost);
+      const stats = players.map(p => ({id:p.id,nama:p.nama,ptm:p.ptm,playerCode:p.customId,
+        wins:0,losses:0,matchPoints:0,gamesWon:0,gamesLost:0,
+        pointsWon:0,pointsLost:0,completePoints:true, matchesPlayed:0}));
+      const byId = Object.fromEntries(stats.map(s => [String(s.id),s]));
+      const aggregate = (subset, ids) => {
+        const out = Object.fromEntries(ids.map(id => [id,{mp:0,gw:0,gl:0,pw:0,pl:0,complete:true}]));
+        subset.forEach(m => {
+          if (!out[m.p1] || !out[m.p2]) return;
+          const a=out[m.p1],b=out[m.p2],r=m.result;
+          a.mp += r.winner==='player1' ? 2 : 1;
+          b.mp += r.winner==='player2' ? 2 : 1;
+          a.gw+=Number(r.player1Score||0); a.gl+=Number(r.player2Score||0);
+          b.gw+=Number(r.player2Score||0); b.gl+=Number(r.player1Score||0);
+          a.complete=a.complete&&m.validPoints; b.complete=b.complete&&m.validPoints;
+          if (m.validPoints) m.games.forEach(g=>{a.pw+=Number(g.p1);a.pl+=Number(g.p2);b.pw+=Number(g.p2);b.pl+=Number(g.p1);});
+        });
+        return out;
+      };
+      const allIds=stats.map(s=>String(s.id));
+      const totals=aggregate(matches,allIds);
+      stats.forEach(s=>{
+        const id=String(s.id),t=totals[id];
+        s.matchPoints=t.mp;s.gamesWon=t.gw;s.gamesLost=t.gl;
+        s.pointsWon=t.pw;s.pointsLost=t.pl;s.completePoints=t.complete;
+        s.wins=matches.filter(m=>(m.p1===id&&m.result.winner==='player1')||(m.p2===id&&m.result.winner==='player2')).length;
+        s.losses=matches.filter(m=>(m.p1===id&&m.result.winner==='player2')||(m.p2===id&&m.result.winner==='player1')).length;
+        s.matchesPlayed=s.wins+s.losses;
+        s.totalPoints=t.pw;
       });
-      rankings[poolName] = sortedPlayers.map((player, index) => ({
-        ...player,
-        ranking: index + 1,
-        keterangan: index < lolosCount ? `Lolos Pool ${index + 1}` : ''
-      }));
+      const ratio=(w,l)=>l===0 ? (w>0?Infinity:0) : w/l;
+      // Recursive tie-break: after separating players, recalculate using only
+      // the matches between players still tied, as required by ITTF.
+      const rankGroup=(ids,depth=0) => {
+        if(ids.length<2 || depth>8) return ids;
+        const scoped=aggregate(matches.filter(m=>ids.includes(m.p1)&&ids.includes(m.p2)),ids);
+        const groupBy=(fn)=>{
+          const groups=new Map();
+          ids.forEach(id=>{const v=fn(scoped[id]);const k=String(v);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(id);});
+          return [...groups.entries()].sort((a,b)=>Number(b[0])-Number(a[0])).map(x=>x[1]);
+        };
+        const mpGroups=groupBy(s=>s.mp);
+        if(mpGroups.length>1) return mpGroups.flatMap(g=>g.length===ids.length?g:rankGroup(g,depth+1));
+        const setGroups=groupBy(s=>ratio(s.gw,s.gl));
+        if(setGroups.length>1) return setGroups.flatMap(g=>rankGroup(g,depth+1));
+        if(ids.every(id=>scoped[id].complete)) {
+          const pointGroups=groupBy(s=>ratio(s.pw,s.pl));
+          if(pointGroups.length>1) return pointGroups.flatMap(g=>rankGroup(g,depth+1));
+        }
+        return ids; // still tied: do not invent a winner
+      };
+      const order=rankGroup(allIds);
+      const fullyPlayed=matches.length >= players.length*(players.length-1)/2;
+      const ordered=order.map((id,index)=>{
+        const s=byId[id];
+        const sameMp=stats.filter(t=>t.matchPoints===s.matchPoints);
+        const unresolved=sameMp.length>1 && !sameMp.every(t=>t.completePoints);
+        return {...s,ranking:index+1,ratioSet:ratio(s.gamesWon,s.gamesLost),
+          ratioPoin:s.completePoints?ratio(s.pointsWon,s.pointsLost):null,
+          keterangan:fullyPlayed && index<qualifyCount && !unresolved ? `Lolos Pool ${index+1}` : '',
+          note:!fullyPlayed?'Pertandingan pool belum lengkap':unresolved?'Poin bola belum lengkap; verifikasi tie-break':'Perhitungan klasemen ITTF'};
+      });
+      rankings[poolName]=ordered;
     });
-    setPoolRankings(prev => ({
-      ...prev,
-      [eventId]: rankings
-    }));
     return rankings;
   };
+
+  const calculatePoolRankings = (eventId) => {
+    const rankings=buildPoolRankings(eventId);
+    setPoolRankings(prev=>({...prev,[eventId]:rankings}));
+    return rankings;
+  };
+
+  // Khusus pengujian: isi hasil Pool yang kosong tanpa menimpa hasil wasit.
+  const simulatePoolScores = async () => {
+    if (!(isEO || isSuperAdmin) || !selectedDrawEvent || !canManageEvent(selectedDrawEvent)) return;
+    if (simulationSaving) return;
+    const eventId = String(selectedDrawEvent.id);
+    const pools = poolResults[eventId]?.pools;
+    if (!pools || !Object.keys(pools).length) {
+      alert('Undian pool belum tersedia.'); return;
+    }
+    if (Object.values(pools).some(players => players.length > 3)) {
+      alert('Simulasi ini mendukung pool berisi 2 atau 3 pemain. Data tidak diubah.'); return;
+    }
+    if (!window.confirm('ISI HASIL SIMULASI untuk event ini?\n\nHasil yang sudah ada tidak akan ditimpa. Hasil baru disimpan ke Supabase dan memengaruhi klasemen/Knockout. Gunakan hanya untuk pengujian.')) return;
+    setSimulationSaving(true);
+    try {
+      const { data: online, error: readError } = await supabase.from('spinmatch_event_data')
+        .select('pool_results, match_results').eq('event_id', Number(eventId)).maybeSingle();
+      if (readError) throw readError;
+      if (!online?.pool_results?.pools) throw new Error('Data pool online tidak ditemukan. Simulasi dibatalkan untuk melindungi data.');
+      const onlinePools = online.pool_results.pools;
+      if (JSON.stringify(onlinePools) !== JSON.stringify(pools)) {
+        throw new Error('Data pool lokal berbeda dari Supabase. Muat ulang halaman sebelum simulasi.');
+      }
+      const next = { ...(online.match_results || {}) };
+      const makeResult = (player1, player2, seed) => {
+        const firstWins = seed % 2 === 0;
+        const games = firstWins
+          ? [{p1:11,p2:7},{p1:9,p2:11},{p1:11,p2:6},{p1:11,p2:8}]
+          : [{p1:8,p2:11},{p1:11,p2:9},{p1:7,p2:11},{p1:6,p2:11}];
+        return {
+          player1Score: firstWins ? 3 : 1,
+          player2Score: firstWins ? 1 : 3,
+          score: firstWins ? '3 - 1' : '1 - 3',
+          winner: firstWins ? 'player1' : 'player2',
+          point1: games.reduce((sum,g) => sum + g.p1, 0),
+          point2: games.reduce((sum,g) => sum + g.p2, 0),
+          gameHistory: games,
+          player1, player2,
+          signatureWinner: '', signatureLoser: '', signatureReferee: '',
+          simulated: true,
+          updatedAt: new Date().toISOString()
+        };
+      };
+      let added = 0;
+      Object.entries(onlinePools).forEach(([poolName, players], poolIndex) => {
+        if (players.length < 2) return;
+        const prefix = `${eventId}_${poolName}_`;
+        const add = (ref, p1, p2, seed) => {
+          const key = prefix + ref;
+          if (next[key]) return;
+          next[key] = makeResult(p1, p2, seed);
+          added++;
+        };
+        if (players.length === 2) {
+          add('M1', players[0], players[1], poolIndex);
+        } else if (players.length === 3) {
+          const m1Key = prefix + 'M1';
+          add('M1', players[1], players[2], poolIndex);
+          const m1 = next[m1Key];
+          if (m1?.winner !== 'player1' && m1?.winner !== 'player2') {
+            throw new Error(`Hasil M1 ${poolName} belum mempunyai pemenang.`);
+          }
+          const loser = m1.winner === 'player1' ? players[2] : players[1];
+          const winner = m1.winner === 'player1' ? players[1] : players[2];
+          add('M2', loser, players[0], poolIndex + 1);
+          add('M3', winner, players[0], poolIndex + 2);
+        }
+      });
+      if (!added) { alert('Semua pertandingan pool sudah mempunyai hasil. Tidak ada data yang diubah.'); return; }
+      const { error: saveError } = await supabase.from('spinmatch_event_data').upsert({
+        event_id: Number(eventId),
+        pool_results: online.pool_results,
+        match_results: next,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'event_id' });
+      if (saveError) throw saveError;
+      setMatchResults(prev => ({ ...prev, ...next }));
+      alert(`${added} pertandingan simulasi berhasil disimpan ke Supabase. Hasil sebelumnya tetap aman.`);
+    } catch (err) {
+      console.error('Simulasi pool gagal:', err);
+      alert('Simulasi dibatalkan: ' + (err?.message || 'Kesalahan tidak diketahui'));
+    } finally {
+      setSimulationSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedEventIdForDraw || !poolResults[selectedEventIdForDraw]?.pools) return;
+    if (!(isEO || isSuperAdmin)) return;
+    calculatePoolRankings(selectedEventIdForDraw);
+  }, [matchResults, selectedEventIdForDraw]);
 
   const generateScheduleFromPools = (eventId) => {
     const poolData = poolResults[eventId];
@@ -2176,7 +2502,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           pool: poolName,
           playerCode: `${poolLetter}2`,
           player: p2,
-          matchLabel: `Pemain Kalah M1 VS ${poolLetter}1`,
+          matchLabel: `PK M1 VS ${poolLetter}1`,
           matchRef: 'M2',
           jam: jam2,
           meja: `Meja ${mejaNumber}`,
@@ -2193,7 +2519,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           pool: poolName,
           playerCode: `${poolLetter}3`,
           player: p3,
-          matchLabel: `Pemain Menang M1 VS ${poolLetter}1`,
+          matchLabel: `PM M1 VS ${poolLetter}1`,
           matchRef: 'M3',
           jam: jam3,
           meja: `Meja ${mejaNumber}`,
@@ -2438,7 +2764,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   const getKOWinner = (eventId, matchId, player1, player2) => {
     if (!player1) return player2 || null;
     if (!player2) return player1 || null;
-    const result = knockoutResults[`${eventId}_${matchId}`] || matchResults[`${eventId}_${matchId}`];
+    const result = matchResults[`${eventId}_${matchId}`] || knockoutResults[`${eventId}_${matchId}`];
     if (!result?.winner) return null;
     return result.winner === 'player1' ? player1 : player2;
   };
@@ -2595,7 +2921,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
     const poolSchedule = generateScheduleFromPools(eventId).filter(r => r.type === 'player' && r.jam && r.jam !== '-');
     const durasi = parseInt(eventData.durasiMatch) || 20;
-    const maxMeja = 4;
+    const maxMeja = Math.max(1, Number(eventData.jumlahMeja || 4));
 
     let startMinute = parseTime(eventData.jamMulai || '08:00');
     poolSchedule.forEach(row => {
@@ -2621,6 +2947,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   };
 
   const openKnockoutLiveScore = (match) => {
+    if (isPublic || isWasit) return;
     if (!selectedKnockoutEvent || !match?.player1 || !match?.player2) return;
     if (match.player1.isPlaceholder || match.player2.isPlaceholder) {
       alert('Pemain belum ditentukan dari hasil Pool.');
@@ -2646,8 +2973,30 @@ const handleUpdatePlayerSubmit = async (e) => {
     openLiveScore(koMatch);
   };
 
+  // Jadwal menyimpan meja sebagai 'Meja 1', sedangkan Supabase menyimpan angka 1.
+  const normalizeMeja = (value) => {
+    const found = String(value ?? '').match(/(?:^|\bmeja\s*)(\d+)\s*$/i);
+    return found ? Number(found[1]) : NaN;
+  };
+
   const openLiveScore = (match) => {
+    if (isPublic) return;
+    // Saat dibuka dari Jadwal, gunakan event jadwal (bukan pilihan Live Score yang
+    // mungkin belum terisi). Tetap wajib cocok dengan event dan meja tugas wasit.
+    const sourceEventId = activeView === 'SCHEDULE'
+      ? selectedScheduleEvent?.id
+      : selectedLiveEvent?.id;
+    if (isWasit && (
+      !wasitAssignment ||
+      !sourceEventId ||
+      String(sourceEventId) !== String(wasitAssignment.event_id) ||
+      normalizeMeja(match?.meja) !== normalizeMeja(wasitAssignment.nomor_meja)
+    )) { alert('Pertandingan ini bukan meja tugas Anda.'); return; }
     if (match.type !== 'player' || !match.matchId) return;
+    // Menjaga proses Simpan/Hapus dan pemuatan pemain tetap memakai event yang sama.
+    if (sourceEventId && String(selectedEventIdForLive) !== String(sourceEventId)) {
+      setSelectedEventIdForLive(String(sourceEventId));
+    }
     activeVoiceSetRef.current = 0;
     setActiveVoiceSet(0);
     setVoiceStatus('SET 1 aktif — klik mikrofon lalu sebut nama dan skor');
@@ -2679,6 +3028,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   };
 
   const saveLiveScoreResult = (closeAfterSave = true) => {
+    if (isWasit && (!wasitAssignment || String(selectedLiveEvent?.id) !== String(wasitAssignment.event_id) || normalizeMeja(liveScoreMatch?.meja) !== normalizeMeja(wasitAssignment.nomor_meja))) { alert('Akses skor ditolak: bukan meja tugas Anda.'); return; }
     if (!liveScoreMatch) return;
     const calculatedScore = liveGameHistory.reduce(
       (score, game) => {
@@ -2718,6 +3068,8 @@ const handleUpdatePlayerSubmit = async (e) => {
       ...prev,
       [liveScoreMatch.matchId]: result
     }));
+    saveOnlineMatch(selectedLiveEvent?.id, liveScoreMatch.matchId, result)
+      .catch(error => alert('Skor tersimpan di browser, tetapi gagal sinkron ke Supabase: ' + error.message));
     if (liveScoreMatch.isKnockout) {
       setKnockoutResults(prev => ({
         ...prev,
@@ -2751,6 +3103,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   const handleLiveScoreSubmit = () => saveLiveScoreResult(true);
 
   const handleDeleteMatch = () => {
+    if (isWasit && (!wasitAssignment || String(selectedLiveEvent?.id) !== String(wasitAssignment.event_id) || normalizeMeja(liveScoreMatch?.meja) !== normalizeMeja(wasitAssignment.nomor_meja))) { alert('Akses skor ditolak: bukan meja tugas Anda.'); return; }
     if (!liveScoreMatch) return;
     if (window.confirm('Apakah Anda yakin ingin menghapus hasil pertandingan ini? Data akan dikosongkan dan bisa diisi ulang.')) {
       const matchId = liveScoreMatch.matchId;
@@ -2758,6 +3111,8 @@ const handleUpdatePlayerSubmit = async (e) => {
       delete updatedMatchResults[matchId];
       setMatchResults(updatedMatchResults);
       localStorage.setItem('spinmatch_match_results', JSON.stringify(updatedMatchResults));
+      saveOnlineMatch(selectedLiveEvent?.id, matchId, null)
+        .catch(error => alert('Gagal menghapus skor online: ' + error.message));
       if (liveScoreMatch.isKnockout) {
         setKnockoutResults(prev => {
           const next = { ...prev };
@@ -2787,6 +3142,10 @@ const handleUpdatePlayerSubmit = async (e) => {
       ...matchResults,
       [matchId]: result
     });
+    if (selectedScheduleEvent?.id) {
+      saveOnlineMatch(selectedScheduleEvent.id, matchId, result)
+        .catch(error => alert('Gagal sinkron hasil pertandingan: ' + error.message));
+    }
     if (selectedScheduleEvent) {
       setTimeout(() => {
         calculatePoolRankings(selectedScheduleEvent.id);
@@ -2848,7 +3207,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${row.jam}</td>
             <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${row.meja}</td>
             <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${row.tanggal}</td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${row.hari}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${getDayName(row.tanggal) !== '-' ? getDayName(row.tanggal) : (row.hari || '-')}</td>
             <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center; font-weight: bold;">${pointStr}</td>
             <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center; color: #059669; font-weight: bold;">${winnerName}</td>
             <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${keterangan}</td>
@@ -2885,9 +3244,9 @@ const handleUpdatePlayerSubmit = async (e) => {
           body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 20px; }
           h2 { text-align: center; margin: 0 0 5px 0; font-size: 14px; }
           h3 { text-align: center; margin: 0 0 15px 0; font-size: 12px; color: #64748b; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          table { width: max-content; min-width: 100%; border-collapse: collapse; margin-top: 10px; white-space: nowrap; }
           th { background-color: #f1f5f9; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #e2e8f0; }
-          td { border: 1px solid #e2e8f0; padding: 6px; }
+          td { border: 1px solid #e2e8f0; padding: 6px; white-space: nowrap; }
           .header-row { background-color: #f1f5f9; }
           @media print { button { display: none; } }
         </style>
@@ -2897,6 +3256,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         <h2>JADWAL PERTANDINGAN</h2>
         <h3>${eventData?.nama?.toUpperCase()}</h3>
         <p style="text-align: center; margin-bottom: 15px;"><strong>${eventData?.tanggal}</strong></p>
+        <p style="font-size: 10px; margin: 8px 0;"><strong>Keterangan:</strong> PM = Pemain Menang &nbsp; | &nbsp; PK = Pemain Kalah &nbsp; | &nbsp; M1/M2/M3 = Nomor pertandingan</p>
         <table>
           <thead>
             <tr class="header-row">
@@ -3077,7 +3437,14 @@ const handleUpdatePlayerSubmit = async (e) => {
   const scheduleRows = selectedScheduleEvent ? generateScheduleFromPools(selectedScheduleEvent.id) : [];
   const currentRankings = poolRankings[selectedScheduleEvent?.id] || {};
   const liveScorePoolData = poolResults[selectedLiveEvent?.id] || null;
-  const liveScoreRows = selectedLiveEvent ? generateScheduleFromPools(selectedLiveEvent.id) : [];
+  const liveScoreRows = selectedLiveEvent ? generateScheduleFromPools(selectedLiveEvent.id).filter(row => {
+    if (!isWasit) return true;
+    // Jadwal memakai 'Meja 1', sedangkan penugasan Supabase memakai angka 1.
+    // Jangan tampilkan header pool kosong atau baris meja lain untuk wasit.
+    return row.type === 'player' && row.showMatch &&
+      normalizeMeja(row.meja) === normalizeMeja(wasitAssignment?.nomor_meja);
+  }) : [];
+  const visibleLiveScoreRows = isPublic && publicLiveTable !== 'ALL' ? liveScoreRows.filter(row => row.type === 'player' && normalizeMeja(row.meja) === Number(publicLiveTable)) : liveScoreRows;
   const liveScoreRankings = poolRankings[selectedLiveEvent?.id] || {};
 
   const calculatedGameScore = liveGameHistory.reduce(
@@ -3178,7 +3545,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         id: p.id,
         nama: p.nama || '-',
         ptm: p.ptm || p.club || p.klub || '-',
-        main: 0, menang: 0, kalah: 0, poin: 0,
+        main: 0, menang: 0, kalah: 0, poin: 0, setMenang:0, setKalah:0, bolaMenang:0, bolaKalah:0, skor30:0, skor31:0, skor32:0,
         eventCount: 1
       };
     });
@@ -3196,19 +3563,30 @@ const handleUpdatePlayerSubmit = async (e) => {
       const key1 = String(row.player.id || row.player.nama);
       const key2 = String(row.opponent.id || row.opponent.nama);
 
-      if (!stats[key1]) stats[key1] = { id: row.player.id, nama: row.player.nama, ptm: row.player.ptm || '-', main:0, menang:0, kalah:0, poin:0, eventCount:1 };
-      if (!stats[key2]) stats[key2] = { id: row.opponent.id, nama: row.opponent.nama, ptm: row.opponent.ptm || '-', main:0, menang:0, kalah:0, poin:0, eventCount:1 };
+      if (!stats[key1]) stats[key1] = { id: row.player.id, nama: row.player.nama, ptm: row.player.ptm || '-', main:0, menang:0, kalah:0, poin:0, setMenang:0, setKalah:0, bolaMenang:0, bolaKalah:0, skor30:0, skor31:0, skor32:0, eventCount:1 };
+      if (!stats[key2]) stats[key2] = { id: row.opponent.id, nama: row.opponent.nama, ptm: row.opponent.ptm || '-', main:0, menang:0, kalah:0, poin:0, setMenang:0, setKalah:0, bolaMenang:0, bolaKalah:0, skor30:0, skor31:0, skor32:0, eventCount:1 };
 
       stats[key1].main += 1;
       stats[key2].main += 1;
 
-      if (result.winner === 'player1') {
-        stats[key1].menang += 1; stats[key1].poin += 3;
-        stats[key2].kalah += 1;
-      } else if (result.winner === 'player2') {
-        stats[key2].menang += 1; stats[key2].poin += 3;
-        stats[key1].kalah += 1;
-      }
+      if (result.winner !== 'player1' && result.winner !== 'player2') return;
+      const s1 = Number(result.player1Score || 0), s2 = Number(result.player2Score || 0);
+      stats[key1].setMenang += s1; stats[key1].setKalah += s2;
+      stats[key2].setMenang += s2; stats[key2].setKalah += s1;
+      (result.gameHistory || []).forEach(game => {
+        if (game?.p1 === '' || game?.p2 === '' || game?.p1 == null || game?.p2 == null) return;
+        const a=Number(game.p1), b=Number(game.p2);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+        stats[key1].bolaMenang += a; stats[key1].bolaKalah += b;
+        stats[key2].bolaMenang += b; stats[key2].bolaKalah += a;
+      });
+      const winning = result.winner === 'player1' ? stats[key1] : stats[key2];
+      const losing = result.winner === 'player1' ? stats[key2] : stats[key1];
+      winning.menang++; winning.poin+=3; losing.kalah++;
+      const loserSets = result.winner === 'player1' ? s2 : s1;
+      if (loserSets === 0) winning.skor30++;
+      if (loserSets === 1) winning.skor31++;
+      if (loserSets === 2) winning.skor32++;
     });
 
     return Object.values(stats)
@@ -3230,7 +3608,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         if (!aggregate[key]) {
           aggregate[key] = {
             id: p.id, nama: p.nama, ptm: p.ptm,
-            main: 0, menang: 0, kalah: 0, poin: 0,
+            main: 0, menang: 0, kalah: 0, poin: 0, setMenang:0, setKalah:0, bolaMenang:0, bolaKalah:0, skor30:0, skor31:0, skor32:0,
             eventCount: 0
           };
         }
@@ -3238,6 +3616,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         aggregate[key].menang += p.menang;
         aggregate[key].kalah += p.kalah;
         aggregate[key].poin += p.poin;
+        ['setMenang','setKalah','bolaMenang','bolaKalah','skor30','skor31','skor32'].forEach(k => { aggregate[key][k] += Number(p[k] || 0); });
         if (p.main > 0) aggregate[key].eventCount += 1;
       });
     });
@@ -3256,6 +3635,29 @@ const handleUpdatePlayerSubmit = async (e) => {
     e => String(e.id) === String(selectedEventIdForSettings)
   ) || events[0] || null;
 
+  // Penugasan online adalah sumber utama untuk akun yang dibuat EO.
+  useEffect(() => {
+    let cancelled = false;
+    setOnlineReferees([]);
+    setOnlineRefereesError('');
+    if (!selectedSettingsEvent?.id || !isEO && !isSuperAdmin) return;
+    setOnlineRefereesLoading(true);
+    supabase.from('spinmatch_wasit_event')
+      .select('id, kode_wasit, nama_wasit, nomor_meja, status')
+      .eq('event_id', Number(selectedSettingsEvent.id))
+      .order('nomor_meja')
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) setOnlineRefereesError(error.message);
+        else setOnlineReferees(data || []);
+        setOnlineRefereesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [selectedSettingsEvent?.id, isEO, isSuperAdmin]);
+
+  const onlineRefereeForTable = (tableNo) => onlineReferees.find(r =>
+    Number(r.nomor_meja) === Number(tableNo)
+  );
   const settingsTableCount = Math.max(
     1,
     Number(selectedSettingsEvent?.jumlahMeja || selectedSettingsEvent?.jumlahmeja || 4)
@@ -3384,7 +3786,8 @@ const handleUpdatePlayerSubmit = async (e) => {
       return { code: 'KOSONG', label: 'KOSONG', match: null };
     }
 
-    const registered = refereeRegistry.find(r => r.id === assignment.refereeId);
+    const onlineRegistered = onlineReferees.find(r => `ONLINE-${r.id}` === assignment.refereeId);
+    const registered = onlineRegistered || refereeRegistry.find(r => r.id === assignment.refereeId);
     if (!registered) {
       return { code: 'KOSONG', label: 'KOSONG', match: null };
     }
@@ -3472,13 +3875,23 @@ const handleUpdatePlayerSubmit = async (e) => {
       : { code: 'MENUNGGU', label: 'MENUNGGU', match: unfinished[0] || null };
   };
 
-  const currentRefereeAssignments =
-    refereeAssignments[String(selectedSettingsEvent?.id)] || {};
+  const currentRefereeAssignments = (() => {
+    const local = refereeAssignments[String(selectedSettingsEvent?.id)] || {};
+    const merged = { ...local };
+    onlineReferees.forEach(r => {
+      merged[String(r.nomor_meja)] = {
+        refereeId: `ONLINE-${r.id}`,
+        refereeName: r.nama_wasit,
+        status: r.status
+      };
+    });
+    return merged;
+  })();
 
   const assignedRefereeCount = Array.from({ length: settingsTableCount }, (_, i) => i + 1)
     .filter(no => {
       const id = currentRefereeAssignments[String(no)]?.refereeId;
-      return !!id && refereeRegistry.some(r => r.id === id);
+      return !!id && (refereeRegistry.some(r => r.id === id) || onlineReferees.some(r => `ONLINE-${r.id}` === id));
     }).length;
 
   const refereeWorkSummary = Array.from({ length: settingsTableCount }, (_, i) => i + 1)
@@ -3559,6 +3972,8 @@ const handleUpdatePlayerSubmit = async (e) => {
           activeView={activeView}
           setActiveView={setActiveView}
           role={userRole}
+          refereeSectionActive={activeView === 'SETTINGS' && settingsSection === 'REFEREE'}
+          onManageReferees={() => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }}
           onMyEvents={() => {
             if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
             setActiveView('DASHBOARD');
@@ -3644,7 +4059,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </div>}
                   </div>
 
-                  {!isPublic && (
+                  {(isEO || isSuperAdmin) && (
                     <button
                       type="button"
                       onClick={handleOpenCreate}
@@ -3751,7 +4166,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
-                    {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
+                    {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
                 <button onClick={() => setShowRegModal(true)} className="flex items-center gap-1.5 text-xs font-bold bg-[#bef264] hover:bg-[#a3e635] text-slate-950 px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm whitespace-nowrap">
@@ -3784,7 +4199,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
-                    {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
+                    {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
               </div>
@@ -3817,7 +4232,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                <button onClick={() => setActiveView('DRAW')} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
+                <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="px-4 py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Shuffle className="w-3.5 h-3.5" /> Undian
                 </button>
                 <button onClick={() => setShowPrintModal(true)} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
@@ -3849,7 +4264,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-black">Pilih Event:</span>
                   <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
-                    {events.map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
+                    {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
                 </div>
                 <button onClick={()=>window.print()} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5">
@@ -3874,7 +4289,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Radio className="w-5 h-5 text-red-600" /> Live Skor Pertandingan
                   </h2>
-                  <p className="text-xs text-blue-100/70">Input skor real-time untuk dilihat publik</p>
+                  <p className="text-xs text-blue-100/70">{isPublic ? 'Pantau skor pertandingan — hanya lihat' : 'Input skor real-time untuk dilihat publik'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
@@ -3896,7 +4311,9 @@ const handleUpdatePlayerSubmit = async (e) => {
     Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
   </div>
 )}
-{activeView === 'DASHBOARD' ? (
+{isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
+  <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">{wasitAssignmentLoading ? 'Memeriksa penugasan wasit...' : 'Belum ada penugasan wasit aktif. Hubungi EO.'}</div>
+) : activeView === 'DASHBOARD' ? (
   <>
     {/* =========================================================
         SPINMATCH PREMIUM DASHBOARD
@@ -4692,7 +5109,17 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
               )}
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
+              {(isEO || isSuperAdmin) && selectedDrawEvent && canManageEvent(selectedDrawEvent) && (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+                  <div className="font-black text-sm text-amber-950">Mode Pengujian Hasil Pool</div>
+                  <p className="my-2 text-xs text-amber-900">Isi skor simulasi otomatis untuk pertandingan Pool A–F yang belum selesai. Hasil yang sudah ada tidak ditimpa. Hanya untuk event uji, bukan pertandingan resmi.</p>
+                  <button type="button" disabled={simulationSaving} onClick={simulatePoolScores}
+                    className="rounded-xl bg-amber-700 px-4 py-2 text-xs font-black text-white disabled:opacity-50">
+                    {simulationSaving ? 'Menyimpan simulasi...' : 'Isi Hasil Simulasi Otomatis'}
+                  </button>
+                </div>
+              )}
+              {!isWasit && !isPublic && <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Settings className="w-5 h-5 text-slate-700" />
                   <h3 className="text-base font-bold text-slate-900">Panel Kontrol Undian</h3>
@@ -4779,7 +5206,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </button>
                   </div>
                 </div>
-              </div>
+              </div>}
               {currentPoolData && (
                 <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
                   <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
@@ -4788,14 +5215,23 @@ const handleUpdatePlayerSubmit = async (e) => {
                       <h3 className="text-base font-black text-slate-900">Hasil Pembagian Pool</h3>
                       <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">{currentPoolData.config.totalPlayers} Pemain • {Object.keys(currentPoolData.pools).length} Pool</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {!isWasit && !isPublic && <div className="flex items-center gap-2 flex-wrap">
+                      <button type="button" onClick={async () => {
+                        if (!selectedDrawEvent?.id || !currentPoolData) return;
+                        try {
+                          await saveOnlinePool(selectedDrawEvent.id, currentPoolData);
+                          alert('Hasil undian berhasil dikirim ke Supabase. Silakan buka ulang halaman Wasit.');
+                        } catch (error) { alert('Gagal sinkron undian: ' + error.message); }
+                      }} className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl text-xs transition cursor-pointer">
+                        Sinkron Undian ke Wasit
+                      </button>
                       <button onClick={handleResetDraw} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5">
                         <RotateCcw className="w-3.5 h-3.5" /> Reset Undian
                       </button>
                       <button onClick={() => { setActiveView('SCHEDULE'); setTimeout(() => calculatePoolRankings(selectedDrawEvent.id), 100); }} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Lanjut ke Jadwal
                       </button>
-                    </div>
+                    </div>}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {Object.entries(currentPoolData.pools).map(([poolName, players]) => (
@@ -4836,7 +5272,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center">
                   <Dices className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Hasil Undian</h4>
-                  <p className="text-xs text-slate-400">Klik tombol <span className="font-bold text-emerald-600">"Mulai Acak & Undi Pemain"</span> untuk memulai.</p>
+                  <p className="text-xs text-slate-400">{isWasit || isPublic ? 'Hasil undian belum tersedia.' : <>Klik tombol <span className="font-bold text-emerald-600">"Mulai Acak & Undi Pemain"</span> untuk memulai.</>}</p>
                 </div>
               )}
             </div>
@@ -4849,6 +5285,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <p className="text-sm text-slate-600 font-semibold">{selectedScheduleEvent.tanggal}</p>
                 </div>
               )}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-sky-100 bg-sky-50 px-4 py-2 text-xs text-slate-700">
+                <span className="font-black text-sky-800">Keterangan Jadwal:</span>
+                <span><strong>PM</strong> = Pemain Menang</span>
+                <span><strong>PK</strong> = Pemain Kalah</span>
+                <span className="text-slate-500">M1/M2/M3 = Nomor pertandingan</span>
+              </div>
               <div className="bg-white p-4 rounded-lg border border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
                   <Search className="w-4 h-4 text-slate-500" />
@@ -4859,15 +5301,16 @@ const handleUpdatePlayerSubmit = async (e) => {
               {selectedScheduleEvent && schedulePoolData && filteredScheduleRows.length > 0 ? (
                 <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs border-collapse">
+                    <table className="w-max min-w-full whitespace-nowrap text-[12px] border-collapse [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap [&_th]:!px-1 [&_td]:!px-1 [&_th]:py-1.5 [&_td]:py-1.5 [&_th]:!text-[12px] [&_td]:!text-[12px]">
                       <thead>
                         <tr className="bg-slate-100 border-2 border-slate-300">
                           <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Pool</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Nama Pemain</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Club/PTM</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Match</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Jam Main</th>
+                          <th className="px-1 py-1 text-center font-bold text-slate-700 border border-slate-300">Nama Pemain</th>
+                          <th className="px-1 py-1 text-center font-bold text-slate-700 border border-slate-300">Club/PTM</th>
+                          <th className="py-1.5 px-1 text-center font-bold text-slate-700 border border-slate-300">Match</th>
+                          <th className="py-1.5 px-1 text-center font-bold text-slate-700 border border-slate-300">Jam Main</th>
                           <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Meja</th>
+                          <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Wasit</th>
                           <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Tgl Main</th>
                           <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Hari</th>
                           <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Point</th>
@@ -4880,7 +5323,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                           if (row.type === 'pool_header') {
                             return (
                               <tr key={index} className="bg-slate-50">
-                                <td colSpan="11" className="py-2 px-2 font-bold text-slate-900 border border-slate-300 text-left">
+                                <td colSpan="12" className="py-2 px-2 font-bold text-slate-900 border border-slate-300 text-left">
                                   {row.pool}
                                   {schedulePoolData?.seededPools?.[row.pool]?.isSeededPool && (
                                     <span className="ml-1 text-amber-500" title={`Seed ${schedulePoolData.seededPools[row.pool].seedRank}`}>★</span>
@@ -4891,7 +5334,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                           } else if (row.type === 'empty_row') {
                             return (
                               <tr key={index} className="h-4">
-                                <td colSpan="11" className="border-0"></td>
+                                <td colSpan="12" className="border-0"></td>
                               </tr>
                             );
                           } else if (row.type === 'player') {
@@ -4906,22 +5349,25 @@ const handleUpdatePlayerSubmit = async (e) => {
                             return (
                               <tr key={index} className={`hover:bg-slate-50 transition cursor-pointer ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => openLiveScore(row)}>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-900">{row.playerCode}</td>
-                                <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-900">
+                                <td className="px-1 py-1 border border-slate-300 font-semibold text-slate-900">
                                   {row.player.nama}
                                   {(row.player.isSeed || row.player.seedRank) && (
                                     <span className="ml-1 text-amber-500" title={`Seed ${row.player.seedRank || row.player.isSeed}`}>★</span>
                                   )}
                                 </td>
-                                <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-600">{row.player.ptm}</td>
-                                <td className="py-2 px-3 border border-slate-300 text-center font-bold text-emerald-700">{row.matchLabel}</td>
+                                <td className="px-1 py-1 border border-slate-300 font-semibold text-slate-600">{row.player.ptm}</td>
+                                <td className="py-1.5 px-1 border border-slate-300 text-center font-bold text-emerald-700">{row.matchLabel}</td>
                                 <td className="py-2 px-3 border border-slate-300 text-center font-mono font-bold text-slate-700">{row.jam}</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-700">{row.meja}</td>
+                                <td className="py-2 px-2 border border-slate-300 text-center text-[10px] font-semibold text-indigo-700">{getScheduledReferee(selectedScheduleEvent?.id, row.meja)}</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center text-slate-600">{row.tanggal}</td>
-                                <td className="py-2 px-2 border border-slate-300 text-center text-slate-600">{row.hari}</td>
+                                <td className="py-2 px-2 border border-slate-300 text-center text-slate-600">{getDayName(row.tanggal) !== '-' ? getDayName(row.tanggal) : (row.hari || '-')}</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-700">{pointStr}</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-emerald-700">{winnerName}</td>
-                                <td className="py-2 px-2 border border-slate-300 text-center">
-                                  {keterangan && (<span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">{keterangan}</span>)}
+                                <td className="py-2 px-2 border border-slate-300 text-center whitespace-nowrap">
+                                  <div className="inline-flex items-center gap-2 whitespace-nowrap">
+                                  <button type="button" className={`inline-block shrink-0 rounded px-1.5 py-1 text-[10px] font-bold ${keterangan ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`} onClick={e=>{e.stopPropagation();setRatioDetail({pool:row.pool,eventId:selectedScheduleEvent?.id});}} title="Klik untuk melihat perhitungan rasio pool">{keterangan || 'Detail Rasio'}</button>
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -4944,10 +5390,11 @@ const handleUpdatePlayerSubmit = async (e) => {
                                 <td className="py-2 px-2 border border-slate-300 text-center text-slate-400">-</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center text-slate-400">-</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center text-slate-400">-</td>
+                                <td className="py-2 px-2 border border-slate-300 text-center text-[10px] text-slate-500">-</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center"></td>
                                 <td className="py-2 px-2 border border-slate-300 text-center"></td>
                                 <td className="py-2 px-2 border border-slate-300 text-center">
-                                  {keterangan && (<span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">{keterangan}</span>)}
+<button type="button" className={`inline-block shrink-0 rounded px-2 py-1 text-[10px] font-bold ${keterangan ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`} onClick={e=>{e.stopPropagation();setRatioDetail({pool:row.pool,eventId:selectedScheduleEvent?.id});}} title="Klik untuk melihat perhitungan rasio pool">{keterangan || 'Detail Rasio'}</button>
                                 </td>
                               </tr>
                             );
@@ -5042,194 +5489,65 @@ const handleUpdatePlayerSubmit = async (e) => {
 
                     <div id="spinmatch-knockout-print" className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-x-auto p-6">
                       {(() => {
-                        /*
-                          v9.5 - Struktur yang diminta:
-                          ATAS  : A (seed/bye) menunggu winner B-C.
-                                  Winner [A vs winner B-C] melawan winner D-E.
-                          BAWAH : winner F-G melawan [winner H-I vs J (seed/bye)].
-                          FINAL : winner bagian atas vs winner bagian bawah.
-                          BYE tidak ditulis.
-                          "Juara Pool X" / nama pemenang Pool berada DI ATAS garis.
-                        */
-                        const entrants = getKnockoutEntrants(selectedKnockoutEvent.id);
-                        const byPool = {};
-                        entrants.forEach(p => { byPool[p.sourcePool] = p; });
-
-                        const poolNames = Object.keys(byPool).sort((a,b)=>{
-                          const aa=a.replace(/^Pool\s+/i,'');
-                          const bb=b.replace(/^Pool\s+/i,'');
-                          return aa.localeCompare(bb,undefined,{numeric:true});
-                        });
-
-                        // Model ini dipakai khusus ketika terdapat 10 qualifier Pool:
-                        // A,B,C,D,E,F,G,H,I,J dengan 2 seeded pada A dan J.
-                        if (poolNames.length !== 10) {
-                          return (
-                            <div className="p-8 text-center text-sm font-bold text-slate-500">
-                              Model bracket A–J ini memerlukan 10 Juara Pool.
-                            </div>
-                          );
-                        }
-
-                        const poolSlots = poolNames.map(n=>byPool[n]);
-                        const [poolA,poolB,poolC,poolD,poolE,poolF,poolG,poolH,poolI,poolJ] = poolSlots;
+                        // Bracket responsif mengikuti jumlah qualifier, bukan model tetap A-J.
+                        const rounds = ko.rounds || [];
+                        if (!rounds.length) return <p className="p-8 text-center text-sm text-slate-500">Belum ada peserta Knockout.</p>;
                         const eventId = selectedKnockoutEvent.id;
-
-                        const makeMatch = (id, player1, player2, orderIndex, matchRef) => ({
-                          id, round: 1, player1, player2, matchRef,
-                          ...getKnockoutMatchMeta(eventId, orderIndex)
-                        });
-                        const winnerOf = (m) => getKOWinner(eventId, m.id, m.player1, m.player2);
-
-                        // Struktur tetap: A menunggu B-C; J menunggu H-I.
-                        const mBC   = makeMatch('KO10_BC',   poolB, poolC, 0, 'B-C');
-                        const mDE   = makeMatch('KO10_DE',   poolD, poolE, 1, 'D-E');
-                        const mFG   = makeMatch('KO10_FG',   poolF, poolG, 2, 'F-G');
-                        const mHI   = makeMatch('KO10_HI',   poolH, poolI, 3, 'H-I');
-
-                        const wBC = winnerOf(mBC);
-                        const wDE = winnerOf(mDE);
-                        const wFG = winnerOf(mFG);
-                        const wHI = winnerOf(mHI);
-
-                        const mABC  = makeMatch('KO10_A_BC', poolA, wBC, 4, 'A / Pemenang B-C');
-                        const mHIJ  = makeMatch('KO10_HI_J', wHI, poolJ, 5, 'Pemenang H-I / J');
-
-                        const wABC = winnerOf(mABC);
-                        const wHIJ = winnerOf(mHIJ);
-
-                        const mTOP = makeMatch('KO10_TOP', wABC, wDE, 6, 'Semifinal Atas');
-                        const mBOT = makeMatch('KO10_BOT', wFG, wHIJ, 7, 'Semifinal Bawah');
-
-                        const wTOP = winnerOf(mTOP);
-                        const wBOT = winnerOf(mBOT);
-                        const mFINAL = makeMatch('KO10_FINAL', wTOP, wBOT, 8, 'FINAL');
-                        const champion10 = winnerOf(mFINAL);
-
-                        const canvasW=900, canvasH=520;
-                        const x0=20;
-                        const segmentLen=120;
-                        const x1=x0+segmentLen;
-                        const x2=x0+(segmentLen*2);
-                        const x3=x0+(segmentLen*3);
-                        const x4=x0+(segmentLen*4);
-                        const x5=x0+(segmentLen*5);
-                        const ys=[35,80,125,185,230,300,345,405,450,495];
-
-                        const yBC=(ys[1]+ys[2])/2;
-                        const yABC=(ys[0]+yBC)/2;
-                        const yDE=(ys[3]+ys[4])/2;
-                        const yTOP=(yABC+yDE)/2;
-                        const yFG=(ys[5]+ys[6])/2;
-                        const yHI=(ys[7]+ys[8])/2;
-                        const yHIJ=(yHI+ys[9])/2;
-                        const yBOT=(yFG+yHIJ)/2;
-                        const yFINAL=(yTOP+yBOT)/2;
-
-                        const lines=[];
-                        const hline=(key,xa,ya,xb)=>lines.push(<line key={key} x1={xa} y1={ya} x2={xb} y2={ya}/>);
-                        const vline=(key,x,ya,yb)=>lines.push(<line key={key} x1={x} y1={ya} x2={x} y2={yb}/>);
-
-                        hline('A',x0,ys[0],x2);
-                        hline('B',x0,ys[1],x1); hline('C',x0,ys[2],x1);
-                        vline('BCv',x1,ys[1],ys[2]); hline('BCo',x1,yBC,x2);
-                        vline('ABCv',x2,ys[0],yBC); hline('ABCo',x2,yABC,x3);
-
-                        hline('D',x0,ys[3],x1); hline('E',x0,ys[4],x1);
-                        vline('DEv',x1,ys[3],ys[4]); hline('DEo',x1,yDE,x3);
-                        vline('TOPv',x3,yABC,yDE); hline('TOPo',x3,yTOP,x4);
-
-                        hline('F',x0,ys[5],x1); hline('G',x0,ys[6],x1);
-                        vline('FGv',x1,ys[5],ys[6]); hline('FGo',x1,yFG,x3);
-
-                        hline('H',x0,ys[7],x1); hline('I',x0,ys[8],x1);
-                        vline('HIv',x1,ys[7],ys[8]); hline('HIo',x1,yHI,x2);
-
-                        hline('J',x0,ys[9],x2);
-                        vline('HIJv',x2,yHI,ys[9]); hline('HIJo',x2,yHIJ,x3);
-                        vline('BOTv',x3,yFG,yHIJ); hline('BOTo',x3,yBOT,x4);
-                        vline('FINALv',x4,yTOP,yBOT); hline('FINALo',x4,yFINAL,x5);
-
-                        const labels=[poolA,poolB,poolC,poolD,poolE,poolF,poolG,poolH,poolI,poolJ];
-
-                        const playerLabel = (p, left, top, width=112) => {
-                          if (!p) return null;
-                          return (
-                            <div className="absolute leading-tight" style={{left:`${left}px`,top:`${top}px`,width:`${width}px`}}>
-                              <div className={`whitespace-nowrap text-[10px] font-black ${p.isPlaceholder?'text-slate-500':'text-slate-950'}`}>
-                                {p.nama}{p.seedRank ? <span className="ml-1 text-amber-500">★{p.seedRank}</span>:null}
-                              </div>
-                              {!p.isPlaceholder && <div className="truncate text-[8px] font-bold text-slate-500">{p.ptm || 'PTM/CLUB -'}</div>}
-                            </div>
-                          );
-                        };
-
-                        const matchButton = (m, left, top, width=112) => {
-                          const ready = Boolean(m?.player1 && m?.player2 && !m.player1.isPlaceholder && !m.player2.isPlaceholder);
-                          const winner = ready ? winnerOf(m) : null;
-                          return (
-                            <button
-                              type="button"
-                              disabled={!ready}
-                              onClick={() => ready && openKnockoutLiveScore(m)}
-                              className={`absolute text-left leading-tight rounded px-1 py-0.5 transition
-                                ${ready ? 'cursor-pointer hover:bg-lime-100/80 hover:ring-1 hover:ring-lime-400' : 'cursor-default'}
-                              `}
-                              style={{left:`${left}px`,top:`${top}px`,width:`${width}px`}}
-                              title={ready ? `Klik untuk Live Skor • ${m.jam} • ${m.meja}` : 'Menunggu pemain'}
-                            >
-                              <div className={`truncate text-[9px] font-black ${winner?'text-emerald-700':'text-slate-500'}`}>
-                                {winner?.nama || 'Pemenang'}
-                              </div>
-                              {winner && <div className="truncate text-[8px] font-bold text-slate-500">{winner.ptm || 'PTM/CLUB -'}</div>}
-                              <div className="truncate text-[8px] font-bold text-sky-700">{m.jam} • {m.meja}</div>
-                            </button>
-                          );
-                        };
-
-                        return (
-                          <div className="min-w-max">
-                            <div className="mb-3 flex items-center justify-between gap-3">
-                              <div className="knockout-draw-meta ml-[10px] flex items-center gap-1.5 text-[9px] font-black text-slate-600">
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5">DRAW {ko.bracketSize}</span>
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5">Slot kosong internal: {ko.byeCount}</span>
-                              </div>
-                              <div className="knockout-screen-only ml-auto inline-flex w-fit flex-col rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-left text-[9px] font-bold leading-tight text-slate-500 shadow-sm">
-                                <span>Klik pertandingan yang kedua pemainnya sudah tersedia</span>
-                                <span>untuk membuka Live Skor.</span>
-                              </div>
-                            </div>
-                            <div className="relative" style={{width:`${canvasW}px`,height:`${canvasH}px`}}>
-                              <svg className="absolute inset-0" width={canvasW} height={canvasH}>
-                                <g fill="none" stroke="#334155" strokeWidth="1.35" shapeRendering="crispEdges">{lines}</g>
-                              </svg>
-
-                              {labels.map((p,i)=>(
-                                <div key={p.sourcePool}
-                                  className="absolute left-[20px] leading-tight"
-                                  style={{top:`${ys[i]-30}px`,width:'165px'}}>
-                                  <div className={`truncate text-[10px] font-black ${p.isPlaceholder?'text-slate-500':'text-slate-950'}`}>
-                                    {p.nama}{p.seedRank ? <span className="ml-1 text-amber-500">★{p.seedRank}</span>:null}
-                                  </div>
-                                  {!p.isPlaceholder && <div className="truncate text-[8px] font-bold text-slate-500">{p.ptm || 'PTM/CLUB -'}</div>}
-                                </div>
-                              ))}
-
-                              {matchButton(mBC,  x1+4, yBC-29, 112)}
-                              {matchButton(mABC, x2+4, yABC-29, 112)}
-                              {matchButton(mDE,  x1+4, yDE-29, 112)}
-                              {matchButton(mTOP, x3+4, yTOP-29, 112)}
-
-                              {matchButton(mFG,  x1+4, yFG-29, 112)}
-                              {matchButton(mHI,  x1+4, yHI-29, 112)}
-                              {matchButton(mHIJ, x2+4, yHIJ-29, 112)}
-                              {matchButton(mBOT, x3+4, yBOT-29, 112)}
-
-                              {matchButton(mFINAL, x4+4, yFINAL-29, 128)}
-                              {champion10 && playerLabel(champion10, x5+4, yFINAL-29, 120)}
-                            </div>
+                        const W = 224, H = 90, GAP = 28, LEFT = 18, TOP = 62;
+                        const stride = H + GAP;
+                        const totalW = LEFT + rounds.length * (W + 62) + 24;
+                        const totalH = TOP + (ko.bracketSize / 2) * stride + 30;
+                        const matchY = (r, i) => TOP + ((2 ** r) * (i + 0.5) - 0.5) * stride;
+                        const matchX = r => LEFT + r * (W + 62);
+                        const getName = p => p?.nama || 'Menunggu pemenang';
+                        const canScore = isSuperAdmin || (isEO && canManageEvent(selectedKnockoutEvent));
+                        return <div className="min-w-max" style={{width: totalW}}>
+                          <div className="mb-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
+                            <span className="rounded-lg bg-slate-100 px-3 py-1">Bracket {ko.bracketSize} slot</span>
+                            <span className="rounded-lg bg-slate-100 px-3 py-1">BYE {ko.byeCount}</span>
+                            <span className="rounded-lg bg-slate-100 px-3 py-1">{ko.drawReady ? 'Juara pool sudah tersedia' : 'Menunggu hasil lengkap pool'}</span>
                           </div>
-                        );
+                          <div className="relative" style={{width:totalW,height:totalH}}>
+                            <svg className="pointer-events-none absolute inset-0" width={totalW} height={totalH} aria-hidden="true">
+                              <g fill="none" stroke="#64748b" strokeWidth="2" strokeLinejoin="round">
+                                {rounds.slice(0,-1).flatMap((round,r) => round.map((m,i) => {
+                                  const x1=matchX(r)+W, x2=matchX(r+1), y1=matchY(r,i)+H/2;
+                                  const y2=matchY(r+1,Math.floor(i/2))+H/2;
+                                  const mid=(x1+x2)/2;
+                                  return <path key={`connector-${r}-${i}`} d={`M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`} />;
+                                }))}
+                              </g>
+                            </svg>
+                            {rounds.map((round,r) => <React.Fragment key={r}>
+                              <div className="absolute text-center text-[11px] font-black text-slate-600" style={{left:matchX(r),top:9,width:W}}>
+                                {round.length===1?'FINAL':round.length===2?'SEMIFINAL':`${round.length*2} BESAR`}
+                              </div>
+                              {round.map((m,i) => {
+                                const ready=Boolean(m.player1 && m.player2 && !m.player1.isPlaceholder && !m.player2.isPlaceholder);
+                                const result=knockoutResults[`${eventId}_${m.id}`] || matchResults[`${eventId}_${m.id}`];
+                                const meta=getKnockoutMatchMeta(eventId,rounds.slice(0,r).reduce((sum,arr)=>sum+arr.length,0)+i);
+                                const byeRound=r===0 && (!m.player1 || !m.player2);
+                                const p1=m.player1, p2=m.player2;
+                                return <button type="button" key={m.id} disabled={!ready || !canScore}
+                                  onClick={()=>ready && canScore && openKnockoutLiveScore({...m,...meta,matchRef:m.id})}
+                                  title={ready ? (canScore?'Klik untuk Live Score':'Hanya EO yang dapat memasukkan skor Knockout'):'Menunggu pemain'}
+                                  className={`absolute overflow-hidden rounded-xl border bg-white text-left shadow-sm ${ready&&canScore?'cursor-pointer border-blue-300 hover:border-lime-500 hover:shadow-md':'cursor-default border-slate-200'}`}
+                                  style={{left:matchX(r),top:matchY(r,i),width:W,height:H}}>
+                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[10px] font-bold ${result?.winner==='player1'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
+                                    <span className="truncate">{getName(p1)}</span><span className="ml-1">{result?.player1Score ?? ''}</span>
+                                  </div>
+                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[10px] font-bold ${result?.winner==='player2'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
+                                    <span className="truncate">{byeRound&&!p2?'BYE':getName(p2)}</span><span className="ml-1">{result?.player2Score ?? ''}</span>
+                                  </div>
+                                  <div className="truncate px-2 py-1 text-[9px] font-semibold text-sky-700">{meta.jam} · {meta.meja}</div>
+                                  <div className="truncate border-t border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-indigo-700" title={`Wasit: ${getScheduledReferee(eventId, meta.meja)}`}>
+                                    Wasit: {getScheduledReferee(eventId, meta.meja)}
+                                  </div>
+                                </button>;
+                              })}
+                            </React.Fragment>)}
+                          </div>
+                        </div>;
                       })()}
                     </div>
                     </div>
@@ -5292,9 +5610,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                   <div className="p-4 bg-slate-50 border-b border-slate-200">
                     <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <Radio className="w-4 h-4 text-red-500" /> Pilih Match untuk Input Skor
+                      <Radio className="w-4 h-4 text-red-500" /> {isPublic ? 'Pantau Skor Pertandingan' : 'Pilih Match untuk Input Skor'}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1">Klik pada baris match untuk membuka form Live Skor</p>
+                    {isPublic ? <div className="mt-3 flex flex-wrap items-center gap-2"><label htmlFor="public-live-table" className="text-xs font-bold text-slate-700">Pilih meja:</label><select id="public-live-table" value={publicLiveTable} onChange={e => setPublicLiveTable(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800"><option value="ALL">Semua Meja</option>{Array.from({ length: Math.max(1, Number(selectedLiveEvent?.jumlahMeja || 4)) }, (_, i) => <option key={i+1} value={String(i+1)}>Meja {i+1}</option>)}</select><span className="text-xs text-slate-500">Hanya melihat, tidak dapat mengubah skor.</span></div> : <p className="text-xs text-slate-500 mt-1">Klik pada baris match untuk membuka form Live Skor</p>}
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs border-collapse">
@@ -5310,7 +5628,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {liveScoreRows.map((row, index) => {
+                        {visibleLiveScoreRows.map((row, index) => {
                           if (row.type === 'pool_header') {
                             return (
                               <tr key={index} className="bg-slate-50">
@@ -5328,7 +5646,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                             const statusLabel = hasResult ? '✓ Selesai' : '⏳ Belum';
                             const statusColor = hasResult ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
                             return (
-                              <tr key={index} className={`hover:bg-slate-50 transition cursor-pointer ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => openLiveScore(row)}>
+                              <tr key={index} className={`hover:bg-slate-50 transition ${isPublic ? 'cursor-default' : 'cursor-pointer'} ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => { if (!isPublic) openLiveScore(row); }}>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-900">{row.playerCode}</td>
                                 <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-900">
                                   {row.player.nama}
@@ -5341,7 +5659,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                                 <td className="py-2 px-3 border border-slate-300 text-center font-mono font-bold text-slate-700">{row.jam}</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-700">{row.meja}</td>
                                 <td className="py-2 px-2 border border-slate-300 text-center">
-                                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
+                                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>{isPublic && hasResult && <div className="mt-1 font-black text-emerald-700">{row.result.player1Score} - {row.result.player2Score}</div>}{isPublic && hasResult && Array.isArray(row.result.gameHistory) && row.result.gameHistory.length > 0 && <div className="mt-1 text-[10px] text-slate-600">{row.result.gameHistory.filter(g => g && g.p1 !== '' && g.p2 !== '').map((g,i) => `S${i+1}: ${g.p1}-${g.p2}`).join(' | ')}</div>}
                                 </td>
                               </tr>
                             );
@@ -5426,12 +5744,15 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <th className="px-4 py-3 text-center">Main</th>
                         <th className="px-4 py-3 text-center">Menang</th>
                         <th className="px-4 py-3 text-center">Kalah</th>
+                        <th className="px-4 py-3 text-center">Set +/-</th>
+                        <th className="px-4 py-3 text-center">Rasio Set</th>
+                        <th className="px-4 py-3 text-center">Rasio Bola</th>
                         <th className="px-5 py-3 text-right">Poin</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {rankingRows.length === 0 ? (
-                        <tr><td colSpan="8" className="px-5 py-14 text-center text-xs font-bold text-slate-400">Belum ada hasil pertandingan untuk divisi ini.</td></tr>
+                        <tr><td colSpan="11" className="px-5 py-14 text-center text-xs font-bold text-slate-400">Belum ada hasil pertandingan untuk divisi ini.</td></tr>
                       ) : rankingRows.map(row => (
                         <tr key={`${row.id || row.nama}-${row.rank}`} className="hover:bg-slate-50">
                           <td className="px-5 py-3">
@@ -5448,6 +5769,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                           <td className="px-4 py-3 text-center text-xs font-bold">{row.main}</td>
                           <td className="px-4 py-3 text-center text-xs font-black text-emerald-600">{row.menang}</td>
                           <td className="px-4 py-3 text-center text-xs font-black text-rose-500">{row.kalah}</td>
+                          <td className="px-4 py-3 text-center text-xs font-bold">{row.setMenang}–{row.setKalah}</td>
+                          <td className="px-4 py-3 text-center text-xs font-bold">{row.setKalah ? (row.setMenang / row.setKalah).toFixed(3) : row.setMenang ? '∞' : '-'}</td>
+                          <td className="px-4 py-3 text-center text-xs font-bold">{row.bolaKalah ? (row.bolaMenang / row.bolaKalah).toFixed(3) : row.bolaMenang ? '∞' : '-'}</td>
                           <td className="px-5 py-3 text-right text-sm font-black text-[#0a3971]">{row.poin}</td>
                         </tr>
                       ))}
@@ -5456,7 +5780,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </div>
 
                 <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-3 text-[9px] font-semibold text-slate-400">
-                  Rumus sementara: menang = 3 poin, kalah = 0 poin. Rumus dapat diubah kemudian tanpa mengubah struktur halaman.
+                  Rasio = total set menang ÷ set kalah; rasio bola = total poin bola menang ÷ poin bola kalah. Poin ranking SpinMatch sementara: menang 3, kalah 0 (bukan Match Point klasemen ITTF).
                 </div>
               </div>
             </div>
@@ -5501,6 +5825,8 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </>
               ) : settingsSection === 'REFEREE' ? (
                 <div className="space-y-4">
+                  {canManageEvent(selectedSettingsEvent) && <RefereeOnlineAccounts eventItem={selectedSettingsEvent} tableCount={settingsTableCount} onAccountsChanged={setOnlineReferees} />}
+
                   <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
                     <div className="flex flex-col gap-3 border-b border-slate-100 p-5 md:flex-row md:items-center md:justify-between">
                       <div className="flex items-center gap-3">
@@ -5528,7 +5854,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
                     <div className="border-b border-slate-100 p-5">
                       <h4 className="text-xs font-black text-slate-900">Penugasan Meja</h4>
-                      <p className="mt-1 text-[9px] font-semibold text-slate-400">Pilih wasit aktif dari Master Wasit SpinMatch. Status tugas berubah otomatis: MENUNGGU → BERTUGAS saat skor mulai diinput → SIAP setelah hasil final disimpan.</p>
+                      {onlineRefereesLoading && <p className="text-xs text-blue-600">Memuat penugasan online...</p>}
+                      {onlineRefereesError && <p className="text-xs text-red-600">Gagal memuat akun wasit online: {onlineRefereesError}</p>}
+                      <p className="mt-1 text-[9px] font-semibold text-slate-400">Akun wasit online otomatis ditugaskan ke meja yang dipilih saat pembuatan. Wasit lokal lama tetap tersedia untuk meja lain. Status tugas berubah otomatis: MENUNGGU → BERTUGAS saat skor mulai diinput → SIAP setelah hasil final disimpan.</p>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[760px]">
@@ -5538,7 +5866,8 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <tbody className="divide-y divide-slate-100">
                           {Array.from({ length: settingsTableCount }, (_, i) => i + 1).map(no => {
                             const a = currentRefereeAssignments[String(no)] || {};
-                            const registered = refereeRegistry.find(r => r.id === a.refereeId);
+                            const onlineRegistered = onlineRefereeForTable(no);
+                            const registered = onlineRegistered ? { id: `ONLINE-${onlineRegistered.id}`, nama: onlineRegistered.nama_wasit, status: onlineRegistered.status, kode: onlineRegistered.kode_wasit } : refereeRegistry.find(r => r.id === a.refereeId);
                             const hasValidAssignment = !!registered;
                             const status = registered?.status || '';
                             const workStatus = getRefereeWorkStatus(no, a);
@@ -5546,8 +5875,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                               <tr key={no} className="hover:bg-slate-50/70">
                                 <td className="px-5 py-4"><span className="inline-flex h-8 min-w-8 items-center justify-center rounded-xl bg-[#071b3b] px-2 text-[10px] font-black text-white">{no}</span></td>
                                 <td className="px-4 py-4">
-                                  <select value={hasValidAssignment ? registered.id : ''} onChange={e => assignRegisteredReferee(no, e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black text-slate-800 outline-none focus:border-blue-500">
+                                  <select disabled={!!onlineRegistered} value={hasValidAssignment ? registered.id : ''} onChange={e => assignRegisteredReferee(no, e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black text-slate-800 outline-none focus:border-blue-500">
                                     <option value="">Belum Ditugaskan</option>
+                                    {onlineRegistered && <option value={`ONLINE-${onlineRegistered.id}`}>{onlineRegistered.kode_wasit} • {onlineRegistered.nama_wasit}</option>}
                                     {refereeRegistry.map(r => <option key={r.id} value={r.id} disabled={r.status !== 'AKTIF'}>{r.id} {r.status !== 'AKTIF' ? '• NONAKTIF' : ''}</option>)}
                                   </select>
                                 </td>
@@ -5565,7 +5895,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                                     : <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[8px] font-black text-slate-500">KOSONG</span>}
                                 </td>
                                 <td className="px-5 py-4 text-right">
-                                  {hasValidAssignment && <button onClick={() => assignRegisteredReferee(no, '')} className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-1.5 text-[8px] font-black text-rose-600">Batalkan Tugas</button>}
+                                  {hasValidAssignment && !onlineRegistered && <button onClick={() => assignRegisteredReferee(no, '')} className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-1.5 text-[8px] font-black text-rose-600">Batalkan Tugas</button>}
                                 </td>
                               </tr>
                             );
@@ -6535,6 +6865,19 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
       )}
 
+      {ratioDetail && (()=>{
+        const list=buildPoolRankings(ratioDetail.eventId)?.[ratioDetail.pool]||[];
+        const fmt=v=>v===null?'Data belum lengkap':v===Infinity?'∞':Number(v).toFixed(3).replace('.',',');
+        return <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/65 p-4" onClick={()=>setRatioDetail(null)}>
+          <div className="max-h-[85vh] w-full max-w-[850px] overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onClick={e=>e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-lg font-black">Detail Rasio ITTF — {ratioDetail.pool}</h3><button className="rounded-lg bg-slate-100 p-2" onClick={()=>setRatioDetail(null)}>Tutup ✕</button></div>
+            <p className="mb-3 text-xs text-slate-600">MP: menang 2, kalah 1. Jika MP seri, hitung ulang hanya pertandingan antarpemain seri, kemudian rasio set dan rasio poin bola.</p>
+            <div className="overflow-x-auto"><table className="w-full min-w-[690px] border-collapse text-xs"><thead><tr className="bg-slate-100">{['Pos','Pemain','M–K','MP','Set M–K','Rasio Set','Poin Bola M–K','Rasio Poin'].map(h=><th key={h} className="border p-2">{h}</th>)}</tr></thead><tbody>{list.map(p=><tr key={p.id}><td className="border p-2 text-center">{p.ranking}</td><td className="border p-2 font-bold">{p.nama}{p.keterangan?' ✓':''}</td><td className="border p-2 text-center">{p.wins}–{p.losses}</td><td className="border p-2 text-center">{p.matchPoints}</td><td className="border p-2 text-center">{p.gamesWon}–{p.gamesLost}</td><td className="border p-2 text-center">{fmt(p.ratioSet)}</td><td className="border p-2 text-center">{p.completePoints?`${p.pointsWon}–${p.pointsLost}`:'Belum lengkap'}</td><td className="border p-2 text-center">{fmt(p.ratioPoin)}</td></tr>)}</tbody></table></div>
+            <p className="mt-3 text-xs text-slate-600">Rasio set = set menang ÷ set kalah. Rasio poin = total poin bola menang ÷ total poin bola kalah. Data poin bola diambil dari skor tiap set yang tersimpan, tidak dikarang dari skor 3–1.</p>
+            {list.some(p=>!p.completePoints)&&<p className="mt-2 rounded-lg bg-amber-50 p-3 text-xs font-bold text-amber-800">Ada pertandingan tanpa skor poin bola lengkap. Penentuan juara yang memerlukan rasio poin harus diverifikasi sebelum Knockout.</p>}
+          </div>
+        </div>;
+      })()}
       {showMatchResultModal && selectedMatch && (
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl relative border border-slate-100">
