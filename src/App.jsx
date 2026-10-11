@@ -186,6 +186,8 @@ const MainContent = () => {
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
   const isEO = userRole === 'EO';
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : userRole === 'WASIT' ? 'Wasit' : 'Pengguna';
 
   const handleMobileRestart = () => {
     setShowMobileMoreMenu(false);
@@ -3569,7 +3571,8 @@ const handleUpdatePlayerSubmit = async (e) => {
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <div className="spinmatch-page-head shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-10 border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
-          <div className="relative z-50 flex justify-end md:hidden">
+          <div className="relative z-50 flex items-center justify-end gap-2 md:hidden">
+            <span className="rounded-full border border-blue-200 bg-white px-3 py-2 text-[11px] font-black text-[#0a3971]">{accountRoleLabel}</span>
             <button
               type="button"
               onClick={() => setShowMobileMoreMenu(prev => !prev)}
@@ -3627,9 +3630,19 @@ const handleUpdatePlayerSubmit = async (e) => {
                     Sistem online
                   </span>
 
-                  <span className="flex h-9 min-w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-3 text-[10px] font-black text-slate-700 shadow-sm">
-                    {isPublic ? 'PU' : String(userRole || 'US').toUpperCase().slice(0, 2)}
-                  </span>
+                  <div className="relative">
+                    <button type="button" onClick={() => setShowAccountMenu(v => !v)} aria-expanded={showAccountMenu} aria-label="Lihat identitas akun" className="flex max-w-[230px] items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-1.5 text-left shadow-sm hover:border-orange-300">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a3971] text-[10px] font-black text-white">{isSuperAdmin ? 'SA' : isEO ? 'EO' : isPublic ? 'PU' : 'WS'}</span>
+                      <span className="min-w-0"><span className="block truncate text-[11px] font-black text-slate-900">{accountRoleLabel}</span><span className="block truncate text-[10px] text-slate-500">{isPublic ? 'Pengunjung SpinMatch' : currentUserName}</span></span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                    </button>
+                    {showAccountMenu && <div className="absolute right-0 top-full z-[100] mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
+                      <p className="text-xs font-black text-[#0a3971]">{accountRoleLabel}</p>
+                      <p className="mt-1 break-words text-xs font-semibold text-slate-800">{isPublic ? 'Pengunjung' : currentUserName}</p>
+                      {!isPublic && user?.email && <p className="mt-1 break-all text-[11px] text-slate-500">{user.email}</p>}
+                      <button type="button" onClick={() => { setShowAccountMenu(false); logout(); }} className="mt-3 flex w-full items-center gap-2 rounded-lg border border-red-100 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50"><LogOut className="h-4 w-4" /> Keluar</button>
+                    </div>}
+                  </div>
 
                   {!isPublic && (
                     <button
