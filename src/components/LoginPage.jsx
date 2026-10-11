@@ -255,7 +255,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-      setUsername(regEmail.trim());
+      setUsername(regUsername.trim());
 
 
 
@@ -555,7 +555,7 @@ export const LoginPage = ({ onCancel }) => {
                 <h2 className="text-base font-extrabold text-white">Periksa Email Anda</h2>
                 <p className="text-xs text-blue-100 mt-2">Jika pendaftaran baru berhasil, klik tautan verifikasi yang dikirim ke:</p>
                 <p className="text-sm font-bold text-orange-200 break-all mt-2">{verificationEmail}</p>
-                <p className="text-xs text-blue-100/80 mt-2">Periksa Inbox, Spam atau Promosi. Setelah verifikasi, kembali ke sini dan login menggunakan email serta password.</p>
+                <p className="text-xs text-blue-100/80 mt-2">Periksa Inbox, Spam atau Promosi. Setelah verifikasi, kembali ke sini dan login menggunakan username serta password.</p>
                 <button type="button" onClick={handleResend} disabled={resending} className="mt-3 w-full rounded-xl border border-orange-300/60 bg-orange-400/15 py-2.5 text-sm font-bold text-orange-100 disabled:opacity-50">
                   {resending ? 'Mengirim...' : 'Kirim Ulang Email Verifikasi'}
                 </button>
@@ -599,7 +599,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Email</label>
+                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Username</label>
 
 
 
@@ -615,7 +615,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                      type="email"
+                      type="text"
 
 
 
@@ -627,7 +627,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                      placeholder="Masukkan alamat email"
+                      placeholder="Masukkan username"
 
 
 
@@ -751,7 +751,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-              <button type="button" onClick={() => { resetMessage(); setResetEmail(username); setMode('FORGOT'); }} className="relative mt-3 block ml-auto text-xs font-semibold text-orange-200 hover:text-orange-100 underline">Lupa Password?</button>
+              <button type="button" onClick={() => { resetMessage(); setResetEmail(username.includes('@') ? username : ''); setMode('FORGOT'); }} className="relative mt-3 block ml-auto text-xs font-semibold text-orange-200 hover:text-orange-100 underline">Lupa Password?</button>
               <div className="relative mt-4 grid grid-cols-2 gap-2.5">
 
 
