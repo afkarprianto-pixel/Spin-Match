@@ -850,7 +850,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                  <UserPlus className="w-4 h-4 text-cyan-300" /> Daftar EO
+                  <UserPlus className="w-4 h-4" style={{ color: "#073875", stroke: "#073875", opacity: 1, strokeWidth: 2.8 }} /> Daftar EO
 
 
 
