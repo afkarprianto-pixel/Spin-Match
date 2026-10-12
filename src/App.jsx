@@ -4628,7 +4628,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
           ) : (
 
-            <div className="divide-y divide-slate-100 max-h-[330px] overflow-y-auto overscroll-contain sm:max-h-[330px] [scrollbar-width:thin] [scrollbar-color:#94a3b8_#f1f5f9]" aria-label="Daftar Event Saya, gulir ke bawah untuk melihat event lainnya" tabIndex={0}>
+            <div className="sm-event-scroll divide-y divide-slate-100 max-h-[330px] overflow-y-auto overscroll-contain sm:max-h-[330px]" aria-label="Daftar Event Saya, gulir ke bawah untuk melihat event lainnya" tabIndex={0}>
 
               {myEvents.map((item) => (
 
@@ -7105,11 +7105,48 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick .mx-auto.grid button { min-width:0 !important; min-height:55px !important; padding:7px 3px !important; flex-direction:column !important; gap:4px !important; font-size:10px !important; line-height:1.15 !important; text-align:center !important; }
           .sm-dashboard-quick .mx-auto.grid button:first-child { min-width:0 !important; width:100% !important; min-height:55px !important; }
           .sm-dashboard-quick .mx-auto.grid button svg { width:19px !important; height:19px !important; }
+          /* HP: tepat tiga baris event ringkas; scrollbar selalu tampak. */
+          .sm-dashboard-screen #dashboard-event-saya { overflow:hidden !important; }
+          .sm-dashboard-screen #dashboard-event-saya > div:first-child { padding:10px 12px !important; }
+          .sm-dashboard-screen #dashboard-event-saya > div:first-child p { display:none !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll {
+            height:225px !important;
+            max-height:225px !important;
+            overflow-y:scroll !important;
+            overflow-x:hidden !important;
+            scrollbar-width:auto !important;
+            scrollbar-color:#1685d4 #e2e8f0 !important;
+            padding-right:5px !important;
+            touch-action:pan-y !important;
+          }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll::-webkit-scrollbar { width:8px !important; display:block !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll::-webkit-scrollbar-track { background:#e2e8f0 !important; border-radius:9px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll::-webkit-scrollbar-thumb { background:#1685d4 !important; border-radius:9px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group {
+            height:75px !important;
+            min-height:75px !important;
+            max-height:75px !important;
+            display:grid !important;
+            grid-template-columns:35px minmax(0,1fr) auto !important;
+            grid-template-rows:1fr 1fr !important;
+            column-gap:7px !important;
+            row-gap:0 !important;
+            padding:5px 7px !important;
+            align-items:center !important;
+            flex-wrap:nowrap !important;
+          }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:first-child { grid-column:1; grid-row:1 / 3; width:32px !important; height:32px !important; border-radius:10px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:nth-child(2) { grid-column:2; grid-row:1 / 3; min-width:0 !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:nth-child(2) > div:first-child { font-size:10px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:nth-child(2) > div:nth-child(2) { font-size:8px !important; gap:2px !important; margin-top:2px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > span { grid-column:3; grid-row:1; justify-self:end; padding:3px 7px !important; font-size:8px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child { grid-column:3; grid-row:2; justify-self:end; margin:0 !important; gap:3px !important; }
+          .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child button { padding:4px 6px !important; font-size:8px !important; }
           /* Dashboard HP: Event Saya scroll sendiri, Menu Cepat selalu di dasar layar. */
           .sm-dashboard-screen { padding-bottom:calc(196px + env(safe-area-inset-bottom, 0px)) !important; }
           .sm-dashboard-screen #dashboard-event-saya > div[aria-label^="Daftar Event Saya"] {
-            max-height:330px !important;
-            overflow-y:auto !important;
+            max-height:225px !important;
+            overflow-y:scroll !important;
             overscroll-behavior:contain !important;
             -webkit-overflow-scrolling:touch;
             scrollbar-width:thin;
