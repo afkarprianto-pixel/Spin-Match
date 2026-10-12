@@ -4062,13 +4062,13 @@ const handleUpdatePlayerSubmit = async (e) => {
       </div>
 
       <main className="min-w-0 flex-1 flex flex-col h-[100dvh] overflow-hidden">
-        <div className="spinmatch-page-head shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-10 border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
+        <div className="spinmatch-page-head relative shrink-0 bg-slate-50 px-3 pt-3 pb-2 z-[100] border-b border-slate-200/60 shadow-xs sm:px-5 sm:pt-5 md:px-8 md:pt-8 md:pb-4">
           <div className="relative z-50 flex items-center justify-end gap-2 md:hidden">
             <span className="rounded-full border border-blue-200 bg-white px-3 py-2 text-[11px] font-black text-[#0a3971]">{accountRoleLabel}</span>
             <button
               type="button"
               onClick={() => setShowMobileMoreMenu(prev => !prev)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm active:scale-95"
+              className="sm-mobile-more-trigger flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm active:scale-95"
               aria-label="Menu lainnya"
               title="Menu lainnya"
             >
@@ -4083,7 +4083,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   onClick={() => setShowMobileMoreMenu(false)}
                   className="fixed inset-0 z-40 cursor-default bg-transparent"
                 />
-                <div className="absolute right-0 top-11 z-50 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,.18)]">
+                <div className="sm-mobile-more-panel absolute right-0 top-11 z-50 w-[min(310px,calc(100vw-24px))] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_rgba(15,23,42,.24)]">
                   {isSuperAdmin && <>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PRICING'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-orange-700 hover:bg-orange-50"><Wallet className="h-4 w-4"/>Tarif & Pembayaran</button>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PAYMENT_REVIEW'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"><CheckCircle2 className="h-4 w-4"/>Verifikasi Pembayaran EO</button>
@@ -7154,7 +7154,11 @@ const handleUpdatePlayerSubmit = async (e) => {
           /* SPINMATCH MOBILE DASHBOARD V3: kontras abu-abu & ruang lebih efisien */
           .spinmatch-app { background:#cbd2dc !important; }
           .spinmatch-page-head { background:#cbd2dc !important; padding:4px 12px 3px !important; min-height:0 !important; }
-          .spinmatch-page-head > div:first-child button { height:32px !important; width:32px !important; }
+          /* Tombol titik tiga saja yang berukuran 32x32; tombol menu harus lebar penuh. */
+          .spinmatch-page-head .sm-mobile-more-trigger { height:32px !important; width:32px !important; flex-shrink:0 !important; }
+          .spinmatch-page-head .sm-mobile-more-panel { background-color:#fff !important; opacity:1 !important; isolation:isolate; z-index:110 !important; }
+          .spinmatch-page-head .sm-mobile-more-panel button { display:flex !important; width:100% !important; height:auto !important; min-height:44px !important; align-items:center !important; justify-content:flex-start !important; white-space:normal !important; line-height:1.3 !important; text-align:left !important; }
+          .spinmatch-page-head .sm-mobile-more-panel button svg { flex-shrink:0 !important; }
           .spinmatch-main-content { background:#cbd2dc !important; padding:7px 12px 18px !important; }
           .sm-dashboard-layout { gap:9px !important; }
           .sm-dashboard-event-buttons button { min-height:40px !important; font-size:12px !important; }
