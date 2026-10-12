@@ -4203,7 +4203,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'SCHEDULE' && (
-            <div className="sm-mobile-page-header relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-3 sm:p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 sm:gap-4 mt-3 sm:mt-4 text-white">
+            <div className="sm-mobile-page-header sm-schedule-header relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-3 sm:p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 sm:gap-4 mt-3 sm:mt-4 text-white">
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -6967,6 +6967,10 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-mobile-page-header select { min-width: 0 !important; max-width: 100% !important; width: 100% !important; text-overflow: ellipsis !important; font-size: 10px !important; }
           .sm-mobile-page-header span { font-size: 10px !important; }
           .sm-mobile-page-header > div:last-child > button { padding: 9px 12px !important; border-radius: 13px !important; font-size: 11px !important; white-space: nowrap !important; }
+          /* Jadwal: override grid lama 1fr auto agar Undian dan Print benar-benar 50:50 */
+          .sm-mobile-page-header.sm-schedule-header > div:last-child { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+          .sm-mobile-page-header.sm-schedule-header > div:last-child > div:first-child { grid-column: 1 / -1 !important; }
+          .sm-mobile-page-header.sm-schedule-header > div:last-child > button { width: 100% !important; min-width: 0 !important; }
 
           .sm-registration, .sm-draw, .sm-schedule, .sm-live, .sm-knockout { margin-top: 12px !important; gap: 12px !important; }
           .sm-registration > div, .sm-draw > div, .sm-schedule > div, .sm-live > div, .sm-knockout > div { border-radius: 22px !important; }
