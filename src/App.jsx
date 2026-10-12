@@ -296,6 +296,8 @@ const PricingAdminPanel = () => {
   const [quota, setQuota] = useState('');
   const [note, setNote] = useState('');
   const money = n => `Rp ${Number(n || 0).toLocaleString('id-ID')}`;
+  // Format rupiah di layar (100.000), tetapi simpan nilai angka murni ke Supabase.
+  const rupiahInput = value => String(value ?? '').replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   const load = async () => {
     setBusy(true); setError('');
     const [a,b] = await Promise.all([
@@ -340,7 +342,10 @@ const PricingAdminPanel = () => {
     if(err) setError(err.message);else await load();
     setBusy(false);
   };
-  const field=(label,key,type='text') => <label className="block text-xs font-bold text-slate-700">{label}<input type={type} value={config?.[key] ?? ''} onChange={e=>setConfig(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" /></label>;
+  const field=(label,key,type='text') => {
+    const isRupiah = key === 'standard_price' || key === 'public_promo_price';
+    return <label className="block text-xs font-bold text-slate-700">{label}<input type={isRupiah ? 'text' : type} inputMode={isRupiah ? 'numeric' : undefined} value={isRupiah ? rupiahInput(config?.[key]) : (config?.[key] ?? '')} onChange={e=>setConfig(v=>({...v,[key]:isRupiah ? e.target.value.replace(/\D/g, '') : e.target.value}))} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" /></label>;
+  };
   return <div className="space-y-4">
     <div className="flex items-center gap-3"><h3 className="text-lg font-black text-slate-900">Tarif & Pembayaran SpinMatch</h3><button type="button" disabled={busy} onClick={load} className="ml-auto rounded-lg border px-3 py-2 text-xs font-bold">Muat ulang</button></div>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">{error}</p>}
@@ -357,7 +362,7 @@ const PricingAdminPanel = () => {
     </>}
     <div className="rounded-2xl bg-white p-5 shadow-sm space-y-3"><h4 className="font-black">Tarif Khusus / Gratis untuk EO</h4>
       <p className="text-xs text-slate-500">Masukkan UUID akun EO dari Supabase → Authentication → Users. Tarif Rp0 memberikan fasilitas gratis. Kuota kosong = tanpa batas; pembatasan pemakaian kuota akan diaktifkan bersama sistem invoice pada tahap berikutnya.</p>
-      <div className="grid gap-3 md:grid-cols-2"><label className="text-xs font-bold">User ID EO<input value={eoId} onChange={e=>setEoId(e.target.value)} placeholder="UUID akun EO" className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Tarif khusus (Rp)<input type="number" min="0" value={specialPrice} onChange={e=>setSpecialPrice(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Kuota event (opsional)<input type="number" min="1" value={quota} onChange={e=>setQuota(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Catatan<input value={note} onChange={e=>setNote(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label></div>
+      <div className="grid gap-3 md:grid-cols-2"><label className="text-xs font-bold">User ID EO<input value={eoId} onChange={e=>setEoId(e.target.value)} placeholder="UUID akun EO" className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Tarif khusus (Rp)<input type="text" inputMode="numeric" value={rupiahInput(specialPrice)} onChange={e=>setSpecialPrice(e.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Kuota event (opsional)<input type="number" min="1" value={quota} onChange={e=>setQuota(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Catatan<input value={note} onChange={e=>setNote(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label></div>
       <button type="button" disabled={busy} onClick={addRule} className="rounded-xl bg-[#0a3971] px-5 py-3 text-sm font-black text-white disabled:opacity-50">+ Tambah Tarif Khusus EO</button>
       <div className="space-y-2">{rules.map(r=><div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-xs"><div className="min-w-0"><div className="break-all font-bold">{r.eo_auth_id}</div><div>{money(r.price_per_event)} • Kuota: {r.quota_events??'Tanpa batas'} • {r.note||'Tanpa catatan'}</div></div><button type="button" disabled={busy} onClick={()=>toggleRule(r)} className={`rounded-lg px-3 py-2 font-bold ${r.enabled?'bg-emerald-100 text-emerald-800':'bg-slate-100 text-slate-600'}`}>{r.enabled?'Aktif — Nonaktifkan':'Nonaktif — Aktifkan'}</button></div>)}{rules.length===0&&<p className="text-xs text-slate-500">Belum ada tarif khusus EO.</p>}</div>
     </div><p className="text-xs text-amber-700">Tahap ini hanya mengelola tarif dan rekening. Penagihan, pemotongan kuota, serta aktivasi event setelah verifikasi belum diterapkan.</p>
@@ -755,6 +760,8 @@ const AuthenticatedContent = () => {
   }, []);
 
   const [showModal, setShowModal] = useState(false);
+  const [eventPaymentPreview, setEventPaymentPreview] = useState(null);
+  const [eventPaymentBusy, setEventPaymentBusy] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showRegModal, setShowRegModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
@@ -1597,11 +1604,37 @@ const AuthenticatedContent = () => {
       localStorage.setItem('spinmatch_events', JSON.stringify(updatedEvents));
       alert('Event berhasil diperbarui dan disimpan');
     } else {
+      // EO wajib melihat tarif yang sedang berlaku sebelum event dibuat.
+      if (isEO && !eventPaymentPreview) {
+        setEventPaymentBusy(true);
+        try {
+          const { data: cfg, error: cfgError } = await supabase.from('spinmatch_pricing_settings').select('*').eq('id', 1).single();
+          if (cfgError || !cfg) throw new Error(cfgError?.message || 'Tarif Super Admin belum tersedia.');
+          const now = new Date();
+          const promoStart = cfg.public_promo_start ? new Date(cfg.public_promo_start) : null;
+          const promoEnd = cfg.public_promo_end ? new Date(cfg.public_promo_end) : null;
+          const promoActive = !!cfg.public_promo_enabled && (!promoStart || now >= promoStart) && (!promoEnd || now <= promoEnd);
+          let price = Number(promoActive ? cfg.public_promo_price : cfg.standard_price);
+          let category = promoActive ? 'Tarif Promosi' : 'Tarif Normal';
+          const { data: rules, error: rulesError } = await supabase.from('spinmatch_eo_pricing').select('*').eq('eo_auth_id', currentUserId).eq('enabled', true).order('created_at', { ascending: false }).limit(1);
+          if (rulesError) throw rulesError;
+          if (rules?.length) {
+            price = Number(rules[0].price_per_event);
+            category = 'Tarif Khusus EO';
+          }
+          if (!Number.isFinite(price) || price < 0) throw new Error('Nominal tarif tidak valid.');
+          setEventPaymentPreview({ price, category, bank: cfg.payment_bank || '', account: cfg.payment_account_number || '', holder: cfg.payment_account_name || '', whatsapp: cfg.payment_whatsapp || '' });
+        } catch (err) {
+          alert(`Tarif belum bisa ditampilkan: ${err.message}. Event belum dibuat.`);
+        } finally { setEventPaymentBusy(false); }
+        return;
+      }
       const newEvent = {
         id: Date.now(),
         nama: formNama,
         tanggal: formattedTanggal,
-        status: formStatus,
+        // Status pembayaran harus dikendalikan oleh verifikasi server sebelum produksi.
+        status: isEO ? 'Menunggu Pembayaran' : formStatus,
         peserta: 0,
         durasiMatch,
         jamMulai,
@@ -1626,9 +1659,10 @@ const AuthenticatedContent = () => {
       const updatedEvents = [...events, newEvent];
       setEvents(updatedEvents);
       localStorage.setItem('spinmatch_events', JSON.stringify(updatedEvents));
-      alert('Event berhasil dibuat dan disimpan');
+      alert(isEO ? 'Event tersimpan dengan status Menunggu Pembayaran. Konfirmasi pembayaran ke admin; aktivasi masih memerlukan verifikasi.' : 'Event berhasil dibuat dan disimpan');
     }
 
+    setEventPaymentPreview(null);
     setShowModal(false);
     setIsEditMode(false);
     setSelectedEventIdForReg('');
@@ -6688,6 +6722,18 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
       )}
 
+      {eventPaymentPreview && showModal && !isEditMode && isEO && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/65 p-4">
+          <div role="dialog" aria-modal="true" aria-label="Konfirmasi tarif event" className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between gap-3"><div><h3 className="text-lg font-black text-slate-900">Biaya Pembuatan Event</h3><p className="text-xs text-slate-500 mt-1">{formNama}</p></div><button type="button" onClick={() => setEventPaymentPreview(null)} className="rounded-lg p-2 text-slate-600"><X className="h-5 w-5"/></button></div>
+            <div className="rounded-2xl bg-orange-50 border border-orange-100 p-4"><p className="text-xs font-bold text-orange-700">{eventPaymentPreview.category} • per event</p><p className="mt-1 text-3xl font-black text-slate-900">Rp {eventPaymentPreview.price.toLocaleString('id-ID')}</p></div>
+            {eventPaymentPreview.price > 0 ? <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700 space-y-1"><p className="font-black">Transfer ke rekening:</p><p>{eventPaymentPreview.bank || 'Bank belum diatur'}</p><p className="font-black select-all">{eventPaymentPreview.account || 'Nomor rekening belum diatur'}</p><p>a.n. {eventPaymentPreview.holder || 'Belum diatur'}</p></div> : <p className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Tarif Rp0 — fasilitas gratis dari Super Admin.</p>}
+            <p className="text-xs text-slate-600">Event akan dibuat dengan status Menunggu Pembayaran. Transfer dan konfirmasi ke admin sebelum event diaktifkan. Jangan melakukan transfer dua kali.</p>
+            {eventPaymentPreview.whatsapp && <a href={`https://wa.me/${String(eventPaymentPreview.whatsapp).replace(/\D/g,'')}?text=${encodeURIComponent(`Konfirmasi pembayaran SpinMatch untuk event ${formNama}, nominal Rp ${eventPaymentPreview.price.toLocaleString('id-ID')}.`)}`} target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-emerald-300 p-3 text-center text-sm font-black text-emerald-700">Konfirmasi melalui WhatsApp</a>}
+            <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setEventPaymentPreview(null)} className="rounded-xl bg-slate-100 px-3 py-3 text-sm font-bold">Kembali</button><button type="button" disabled={eventPaymentBusy} onClick={() => document.getElementById('spinmatch-event-create-form')?.requestSubmit()} className="rounded-xl bg-orange-500 px-3 py-3 text-sm font-black text-white disabled:opacity-50">Buat Event</button></div>
+          </div>
+        </div>
+      )}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative border border-slate-100 my-8">
@@ -6699,7 +6745,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <form onSubmit={handleFormSubmit} className="p-5 space-y-4">
+            <form id="spinmatch-event-create-form" onSubmit={handleFormSubmit} className="p-5 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nama Event</label>
                 <input type="text" required value={formNama} onChange={(e) => setFormNama(e.target.value)} placeholder="Contoh: Turnamen Pingpong Divisi 5 2026" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-800 text-sm" />
