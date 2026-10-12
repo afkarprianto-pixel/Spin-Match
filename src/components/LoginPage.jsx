@@ -846,7 +846,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                <button onClick={() => openRegister('EO')} className="rounded-[13px] border border-blue-300/20 bg-blue-500/10 hover:bg-blue-500/20 text-blue-50 py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer">
+                <button onClick={() => openRegister('EO')} className="rounded-[13px] border border-blue-300/20 bg-blue-500/10 hover:bg-blue-500/20 text-blue-50 py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer" style={{ color: "#073875", backgroundColor: "#d7e9ff", border: "2px solid #83baf4", opacity: 1, WebkitTextFillColor: "#073875", fontWeight: 800 }}>
 
 
 
@@ -858,7 +858,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                <button onClick={handlePublic} className="rounded-[13px] border border-orange-300/25 bg-orange-500/10 hover:bg-orange-500/20 text-orange-100 py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer">
+                <button onClick={handlePublic} className="rounded-[13px] border border-orange-300/25 bg-orange-500/10 hover:bg-orange-500/20 text-orange-100 py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer" style={{ color: "#713108", backgroundColor: "#fff0e4", border: "2px solid #f4b88c", opacity: 1, WebkitTextFillColor: "#713108", fontWeight: 800 }}>
 
 
 
@@ -878,15 +878,15 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-              <button onClick={handlePublic} className="relative mt-2.5 w-full text-[11px] text-blue-100/55 hover:text-orange-300 transition cursor-pointer">
+              <button onClick={handlePublic} className="relative mt-2.5 w-full text-[11px] text-blue-100/55 hover:text-orange-300 transition cursor-pointer" style={{ color: "#254c79", WebkitTextFillColor: "#254c79", opacity: 1, fontWeight: 600 }}>
 
 
 
-                Ingin melihat pertandingan? <span className="font-bold">Masuk sebagai Public</span>
+                Ingin melihat pertandingan? <span className="font-bold" style={{ color: "#073875", WebkitTextFillColor: "#073875" }}>Masuk sebagai Public</span>
 
 
 
-                <span className="text-blue-100/35"> — untuk fitur Public/latihan ke depan</span>
+                <span className="text-blue-100/35" style={{ color: "#3c5878", WebkitTextFillColor: "#3c5878" }}> — untuk fitur Public/latihan ke depan</span>
 
 
 
