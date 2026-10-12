@@ -283,6 +283,87 @@ const SignaturePad = ({ value, onChange, label }) => {
   );
 };
 
+
+// Pengaturan tarif global SpinMatch — hanya Super Admin; Supabase RLS memverifikasi hak tulis.
+const PricingAdminPanel = () => {
+  const [config, setConfig] = useState(null);
+  const [rules, setRules] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [eoId, setEoId] = useState('');
+  const [specialPrice, setSpecialPrice] = useState('0');
+  const [quota, setQuota] = useState('');
+  const [note, setNote] = useState('');
+  const money = n => `Rp ${Number(n || 0).toLocaleString('id-ID')}`;
+  const load = async () => {
+    setBusy(true); setError('');
+    const [a,b] = await Promise.all([
+      supabase.from('spinmatch_pricing_settings').select('*').eq('id',1).single(),
+      supabase.from('spinmatch_eo_pricing').select('*').order('created_at',{ascending:false})
+    ]);
+    if(a.error || b.error) setError(a.error?.message || b.error?.message || 'Tidak dapat membaca tarif.');
+    else {setConfig(a.data);setRules(b.data || []);}
+    setBusy(false);
+  };
+  useEffect(() => {load();}, []);
+  const save = async () => {
+    if(!config || busy) return;
+    const standard = Number(config.standard_price), promo = Number(config.public_promo_price);
+    if(!Number.isInteger(standard) || standard<0 || !Number.isInteger(promo) || promo<0) {setError('Harga harus angka bulat minimal 0.');return;}
+    if(config.public_promo_start && config.public_promo_end && config.public_promo_end < config.public_promo_start) {setError('Tanggal akhir promosi harus setelah tanggal mulai.');return;}
+    setBusy(true);setError('');setNotice('');
+    const {error:err} = await supabase.from('spinmatch_pricing_settings').update({
+      standard_price:standard, public_promo_enabled:!!config.public_promo_enabled,
+      public_promo_price:promo, public_promo_start:config.public_promo_start || null,
+      public_promo_end:config.public_promo_end || null,
+      payment_bank:config.payment_bank || '', payment_account_number:config.payment_account_number || '',
+      payment_account_name:config.payment_account_name || '',payment_whatsapp:config.payment_whatsapp || '',
+      updated_at:new Date().toISOString()
+    }).eq('id',1).select('id');
+    if(err) setError(err.message); else setNotice('Pengaturan tarif berhasil disimpan di Supabase.');
+    setBusy(false);
+  };
+  const addRule = async () => {
+    if(busy) return;
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eoId.trim())) {setError('Isi User ID EO dari Supabase Auth (format UUID).');return;}
+    const price=Number(specialPrice), q=quota.trim()===''?null:Number(quota);
+    if(!Number.isInteger(price)||price<0||(q!==null&&(!Number.isInteger(q)||q<1))) {setError('Tarif minimal Rp0 dan kuota harus bilangan bulat positif.');return;}
+    setBusy(true);setError('');setNotice('');
+    const {error:err}=await supabase.from('spinmatch_eo_pricing').insert({eo_auth_id:eoId.trim(),price_per_event:price,quota_events:q,note:note.trim(),enabled:true});
+    if(err) setError(err.message); else {setNotice('Tarif khusus berhasil ditambahkan.');setEoId('');setNote('');await load();}
+    setBusy(false);
+  };
+  const toggleRule = async r => {
+    setBusy(true);setError('');
+    const {error:err}=await supabase.from('spinmatch_eo_pricing').update({enabled:!r.enabled,updated_at:new Date().toISOString()}).eq('id',r.id);
+    if(err) setError(err.message);else await load();
+    setBusy(false);
+  };
+  const field=(label,key,type='text') => <label className="block text-xs font-bold text-slate-700">{label}<input type={type} value={config?.[key] ?? ''} onChange={e=>setConfig(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" /></label>;
+  return <div className="space-y-4">
+    <div className="flex items-center gap-3"><h3 className="text-lg font-black text-slate-900">Tarif & Pembayaran SpinMatch</h3><button type="button" disabled={busy} onClick={load} className="ml-auto rounded-lg border px-3 py-2 text-xs font-bold">Muat ulang</button></div>
+    {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">{error}</p>}
+    {notice && <p className="rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-800">{notice}</p>}
+    {!config ? <p className="rounded-xl bg-white p-5 text-sm">{busy?'Memuat pengaturan...':'Pengaturan belum dapat ditampilkan. Periksa akses Super Admin dan RLS Supabase.'}</p> : <>
+      <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4"><h4 className="font-black">Tarif Umum & Promosi</h4>
+        <div className="grid gap-3 md:grid-cols-2">{field('Tarif umum per event (Rp)','standard_price','number')}{field('Tarif promosi per event (Rp)','public_promo_price','number')}</div>
+        <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!config.public_promo_enabled} onChange={e=>setConfig(v=>({...v,public_promo_enabled:e.target.checked}))}/>Aktifkan promosi umum</label>
+        <div className="grid gap-3 md:grid-cols-2">{field('Mulai promosi (opsional)','public_promo_start','datetime-local')}{field('Akhir promosi (opsional)','public_promo_end','datetime-local')}</div>
+        <p className="text-xs text-slate-500">Tarif normal: {money(config.standard_price)} • Promosi: {config.public_promo_enabled ? money(config.public_promo_price) : 'Tidak aktif'}. Harga Rp0 berarti gratis.</p>
+      </div>
+      <div className="rounded-2xl bg-white p-5 shadow-sm space-y-3"><h4 className="font-black">Rekening & Konfirmasi</h4><div className="grid gap-3 md:grid-cols-2">{field('Nama bank','payment_bank')}{field('Nomor rekening','payment_account_number')}{field('Atas nama','payment_account_name')}{field('Nomor WhatsApp (contoh 62812...)','payment_whatsapp')}</div></div>
+      <button type="button" disabled={busy} onClick={save} className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-black text-white disabled:opacity-50">{busy?'Memproses...':'Simpan Tarif & Rekening'}</button>
+    </>}
+    <div className="rounded-2xl bg-white p-5 shadow-sm space-y-3"><h4 className="font-black">Tarif Khusus / Gratis untuk EO</h4>
+      <p className="text-xs text-slate-500">Masukkan UUID akun EO dari Supabase → Authentication → Users. Tarif Rp0 memberikan fasilitas gratis. Kuota kosong = tanpa batas; pembatasan pemakaian kuota akan diaktifkan bersama sistem invoice pada tahap berikutnya.</p>
+      <div className="grid gap-3 md:grid-cols-2"><label className="text-xs font-bold">User ID EO<input value={eoId} onChange={e=>setEoId(e.target.value)} placeholder="UUID akun EO" className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Tarif khusus (Rp)<input type="number" min="0" value={specialPrice} onChange={e=>setSpecialPrice(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Kuota event (opsional)<input type="number" min="1" value={quota} onChange={e=>setQuota(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Catatan<input value={note} onChange={e=>setNote(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label></div>
+      <button type="button" disabled={busy} onClick={addRule} className="rounded-xl bg-[#0a3971] px-5 py-3 text-sm font-black text-white disabled:opacity-50">+ Tambah Tarif Khusus EO</button>
+      <div className="space-y-2">{rules.map(r=><div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-xs"><div className="min-w-0"><div className="break-all font-bold">{r.eo_auth_id}</div><div>{money(r.price_per_event)} • Kuota: {r.quota_events??'Tanpa batas'} • {r.note||'Tanpa catatan'}</div></div><button type="button" disabled={busy} onClick={()=>toggleRule(r)} className={`rounded-lg px-3 py-2 font-bold ${r.enabled?'bg-emerald-100 text-emerald-800':'bg-slate-100 text-slate-600'}`}>{r.enabled?'Aktif — Nonaktifkan':'Nonaktif — Aktifkan'}</button></div>)}{rules.length===0&&<p className="text-xs text-slate-500">Belum ada tarif khusus EO.</p>}</div>
+    </div><p className="text-xs text-amber-700">Tahap ini hanya mengelola tarif dan rekening. Penagihan, pemotongan kuota, serta aktivasi event setelah verifikasi belum diterapkan.</p>
+  </div>;
+};
+
 const AuthenticatedContent = () => {
   const { user, logout } = useAuth();
   const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
@@ -4002,7 +4083,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                   onClick={() => setShowMobileMoreMenu(false)}
                   className="fixed inset-0 z-40 cursor-default bg-transparent"
                 />
-                <div className="absolute right-0 top-11 z-50 w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,.18)]">
+                <div className="absolute right-0 top-11 z-50 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,.18)]">
+                  {isSuperAdmin && <>
+                    <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PRICING'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-orange-700 hover:bg-orange-50"><Wallet className="h-4 w-4"/>Tarif & Pembayaran</button>
+                    <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PAYMENT_REVIEW'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"><CheckCircle2 className="h-4 w-4"/>Verifikasi Pembayaran EO</button>
+                    <div className="my-1 border-t border-slate-100"/>
+                  </>}
                   <button
                     type="button"
                     onClick={handleMobileRestart}
@@ -4124,10 +4210,10 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </button>
                   <div>
                     <h2 className="text-lg font-black">Pengaturan</h2>
-                    <p className="text-xs text-blue-100/75">Pertandingan, penugasan wasit, dan keuangan per event</p>
+                    <p className="text-xs text-blue-100/75">Pertandingan, wasit, keuangan, dan tarif platform</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2">
+                {settingsSection !== 'PRICING' && <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2">
                   <Filter className="h-4 w-4 text-cyan-200" />
                   <select
                     value={selectedEventIdForSettings}
@@ -4136,7 +4222,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   >
                     {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama}</option>)}
                   </select>
-                </div>
+                </div>}
               </div>
             </div>
           )}
@@ -5783,17 +5869,22 @@ const handleUpdatePlayerSubmit = async (e) => {
 
           ) : activeView === 'SETTINGS' ? (
             <div className="mx-auto w-full max-w-[1500px] space-y-4">
-              {!selectedSettingsEvent ? (
+              {settingsSection === 'PRICING' && isSuperAdmin ? (
+                <div><button type="button" onClick={() => setSettingsSection('HOME')} className="mb-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4"/>Kembali</button><PricingAdminPanel /></div>
+              ) : settingsSection === 'PAYMENT_REVIEW' && isSuperAdmin ? (
+                <div className="space-y-4"><button type="button" onClick={() => setSettingsSection('HOME')} className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4"/>Kembali</button><div className="rounded-2xl bg-white p-5 shadow-sm"><h3 className="text-lg font-black text-slate-900">Verifikasi Pembayaran EO</h3><p className="mt-2 text-sm text-slate-600">Belum ada daftar tagihan yang terhubung. Fitur persetujuan pembayaran akan tersedia setelah tabel tagihan dan bukti transfer di Supabase dibuat. Belum ada event yang otomatis diaktifkan melalui halaman ini.</p></div></div>
+              ) : !selectedSettingsEvent && !(isSuperAdmin && settingsSection === 'HOME') ? (
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm font-bold text-slate-400">Belum ada event.</div>
               ) : settingsSection === 'HOME' ? (
                 <>
-                  <div className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                  {isSuperAdmin && <button type="button" onClick={() => setSettingsSection('PRICING')} className="flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 p-5 text-left font-black text-white shadow-lg"><span>Tarif & Pembayaran — Super Admin</span><span>ATUR →</span></button>}
+                  {selectedSettingsEvent && <div className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,.05)]">
                     <div className="text-[10px] font-black uppercase tracking-wide text-slate-400">Event yang diatur</div>
                     <div className="mt-1 text-lg font-black text-slate-950">{selectedSettingsEvent.nama}</div>
                     <div className="mt-1 text-xs font-semibold text-slate-400">{selectedSettingsEvent.tanggal}</div>
-                  </div>
+                  </div>}
 
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  {selectedSettingsEvent && <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <button onClick={() => { handleRowClick(selectedSettingsEvent); }} className="group relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-left text-white shadow-lg transition hover:-translate-y-1">
                       <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
                       <Settings className="relative z-10 h-7 w-7 text-cyan-200" />
@@ -5817,7 +5908,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                       <div className="relative z-10 mt-1 text-[10px] text-blue-100/70">Pemasukan, pengeluaran dan laporan event</div>
                       <div className="relative z-10 mt-5 text-[9px] font-black text-[#8DFF63]">BUKA KEUANGAN →</div>
                     </button>
-                  </div>
+                  </div>}
                 </>
               ) : settingsSection === 'REFEREE' ? (
                 <div className="space-y-4">
