@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 
 
-import logoSpinMatch from '../assets/logo-spinmatch.png';
+import logoSpinMatch from '../assets/logo-spinmatch-bola.png';
 
 
 
@@ -46,7 +46,7 @@ export const LoginPage = ({ onCancel }) => {
 
     if (!meta) { theme.setAttribute('name', 'theme-color'); document.head.appendChild(theme); }
 
-    theme.setAttribute('content', '#f58235');
+    theme.setAttribute('content', '#12b894');
 
     return () => { if (meta) theme.setAttribute('content', previous || ''); else theme.remove(); };
 
@@ -425,13 +425,43 @@ export const LoginPage = ({ onCancel }) => {
 
         @media(max-width:480px){.sm-login{padding-top:94px;padding-bottom:80px}.sm-login .sm-planet{top:4%;right:3%}.sm-login .sm-arc{bottom:-6%;}}
 
+
+        /* Tema Login SpinMatch: biru muda / putih / aksen oranye, tanpa mengubah fungsi autentikasi. */
+        .sm-login{background:radial-gradient(ellipse at 25% 17%,#a9d9ff 0%,transparent 43%),linear-gradient(165deg,#e5f5ff 0%,#f8fcff 50%,#d6edff 100%) !important;color:#123866;padding-top:38px !important;padding-bottom:60px !important;align-items:flex-start;overflow-x:hidden}
+        .sm-login .sm-space:before{display:none}
+        .sm-login .sm-wave{position:absolute;left:-25%;width:150%;height:230px;border-radius:50%;transform:rotate(-11deg);border-top:24px solid #268df3;box-shadow:0 -12px 0 #9dd9ff,0 -21px 0 #f5fcff}
+        .sm-login .sm-wave-top{top:-140px}
+        .sm-login .sm-wave-bottom{bottom:-160px;transform:rotate(10deg);border-top:35px solid #0872d5;box-shadow:0 -13px 0 #5cb7ff,0 -23px 0 #fff,0 -31px 0 #ff7c35}
+        .sm-login .sm-net{position:absolute;right:-8%;top:210px;width:45%;height:70px;transform:skewY(-10deg);opacity:.22;background:repeating-linear-gradient(90deg,#1476c6 0 2px,transparent 2px 11px),repeating-linear-gradient(0deg,#1476c6 0 2px,transparent 2px 11px)}
+        .sm-login .sm-player{position:absolute;top:175px;width:90px;height:130px;opacity:.12;filter:blur(1px);background:#167fda;clip-path:polygon(42% 0,60% 0,68% 12%,58% 21%,83% 33%,100% 49%,92% 57%,67% 44%,56% 71%,79% 100%,60% 100%,40% 75%,20% 100%,0 100%,31% 57%,20% 33%,35% 20%)}
+        .sm-login .sm-player-left{left:0}.sm-login .sm-player-right{right:2%;transform:scaleX(-1)}
+        .sm-login .sm-panel{background:rgba(255,255,255,.94) !important;border:1px solid rgba(255,255,255,.9) !important;box-shadow:0 15px 45px rgba(38,111,185,.14) !important;backdrop-filter:blur(12px)}
+        .sm-login .sm-panel label,.sm-login .sm-panel h2{color:#123866 !important}
+        .sm-login .sm-panel input{background:#edf6fd !important;border:1px solid #d7e9f8 !important;color:#123866 !important;box-shadow:none !important}
+        .sm-login .sm-panel input::placeholder{color:#8297b0 !important;opacity:1}
+        .sm-login .sm-panel input:focus{border-color:#218bf3 !important;outline:2px solid #a6d7ff !important;outline-offset:0}
+        .sm-login .sm-panel .text-blue-50,.sm-login .sm-panel .text-blue-100,.sm-login .sm-panel .text-blue-100\/60,.sm-login .sm-panel .text-blue-100\/55,.sm-login .sm-panel .text-blue-100\/35,.sm-login .sm-panel .text-blue-100\/65{color:#607a9b !important}
+        .sm-login .sm-panel .text-orange-200,.sm-login .sm-panel .text-orange-300{color:#ec6d15 !important}
+        .sm-login .sm-panel .text-cyan-300,.sm-login .sm-panel .text-blue-200\/45{color:#1887ee !important}
+        .sm-login .sm-panel button[type=submit]{background:linear-gradient(100deg,#ff612d,#ffbd4b) !important;color:white !important;border-radius:20px !important;padding-top:13px !important;padding-bottom:13px !important;box-shadow:0 8px 18px #ff8b4b44}
+        .sm-login .sm-panel button:not([type=submit]){transition:filter .2s}
+        .sm-login .sm-panel button:not([type=submit]):hover{filter:brightness(.96)}
+        .sm-login .sm-panel .bg-blue-500\/10{background:#e1f0ff !important;border-color:#c4e2ff !important;color:#123866 !important}
+        .sm-login .sm-panel .bg-orange-500\/10{background:#fff3e9 !important;border-color:#ffdfc8 !important;color:#123866 !important}
+        .sm-login .sm-panel .bg-white\/\[0\.035\]{background:#f6fbff !important;border-color:#deecf9 !important}
+        .sm-login .sm-panel .border-blue-200\/10{border-color:#dcebf8 !important}
+        .sm-login .sm-panel .text-\[9px\],.sm-login .sm-panel .text-\[10px\]{color:#7189a5}
+        .sm-login .sm-panel .text-orange-400{color:#f47716 !important}
+        .sm-login .sm-panel .bg-\[\#092d59\]{background:#f2f8ff !important}
+        @media(min-width:640px){.sm-login{padding-top:55px !important}.sm-login .sm-player{top:205px}}
+        @media(max-width:480px){.sm-login .sm-net{top:210px}.sm-login .sm-player{top:180px}.sm-login .sm-panel{padding:24px 20px !important}.sm-login .sm-wave-bottom{bottom:-160px}}
       `}</style>
 
-      <div className="sm-space" aria-hidden="true"><div className="sm-planet"/><div className="sm-arc"/></div>
+      <div className="sm-space" aria-hidden="true"><div className="sm-wave sm-wave-top"/><div className="sm-wave sm-wave-bottom"/><div className="sm-net"/><div className="sm-player sm-player-left"/><div className="sm-player sm-player-right"/></div>
 
       <div className="relative w-full max-w-[430px]">
 
-        <div className="sm-panel relative backdrop-blur-xl rounded-[30px] px-6 py-7 sm:px-8 sm:py-8 overflow-hidden">
+
 
 
 
@@ -449,15 +479,15 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-          <div className="relative flex flex-col items-center text-center mb-4">
+          <div className="relative flex flex-col items-center text-center mb-5">
 
 
 
-            <div className="w-[68px] h-[68px] rounded-[22px] bg-white border-2 border-orange-400 p-1.5 flex items-center justify-center shadow-[0_0_30px_rgba(251,146,60,0.32)] mb-2.5 overflow-hidden">
+            <div className="w-[96px] h-[96px] sm:w-[108px] sm:h-[108px] rounded-full bg-white border border-white/80 p-0 flex items-center justify-center shadow-[0_0_30px_rgba(251,146,60,0.32)] mb-2.5 overflow-hidden">
 
 
 
-              <img src={logoSpinMatch} alt="SpinMatch Logo" className="w-full h-full object-contain rounded-[16px]" />
+              <img src={logoSpinMatch} alt="SpinMatch Logo" className="w-full h-full object-contain rounded-full" />
 
 
 
@@ -469,15 +499,15 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-            <h1 className="text-[23px] sm:text-[26px] font-black tracking-tight leading-tight">
+            <h1 className="text-[25px] sm:text-[28px] font-black tracking-tight leading-tight">
 
 
 
-              <span className="text-white">{recoveryMode ? 'Reset Password ' : mode === 'REGISTER' ? 'Daftar di ' : 'Masuk ke '}</span>
+              <span className="text-[#154b85]">{recoveryMode ? 'Reset Password ' : mode === 'REGISTER' ? 'Daftar di ' : 'Masuk ke '}</span>
 
 
 
-              <span className="text-[#f7a45a]">SpinMatch</span>
+              <span className="text-[#087b51]">SpinMatch</span>
 
 
 
@@ -485,7 +515,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-            <p className="text-[10px] sm:text-[11px] text-blue-100/65 mt-1.5">
+            <p className="text-[10px] sm:text-[11px] text-[#68829f] mt-1.5">
 
 
 
@@ -505,6 +535,8 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
+
+        <div className="sm-panel relative backdrop-blur-xl rounded-[30px] px-6 py-7 sm:px-8 sm:py-8 overflow-hidden">
           {error && (
 
 
