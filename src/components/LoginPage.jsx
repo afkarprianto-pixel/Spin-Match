@@ -399,7 +399,7 @@ export const LoginPage = ({ onCancel }) => {
 
   return (
 
-    <div className="sm-login relative min-h-[100dvh] overflow-hidden flex items-center justify-center px-4 py-16 sm:px-6 sm:py-20">
+    <div className={`sm-login ${mode === 'LOGIN' && !recoveryMode ? 'sm-login-home' : 'sm-login-extra'} relative min-h-[100dvh] overflow-hidden flex items-center justify-center px-4 py-16 sm:px-6 sm:py-20`}>
 
       <style>{`
 
@@ -455,11 +455,51 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-panel .bg-\[\#092d59\]{background:#f2f8ff !important}
         @media(min-width:640px){.sm-login{padding-top:55px !important}.sm-login .sm-player{top:205px}}
         @media(max-width:480px){.sm-login .sm-net{top:210px}.sm-login .sm-player{top:180px}.sm-login .sm-panel{padding:24px 20px !important}.sm-login .sm-wave-bottom{bottom:-160px}}
+
+        /* SpinMatch sporty v3: biru tegas, kontras tinggi, tepi kartu tipis. */
+        .sm-login{background:radial-gradient(ellipse at 48% 22%,#e9f8ff 0%,#b5e1ff 31%,transparent 61%),linear-gradient(150deg,#147fe9 0%,#60baff 35%,#d8f2ff 59%,#0875d9 100%) !important;color:#092d65;}
+        .sm-login .sm-space{z-index:0;}
+        .sm-login .sm-space:before{display:block;left:-27%;top:-10%;width:155%;height:32%;border-top:23px solid #0877e8;box-shadow:0 -13px 0 #e8faff,0 -27px 0 #ff833a,0 -37px 0 #1466c7;transform:rotate(-22deg);opacity:.96}
+        .sm-login .sm-wave-top{top:-146px;border-top:33px solid #1688ef;box-shadow:0 -14px 0 #a5dfff,0 -26px 0 #fff,0 -36px 0 #ff8d3d}
+        .sm-login .sm-wave-bottom{bottom:-125px;height:260px;border-top:50px solid #0c69c8;box-shadow:0 -12px 0 #83cbff,0 -23px 0 #fff,0 -36px 0 #ff8737,0 -50px 0 #1763c1;}
+        .sm-login .sm-space:after{content:'';position:absolute;bottom:-7%;left:-20%;width:140%;height:22%;background:linear-gradient(140deg,#032c77,#0963c5 55%,#03306f);border-radius:50% 50% 0 0;transform:rotate(7deg)}
+        .sm-login .sm-net{top:19%;right:-5%;width:38%;height:15%;opacity:.65;transform:perspective(200px) rotateY(-24deg) skewY(-8deg);background:repeating-linear-gradient(90deg,#0a4c9a 0 2px,transparent 2px 12px),repeating-linear-gradient(0deg,#0a4c9a 0 2px,transparent 2px 12px)}
+        .sm-login .sm-player{top:15%;height:175px;width:130px;opacity:.38;filter:none;background:#0864bd}
+        .sm-login .sm-player-left{left:-13px}.sm-login .sm-player-right{right:-7px}
+        .sm-login .sm-panel{background:linear-gradient(145deg,#fff 0%,#f8fcff 100%) !important;border:1px solid #d9edff !important;box-shadow:0 14px 32px #0a5aa433 !important;}
+        .sm-login .sm-panel label,.sm-login .sm-panel h2{color:#082b63 !important;font-weight:750}
+        .sm-login .sm-panel input{background:#e8f2fd !important;border:1px solid #c7def6 !important;color:#0b3068 !important}
+        .sm-login .sm-panel input::placeholder{color:#6c86a9 !important}
+        .sm-login .sm-panel .text-blue-100\/55,.sm-login .sm-panel .text-blue-100\/35,.sm-login .sm-panel .text-blue-100\/60{color:#385f93 !important}
+        .sm-login .sm-panel .bg-blue-500\/10{background:#dcecff !important;color:#0a306d !important}
+        .sm-login .sm-panel .bg-orange-500\/10{background:#fff0e6 !important;color:#0a306d !important}
+        .sm-login .sm-panel .bg-white\/\[0\.035\]{background:#eaf4ff !important;border:1px solid #c8def6 !important}
+        .sm-login .sm-panel .text-\[9px\]{color:#224979 !important}
+        .sm-login .sm-login-footer{padding:14px 0 9px;margin-top:8px;position:relative;z-index:2}
+        .sm-login .sm-login-footer p:first-child{font-size:14px;color:#fff !important;letter-spacing:.32em;text-shadow:0 2px 8px #05245b}
+        .sm-login .sm-login-footer p:last-child{color:#fff !important;font-size:10px;text-shadow:0 2px 8px #05245b;letter-spacing:.23em}
+        .sm-login .sm-login-content{z-index:2;width:min(100%,490px)}
+        .sm-login-home{height:100dvh;min-height:100dvh;max-height:100dvh;overflow:hidden !important;display:flex;align-items:center;justify-content:center;padding:8px 10px !important}
+        .sm-login-home .sm-login-content{max-height:100%;display:flex;flex-direction:column;justify-content:center}
+        .sm-login-home .sm-login-brand{margin-bottom:10px}
+        .sm-login-home .sm-login-brand>div:first-child{width:clamp(66px,11.5vh,104px);height:clamp(66px,11.5vh,104px);margin-bottom:8px}
+        .sm-login-home .sm-login-brand h1{font-size:clamp(22px,3.4vh,29px);white-space:nowrap;text-shadow:0 1px 2px #fff}
+        .sm-login-home .sm-login-brand p{font-size:clamp(10px,1.6vh,12px);color:#234c80}
+        .sm-login-home .sm-panel{padding:clamp(14px,2.4vh,24px) clamp(14px,4vw,24px) !important;border-radius:25px}
+        .sm-login-home .sm-panel form{gap:0}
+        .sm-login-home .sm-panel form>div{margin-bottom:clamp(8px,1.35vh,14px)}
+        .sm-login-home .sm-panel input{padding-top:clamp(9px,1.4vh,13px);padding-bottom:clamp(9px,1.4vh,13px)}
+        .sm-login-home .sm-panel button[type=submit]{padding-top:clamp(10px,1.5vh,15px) !important;padding-bottom:clamp(10px,1.5vh,15px) !important}
+        .sm-login-home .sm-login-footer{margin-top:clamp(4px,1.3vh,12px);padding:3px 0}
+        @media(max-height:760px){.sm-login-home .sm-login-brand>div:first-child{width:60px;height:60px}.sm-login-home .sm-login-brand{margin-bottom:5px}.sm-login-home .sm-panel{padding:12px 16px !important}.sm-login-home .sm-panel .relative.mt-4{margin-top:9px}.sm-login-home .sm-panel .relative.mt-4.pt-3{padding-top:8px}.sm-login-home .sm-panel .relative.mt-3{margin-top:7px}.sm-login-home .sm-panel .relative.mt-2\.5{margin-top:6px}.sm-login-home .sm-login-footer{margin-top:3px}.sm-login-home .sm-login-brand h1{font-size:22px}}
+        @media(max-height:620px){.sm-login-home .sm-login-brand>div:first-child{width:48px;height:48px}.sm-login-home .sm-login-brand p{display:none}.sm-login-home .sm-panel{padding:8px 14px !important}.sm-login-home .sm-panel form>div{margin-bottom:5px}.sm-login-home .sm-panel input{padding-top:7px;padding-bottom:7px}.sm-login-home .sm-login-footer p:last-child{display:none}}
+        @media(min-width:641px){.sm-login-home .sm-login-content{width:min(100%,510px)}.sm-login-home .sm-player{width:200px;height:250px}}
+
       `}</style>
 
       <div className="sm-space" aria-hidden="true"><div className="sm-wave sm-wave-top"/><div className="sm-wave sm-wave-bottom"/><div className="sm-net"/><div className="sm-player sm-player-left"/><div className="sm-player sm-player-right"/></div>
 
-      <div className="relative w-full max-w-[430px]">
+      <div className="sm-login-content relative w-full max-w-[430px]">
 
 
 
@@ -479,7 +519,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-          <div className="relative flex flex-col items-center text-center mb-5">
+          <div className="sm-login-brand relative flex flex-col items-center text-center mb-5">
 
 
 
@@ -1080,7 +1120,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-        <div className="relative z-10 text-center mt-5 pb-2">
+        <div className="sm-login-footer relative z-10 text-center mt-5 pb-2">
 
 
 
