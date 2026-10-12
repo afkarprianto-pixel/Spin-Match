@@ -355,7 +355,7 @@ const PricingAdminPanel = () => {
         <div className="grid gap-3 md:grid-cols-2">{field('Tarif umum per event (Rp)','standard_price','number')}{field('Tarif promosi per event (Rp)','public_promo_price','number')}</div>
         <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!config.public_promo_enabled} onChange={e=>setConfig(v=>({...v,public_promo_enabled:e.target.checked}))}/>Aktifkan promosi umum</label>
         <div className="grid gap-3 md:grid-cols-2">{field('Mulai promosi (opsional)','public_promo_start','datetime-local')}{field('Akhir promosi (opsional)','public_promo_end','datetime-local')}</div>
-        <p className="text-xs text-slate-500">Tarif normal: {money(config.standard_price)} • Promosi: {config.public_promo_enabled ? money(config.public_promo_price) : 'Tidak aktif'}. Harga Rp0 berarti gratis.</p>
+        <p className="text-xs text-slate-500">Tarif normal: {money(config.standard_price)} • Promosi: {config.public_promo_enabled ? money(config.public_promo_price) : 'Tidak aktif'}. Tarif promosi adalah harga akhir, bukan nilai diskon. Saat promo aktif dengan harga Rp0, event gratis.</p>
       </div>
       <div className="rounded-2xl bg-white p-5 shadow-sm space-y-3"><h4 className="font-black">Rekening & Konfirmasi</h4><div className="grid gap-3 md:grid-cols-2">{field('Nama bank','payment_bank')}{field('Nomor rekening','payment_account_number')}{field('Atas nama','payment_account_name')}{field('Nomor WhatsApp (contoh 62812...)','payment_whatsapp')}</div></div>
       <button type="button" disabled={busy} onClick={save} className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-black text-white disabled:opacity-50">{busy?'Memproses...':'Simpan Tarif & Rekening'}</button>
@@ -1556,6 +1556,7 @@ const AuthenticatedContent = () => {
     e.preventDefault();
     if (guardPublicMutation()) return;
     if (!isEO && !isSuperAdmin) { alert('Akses ditolak.'); return; }
+    if (eventPaymentBusy) return;
     const formattedTanggal = isMultiDate
       ? `Dari Tanggal ${formatEventDate(formStartDate)} sd ${formatEventDate(formEndDate)}`
       : formatEventDate(formSingleDate);
@@ -1629,12 +1630,13 @@ const AuthenticatedContent = () => {
         } finally { setEventPaymentBusy(false); }
         return;
       }
+      const isFreeEvent = isEO && eventPaymentPreview?.price === 0;
       const newEvent = {
         id: Date.now(),
         nama: formNama,
         tanggal: formattedTanggal,
         // Status pembayaran harus dikendalikan oleh verifikasi server sebelum produksi.
-        status: isEO ? 'Menunggu Pembayaran' : formStatus,
+        status: isEO ? (isFreeEvent ? 'Aktif' : 'Menunggu Pembayaran') : formStatus,
         peserta: 0,
         durasiMatch,
         jamMulai,
@@ -1646,9 +1648,11 @@ const AuthenticatedContent = () => {
         ownerName: currentUserName
       };
 
+      setEventPaymentBusy(true);
       const { error } = await supabase
         .from('Events')
         .insert(eventToSupabase(newEvent));
+      setEventPaymentBusy(false);
 
       if (error) {
         console.error('❌ Gagal membuat Event di Supabase:', error);
@@ -1659,7 +1663,7 @@ const AuthenticatedContent = () => {
       const updatedEvents = [...events, newEvent];
       setEvents(updatedEvents);
       localStorage.setItem('spinmatch_events', JSON.stringify(updatedEvents));
-      alert(isEO ? 'Event tersimpan dengan status Menunggu Pembayaran. Konfirmasi pembayaran ke admin; aktivasi masih memerlukan verifikasi.' : 'Event berhasil dibuat dan disimpan');
+      alert(isEO ? (isFreeEvent ? 'Event GRATIS berhasil dibuat dan langsung aktif. Tidak perlu transfer.' : 'Event tersimpan dengan status Menunggu Pembayaran. Konfirmasi pembayaran ke admin; aktivasi masih memerlukan verifikasi.') : 'Event berhasil dibuat dan disimpan');
     }
 
     setEventPaymentPreview(null);
@@ -6728,9 +6732,9 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="flex items-start justify-between gap-3"><div><h3 className="text-lg font-black text-slate-900">Biaya Pembuatan Event</h3><p className="text-xs text-slate-500 mt-1">{formNama}</p></div><button type="button" onClick={() => setEventPaymentPreview(null)} className="rounded-lg p-2 text-slate-600"><X className="h-5 w-5"/></button></div>
             <div className="rounded-2xl bg-orange-50 border border-orange-100 p-4"><p className="text-xs font-bold text-orange-700">{eventPaymentPreview.category} • per event</p><p className="mt-1 text-3xl font-black text-slate-900">Rp {eventPaymentPreview.price.toLocaleString('id-ID')}</p></div>
             {eventPaymentPreview.price > 0 ? <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700 space-y-1"><p className="font-black">Transfer ke rekening:</p><p>{eventPaymentPreview.bank || 'Bank belum diatur'}</p><p className="font-black select-all">{eventPaymentPreview.account || 'Nomor rekening belum diatur'}</p><p>a.n. {eventPaymentPreview.holder || 'Belum diatur'}</p></div> : <p className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Tarif Rp0 — fasilitas gratis dari Super Admin.</p>}
-            <p className="text-xs text-slate-600">Event akan dibuat dengan status Menunggu Pembayaran. Transfer dan konfirmasi ke admin sebelum event diaktifkan. Jangan melakukan transfer dua kali.</p>
-            {eventPaymentPreview.whatsapp && <a href={`https://wa.me/${String(eventPaymentPreview.whatsapp).replace(/\D/g,'')}?text=${encodeURIComponent(`Konfirmasi pembayaran SpinMatch untuk event ${formNama}, nominal Rp ${eventPaymentPreview.price.toLocaleString('id-ID')}.`)}`} target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-emerald-300 p-3 text-center text-sm font-black text-emerald-700">Konfirmasi melalui WhatsApp</a>}
-            <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setEventPaymentPreview(null)} className="rounded-xl bg-slate-100 px-3 py-3 text-sm font-bold">Kembali</button><button type="button" disabled={eventPaymentBusy} onClick={() => document.getElementById('spinmatch-event-create-form')?.requestSubmit()} className="rounded-xl bg-orange-500 px-3 py-3 text-sm font-black text-white disabled:opacity-50">Buat Event</button></div>
+            <p className="text-xs text-slate-600">{eventPaymentPreview.price === 0 ? 'Event gratis akan langsung aktif tanpa transfer atau verifikasi pembayaran.' : 'Event akan dibuat dengan status Menunggu Pembayaran. Transfer dan konfirmasi ke admin sebelum event diaktifkan. Jangan melakukan transfer dua kali.'}</p>
+            {eventPaymentPreview.price > 0 && eventPaymentPreview.whatsapp && <a href={`https://wa.me/${String(eventPaymentPreview.whatsapp).replace(/\D/g,'')}?text=${encodeURIComponent(`Konfirmasi pembayaran SpinMatch untuk event ${formNama}, nominal Rp ${eventPaymentPreview.price.toLocaleString('id-ID')}.`)}`} target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-emerald-300 p-3 text-center text-sm font-black text-emerald-700">Konfirmasi melalui WhatsApp</a>}
+            <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setEventPaymentPreview(null)} className="rounded-xl bg-slate-100 px-3 py-3 text-sm font-bold">Kembali</button><button type="button" disabled={eventPaymentBusy} onClick={() => document.getElementById('spinmatch-event-create-form')?.requestSubmit()} className="rounded-xl bg-orange-500 px-3 py-3 text-sm font-black text-white disabled:opacity-50">{eventPaymentBusy ? 'Menyimpan...' : eventPaymentPreview.price === 0 ? 'Buat Event Gratis' : 'Buat Event'}</button></div>
           </div>
         </div>
       )}
