@@ -4628,9 +4628,9 @@ const handleUpdatePlayerSubmit = async (e) => {
 
           ) : (
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 max-h-[330px] overflow-y-auto overscroll-contain sm:max-h-[330px] [scrollbar-width:thin] [scrollbar-color:#94a3b8_#f1f5f9]" aria-label="Daftar Event Saya, gulir ke bawah untuk melihat event lainnya" tabIndex={0}>
 
-              {myEvents.slice(0, 5).map((item) => (
+              {myEvents.map((item) => (
 
                 <div
                   key={item.id}
