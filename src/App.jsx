@@ -4779,7 +4779,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <p className="mt-1 truncate text-[11px] font-semibold text-slate-600">{dashboardActiveEvent?.nama || 'Pilih event untuk melihat meja'}</p>
               <p className="text-[10px] text-slate-500">Ketuk meja untuk melihat skor. Gulir daftar jika lebih dari enam meja.</p>
             </div>
-            <div className="sm-public-tables-scroll max-h-[340px] overflow-y-auto overscroll-contain p-3" tabIndex={0} aria-label="Daftar Live Meja Publik">
+            <div className="sm-public-tables-scroll max-h-[340px] overflow-y-auto overscroll-contain p-3" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }} tabIndex={0} aria-label="Daftar Live Meja Publik">
               <div className="grid grid-cols-2 gap-2">
                 {dashboardTableCards.map(card => (
                   <button key={card.tableNo} type="button" disabled={!card.row} onClick={() => {
@@ -7377,9 +7377,23 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child { grid-column:3; grid-row:2; justify-self:end; margin:0 !important; gap:3px !important; }
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child button { padding:4px 6px !important; font-size:8px !important; }
           /* Publik: tiga baris kartu meja terlihat, sisanya scroll internal. */
-          .sm-dashboard-screen .sm-public-tables-scroll { max-height:315px !important; overflow-y:auto !important; overscroll-behavior:contain !important; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+          .sm-dashboard-screen #dashboard-live-meja-publik { overflow:hidden !important; }
+          .sm-dashboard-screen .sm-public-tables-scroll {
+            max-height:315px !important;
+            overflow-y:scroll !important;
+            overflow-x:hidden !important;
+            overscroll-behavior-y:contain !important;
+            -webkit-overflow-scrolling:touch !important;
+            touch-action:pan-y !important;
+            scrollbar-width:auto !important;
+            scrollbar-color:#1685d4 #e2e8f0 !important;
+            padding-right:7px !important;
+          }
+          .sm-dashboard-screen .sm-public-tables-scroll::-webkit-scrollbar { width:8px !important; display:block !important; }
+          .sm-dashboard-screen .sm-public-tables-scroll::-webkit-scrollbar-track { background:#e2e8f0 !important; border-radius:9px !important; }
+          .sm-dashboard-screen .sm-public-tables-scroll::-webkit-scrollbar-thumb { background:#1685d4 !important; border-radius:9px !important; }
           /* Dashboard HP: Event Saya scroll sendiri, Menu Cepat selalu di dasar layar. */
-          .sm-dashboard-screen { padding-bottom:calc(196px + env(safe-area-inset-bottom, 0px)) !important; }
+          .sm-dashboard-screen { padding-bottom:calc(410px + env(safe-area-inset-bottom, 0px)) !important; }
           .sm-dashboard-screen #dashboard-event-saya > div[aria-label^="Daftar Event Saya"] {
             max-height:186px !important;
             overflow-y:scroll !important;
