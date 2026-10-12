@@ -4203,7 +4203,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'SCHEDULE' && (
-            <div className="sm-mobile-page-header relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 text-white">
+            <div className="sm-mobile-page-header relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-3 sm:p-5 rounded-3xl border border-white/10 shadow-[0_14px_35px_rgba(3,35,68,.20)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 sm:gap-4 mt-3 sm:mt-4 text-white">
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -4220,18 +4220,18 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <p className="text-xs text-blue-100/70">Jadwal match berdasarkan hasil undian pool</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
-                <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
+              <div className="grid grid-cols-[minmax(0,1fr)_112px] gap-2 w-full md:w-auto md:flex md:items-center md:justify-end md:flex-wrap">
+                <div className="min-w-0 flex items-center gap-2 bg-white/10 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
-                  <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                  <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="px-4 py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
+                <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full md:w-auto justify-center px-2 py-1.5 sm:px-4 sm:py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Shuffle className="w-3.5 h-3.5" /> Undian
                 </button>
-                <button onClick={() => setShowPrintModal(true)} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
+                <button onClick={() => setShowPrintModal(true)} className="col-start-2 w-full md:w-auto justify-center px-2 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Printer className="w-3.5 h-3.5" /> Print
                 </button>
 
