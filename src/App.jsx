@@ -698,6 +698,7 @@ const AuthenticatedContent = () => {
     durasimatch: eventItem.durasiMatch || '20 Menit',
     jammulai: eventItem.jamMulai || '08:00',
     jamselesai: eventItem.jamSelesai || '18:00',
+    jumlahmeja: Math.max(1, Number(eventItem.jumlahMeja || 4)),
     metodeundian: eventItem.metodePengundian || 'PER_DIVISI',
     divisilist: Array.isArray(eventItem.divisiList) ? eventItem.divisiList : [],
     ...(eventItem.ownerId ? { eo_auth_id: eventItem.ownerId } : {})
@@ -4778,7 +4779,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <p className="mt-1 truncate text-[11px] font-semibold text-slate-600">{dashboardActiveEvent?.nama || 'Pilih event untuk melihat meja'}</p>
               <p className="text-[10px] text-slate-500">Ketuk meja untuk melihat skor. Gulir daftar jika lebih dari enam meja.</p>
             </div>
-            <div className="sm-public-tables-scroll overflow-y-auto overscroll-contain p-3" tabIndex={0} aria-label="Daftar Live Meja Publik">
+            <div className="sm-public-tables-scroll max-h-[340px] overflow-y-auto overscroll-contain p-3" tabIndex={0} aria-label="Daftar Live Meja Publik">
               <div className="grid grid-cols-2 gap-2">
                 {dashboardTableCards.map(card => (
                   <button key={card.tableNo} type="button" disabled={!card.row} onClick={() => {
@@ -5135,7 +5136,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
         <div className="mx-auto grid w-full grid-cols-3 gap-2 md:hidden">
           <button
-            onClick={() => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
           >
             <Settings className="h-5 w-5" /> Kelola Event
@@ -5199,7 +5200,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         {/* Tablet/Desktop: 6 menu termasuk Kelola Wasit untuk EO/Admin */}
         <div className="hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6">
           {[
-            { label: 'Kelola Event', icon: Settings, action: () => document.getElementById('dashboard-event-saya')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
+            { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
             { label: 'Kelola Pemain', icon: Users, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForReg(String(ev.id)); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
             { label: 'Undian Pool', icon: Shuffle, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForDraw(String(ev.id)); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
