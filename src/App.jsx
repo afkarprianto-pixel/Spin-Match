@@ -7110,8 +7110,8 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-screen #dashboard-event-saya > div:first-child { padding:10px 12px !important; }
           .sm-dashboard-screen #dashboard-event-saya > div:first-child p { display:none !important; }
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll {
-            height:225px !important;
-            max-height:225px !important;
+            height:186px !important;
+            max-height:186px !important;
             overflow-y:scroll !important;
             overflow-x:hidden !important;
             scrollbar-width:auto !important;
@@ -7123,15 +7123,15 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll::-webkit-scrollbar-track { background:#e2e8f0 !important; border-radius:9px !important; }
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll::-webkit-scrollbar-thumb { background:#1685d4 !important; border-radius:9px !important; }
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group {
-            height:75px !important;
-            min-height:75px !important;
-            max-height:75px !important;
+            height:62px !important;
+            min-height:62px !important;
+            max-height:62px !important;
             display:grid !important;
             grid-template-columns:35px minmax(0,1fr) auto !important;
             grid-template-rows:1fr 1fr !important;
             column-gap:7px !important;
             row-gap:0 !important;
-            padding:5px 7px !important;
+            padding:3px 7px !important;
             align-items:center !important;
             flex-wrap:nowrap !important;
           }
@@ -7145,7 +7145,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           /* Dashboard HP: Event Saya scroll sendiri, Menu Cepat selalu di dasar layar. */
           .sm-dashboard-screen { padding-bottom:calc(196px + env(safe-area-inset-bottom, 0px)) !important; }
           .sm-dashboard-screen #dashboard-event-saya > div[aria-label^="Daftar Event Saya"] {
-            max-height:225px !important;
+            max-height:186px !important;
             overflow-y:scroll !important;
             overscroll-behavior:contain !important;
             -webkit-overflow-scrolling:touch;
@@ -7159,7 +7159,23 @@ const handleUpdatePlayerSubmit = async (e) => {
             bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;
             margin:0 !important;
             padding:9px 10px !important;
-            box-shadow:0 -6px 25px rgba(15,23,42,.16) !important;
+            border:1px solid rgba(80,192,255,.85) !important;
+            border-radius:27px !important;
+            background:linear-gradient(180deg,#f4fbff 0%,#fff 24%,#fff 100%) !important;
+            box-shadow:0 -5px 18px rgba(15,114,222,.24), 0 -1px 9px rgba(60,190,255,.55), inset 0 2px 0 rgba(165,228,255,.85) !important;
+          }
+          /* Garis cahaya biru mengikuti lengkung tepi atas Menu Cepat. */
+          .sm-dashboard-screen .sm-dashboard-quick::before {
+            content:"";
+            position:absolute;
+            pointer-events:none;
+            top:-2px;
+            left:18px;
+            right:18px;
+            height:12px;
+            border-top:2px solid rgba(42,164,255,.92);
+            border-radius:50% 50% 0 0 / 100% 100% 0 0;
+            filter:drop-shadow(0 0 5px rgba(12,155,255,.85));
           }
           .sm-dashboard-screen .sm-dashboard-quick .mb-4 { margin-bottom:6px !important; }
           .sm-dashboard-screen .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
