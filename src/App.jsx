@@ -4164,7 +4164,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -4197,7 +4197,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -4227,7 +4227,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
@@ -4262,7 +4262,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="relative z-10 flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
@@ -4295,7 +4295,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
-                  <span className="text-xs font-bold text-black">Pilih Event:</span>
+                  <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForLive} onChange={(e) => setSelectedEventIdForLive(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
