@@ -495,6 +495,24 @@ export const LoginPage = ({ onCancel }) => {
         @media(max-height:620px){.sm-login-home .sm-login-brand>div:first-child{width:48px;height:48px}.sm-login-home .sm-login-brand p{display:none}.sm-login-home .sm-panel{padding:8px 14px !important}.sm-login-home .sm-panel form>div{margin-bottom:5px}.sm-login-home .sm-panel input{padding-top:7px;padding-bottom:7px}.sm-login-home .sm-login-footer p:last-child{display:none}}
         @media(min-width:641px){.sm-login-home .sm-login-content{width:min(100%,510px)}.sm-login-home .sm-player{width:200px;height:250px}}
 
+        /* FIX KONTRAS: tombol dan label di panel putih harus selalu terbaca */
+        .sm-login .sm-panel button.bg-blue-500\/10,
+        .sm-login .sm-panel button.bg-orange-500\/10{opacity:1 !important;filter:none !important;text-shadow:none !important;font-weight:800 !important;}
+        .sm-login .sm-panel button.bg-blue-500\/10{background:#d7e9ff !important;border:1.5px solid #9dc9fa !important;color:#093b83 !important;box-shadow:0 3px 9px #135da312 !important;}
+        .sm-login .sm-panel button.bg-orange-500\/10{background:#fff0e4 !important;border:1.5px solid #ffc8a3 !important;color:#833a0b !important;box-shadow:0 3px 9px #d57a2612 !important;}
+        .sm-login .sm-panel button.bg-blue-500\/10 svg{color:#0878df !important;stroke-width:2.6 !important;opacity:1 !important;}
+        .sm-login .sm-panel button.bg-orange-500\/10 svg{color:#e76b0a !important;stroke-width:2.6 !important;opacity:1 !important;}
+        .sm-login .sm-panel button.text-blue-100\/55{color:#345a87 !important;opacity:1 !important;font-weight:500 !important;}
+        .sm-login .sm-panel button.text-blue-100\/55 span{color:#103e7d !important;opacity:1 !important;}
+        .sm-login .sm-panel button.text-blue-100\/55 span.text-blue-100\/35{color:#526d8b !important;}
+        .sm-login .sm-panel .grid.grid-cols-3.text-center>div{background:#edf5ff !important;border:1.5px solid #bfd9f6 !important;opacity:1 !important;box-shadow:0 2px 8px #0b5db10b;}
+        .sm-login .sm-panel .grid.grid-cols-3.text-center>div p{color:#173d70 !important;font-weight:800 !important;font-size:11px !important;opacity:1 !important;}
+        .sm-login .sm-panel .grid.grid-cols-3.text-center>div svg{opacity:1 !important;stroke-width:2.4 !important;}
+        .sm-login .sm-panel .grid.grid-cols-3.text-center>div:nth-child(1) svg{color:#e47b08 !important;}
+        .sm-login .sm-panel .grid.grid-cols-3.text-center>div:nth-child(2) svg{color:#1165ca !important;}
+        .sm-login .sm-panel .grid.grid-cols-3.text-center>div:nth-child(3) svg{color:#0788bb !important;}
+        .sm-login .sm-panel input+svg,.sm-login .sm-panel input~svg{opacity:1 !important;}
+
       `}</style>
 
       <div className="sm-space" aria-hidden="true"><div className="sm-wave sm-wave-top"/><div className="sm-wave sm-wave-bottom"/><div className="sm-net"/><div className="sm-player sm-player-left"/><div className="sm-player sm-player-right"/></div>
