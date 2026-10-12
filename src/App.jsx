@@ -4305,7 +4305,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
         </div>
 
-        <div className="spinmatch-main-content flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8">
+        <div className={`spinmatch-main-content ${activeView === 'DASHBOARD' ? 'sm-dashboard-screen' : ''} flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8`}>
 {isPublic && (
   <div className="mx-auto mb-3 w-full max-w-[1500px] rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700 md:mb-4 md:px-4 md:py-3 md:text-xs">
     Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
@@ -7105,6 +7105,28 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick .mx-auto.grid button { min-width:0 !important; min-height:55px !important; padding:7px 3px !important; flex-direction:column !important; gap:4px !important; font-size:10px !important; line-height:1.15 !important; text-align:center !important; }
           .sm-dashboard-quick .mx-auto.grid button:first-child { min-width:0 !important; width:100% !important; min-height:55px !important; }
           .sm-dashboard-quick .mx-auto.grid button svg { width:19px !important; height:19px !important; }
+          /* Dashboard HP: Event Saya scroll sendiri, Menu Cepat selalu di dasar layar. */
+          .sm-dashboard-screen { padding-bottom:calc(196px + env(safe-area-inset-bottom, 0px)) !important; }
+          .sm-dashboard-screen #dashboard-event-saya > div[aria-label^="Daftar Event Saya"] {
+            max-height:330px !important;
+            overflow-y:auto !important;
+            overscroll-behavior:contain !important;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:thin;
+          }
+          .sm-dashboard-screen .sm-dashboard-quick {
+            position:fixed !important;
+            z-index:40 !important;
+            left:10px !important;
+            right:10px !important;
+            bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+            margin:0 !important;
+            padding:9px 10px !important;
+            box-shadow:0 -6px 25px rgba(15,23,42,.16) !important;
+          }
+          .sm-dashboard-screen .sm-dashboard-quick .mb-4 { margin-bottom:6px !important; }
+          .sm-dashboard-screen .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
+          .sm-dashboard-screen .sm-dashboard-quick .mx-auto.grid button { min-height:49px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
