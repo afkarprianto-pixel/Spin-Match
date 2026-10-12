@@ -697,7 +697,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                    <User className="w-[17px] h-[17px] text-blue-200/45 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <User className="w-[17px] h-[17px] text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#64748B", stroke: "#64748B", opacity: 1, strokeWidth: 2.3 }} />
 
 
 
@@ -757,7 +757,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                    <Lock className="w-[17px] h-[17px] text-blue-200/45 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-[17px] h-[17px] text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#64748B", stroke: "#64748B", opacity: 1, strokeWidth: 2.3 }} />
 
 
 
