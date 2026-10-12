@@ -365,7 +365,57 @@ const PricingAdminPanel = () => {
       <div className="grid gap-3 md:grid-cols-2"><label className="text-xs font-bold">User ID EO<input value={eoId} onChange={e=>setEoId(e.target.value)} placeholder="UUID akun EO" className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Tarif khusus (Rp)<input type="text" inputMode="numeric" value={rupiahInput(specialPrice)} onChange={e=>setSpecialPrice(e.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Kuota event (opsional)<input type="number" min="1" value={quota} onChange={e=>setQuota(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label><label className="text-xs font-bold">Catatan<input value={note} onChange={e=>setNote(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm"/></label></div>
       <button type="button" disabled={busy} onClick={addRule} className="rounded-xl bg-[#0a3971] px-5 py-3 text-sm font-black text-white disabled:opacity-50">+ Tambah Tarif Khusus EO</button>
       <div className="space-y-2">{rules.map(r=><div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-xs"><div className="min-w-0"><div className="break-all font-bold">{r.eo_auth_id}</div><div>{money(r.price_per_event)} • Kuota: {r.quota_events??'Tanpa batas'} • {r.note||'Tanpa catatan'}</div></div><button type="button" disabled={busy} onClick={()=>toggleRule(r)} className={`rounded-lg px-3 py-2 font-bold ${r.enabled?'bg-emerald-100 text-emerald-800':'bg-slate-100 text-slate-600'}`}>{r.enabled?'Aktif — Nonaktifkan':'Nonaktif — Aktifkan'}</button></div>)}{rules.length===0&&<p className="text-xs text-slate-500">Belum ada tarif khusus EO.</p>}</div>
-    </div><p className="text-xs text-amber-700">Tahap ini hanya mengelola tarif dan rekening. Penagihan, pemotongan kuota, serta aktivasi event setelah verifikasi belum diterapkan.</p>
+    </div><p className="text-xs text-amber-700">Tagihan saat pembuatan event sudah tersedia. Verifikasi pembayaran, pemotongan kuota, dan pengamanan tarif/status di server masih memerlukan integrasi lanjutan.</p>
+  </div>;
+};
+
+// Verifikasi pembayaran hanya lewat RPC Supabase dengan pemeriksaan Super Admin di server.
+const PaymentReviewPanel = ({ onEventUpdated }) => {
+  const [invoices, setInvoices] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [filter, setFilter] = useState('PENDING');
+  const load = async () => {
+    setBusy(true); setError('');
+    const { data, error: err } = await supabase.from('spinmatch_event_invoices')
+      .select('id,event_id,event_name,eo_auth_id,amount,price_label,status,created_at,reviewed_at')
+      .order('created_at', { ascending: false });
+    if (err) setError(`Gagal memuat tagihan: ${err.message}`);
+    else setInvoices(data || []);
+    setBusy(false);
+  };
+  useEffect(() => { load(); }, []);
+  const review = async (invoice, action) => {
+    const approve = action === 'APPROVED';
+    const amountText = invoice.amount == null ? 'nominal lama belum tercatat' : `Rp ${Number(invoice.amount).toLocaleString('id-ID')}`;
+    if (!window.confirm(`${approve ? 'SETUJUI' : 'TOLAK'} pembayaran event "${invoice.event_name}" (${amountText})? ${approve ? 'Pastikan dana benar-benar masuk ke rekening sebelum melanjutkan.' : 'Event tetap tidak aktif.'}`)) return;
+    setBusy(true); setError(''); setNotice('');
+    const { data, error: err } = await supabase.rpc('spinmatch_review_event_payment', { p_invoice_id: invoice.id, p_action: action });
+    if (err) setError(`Verifikasi gagal: ${err.message}`);
+    else {
+      setNotice(`Pembayaran ${invoice.event_name} ${approve ? 'disetujui; event diaktifkan' : 'ditolak'}.`);
+      await onEventUpdated?.();
+    }
+    await load();
+    setBusy(false);
+  };
+  const shown = invoices.filter(r => filter === 'ALL' || r.status === filter);
+  return <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-lg font-black text-slate-900">Verifikasi Pembayaran EO</h3><button type="button" disabled={busy} onClick={load} className="rounded-lg border px-3 py-2 text-xs font-bold">Muat Ulang</button></div>
+    <p className="text-xs text-slate-500">Cocokkan bukti WhatsApp dengan mutasi rekening. WhatsApp bukan bukti pembayaran otomatis.</p>
+    <div className="flex flex-wrap gap-2">{[['PENDING','Menunggu'],['APPROVED','Disetujui'],['REJECTED','Ditolak'],['ALL','Semua']].map(([value,label])=><button key={value} type="button" onClick={()=>setFilter(value)} className={`rounded-lg px-3 py-2 text-xs font-bold ${filter===value?'bg-blue-800 text-white':'bg-slate-100 text-slate-700'}`}>{label}</button>)}</div>
+    {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-xs text-red-700">{error}</p>}
+    {notice && <p className="rounded-lg bg-green-50 p-3 text-xs text-green-800">{notice}</p>}
+    {busy && <p className="text-xs text-slate-500">Memproses...</p>}
+    {!busy && shown.length===0 && <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">Tidak ada tagihan dalam kategori ini.</p>}
+    <div className="space-y-3">{shown.map(inv=><div key={inv.id} className="rounded-xl border border-slate-200 p-4 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm text-slate-900">{inv.event_name}</strong><span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold">{inv.status==='PENDING'?'Menunggu':inv.status==='APPROVED'?'Disetujui':inv.status==='REJECTED'?'Ditolak':'Gratis'}</span></div>
+      <div className="text-xs text-slate-600">Event ID: {inv.event_id} • {new Date(inv.created_at).toLocaleString('id-ID')}</div>
+      <div className="text-base font-black text-blue-950">{inv.amount==null?'Nominal belum tercatat — cek bukti dan rekening':`Rp ${Number(inv.amount).toLocaleString('id-ID')}`}</div>
+      <div className="text-xs text-slate-500">{inv.price_label || 'Tarif event'} • EO: {inv.eo_auth_id || '-'}</div>
+      {inv.status==='PENDING' && <div className="grid grid-cols-2 gap-2 pt-2"><button type="button" disabled={busy} onClick={()=>review(inv,'APPROVED')} className="rounded-xl bg-emerald-600 px-3 py-3 text-xs font-black text-white disabled:opacity-50">✓ Setujui</button><button type="button" disabled={busy} onClick={()=>review(inv,'REJECTED')} className="rounded-xl bg-red-600 px-3 py-3 text-xs font-black text-white disabled:opacity-50">✕ Tolak</button></div>}
+    </div>)}</div>
   </div>;
 };
 
@@ -1473,6 +1523,7 @@ const AuthenticatedContent = () => {
     if (isPublic) { alert('Akun Public tidak dapat membuat event. Silakan pilih Semua Event.'); return; }
     if (!isEO && !isSuperAdmin) { alert('Hanya akun EO atau Super Admin yang dapat membuat event.'); return; }
     setIsEditMode(false);
+    setEventPaymentPreview(null); // Jangan membawa tagihan event sebelumnya.
     setFormNama('');
     setIsMultiDate(false);
     setFormSingleDate('');
@@ -1493,6 +1544,7 @@ const AuthenticatedContent = () => {
   const handleRowClick = (eventItem) => {
     if (!canManageEvent(eventItem)) { alert('Event ini hanya dapat diedit oleh EO pemilik event atau Super Admin.'); return; }
     setIsEditMode(true);
+    setEventPaymentPreview(null);
     setFormNama(eventItem.nama);
     setFormStatus(eventItem.status);
     if (eventItem.tanggal.includes('sd') || eventItem.tanggal.includes('-')) {
@@ -1571,7 +1623,8 @@ const AuthenticatedContent = () => {
         ...currentEvent,
         nama: formNama,
         tanggal: formattedTanggal,
-        status: formStatus,
+        // EO tidak boleh mengaktifkan sendiri event yang masih menunggu pembayaran.
+        status: isSuperAdmin ? formStatus : currentEvent.status,
         durasiMatch,
         jamMulai,
         jamSelesai,
@@ -1623,14 +1676,22 @@ const AuthenticatedContent = () => {
             price = Number(rules[0].price_per_event);
             category = 'Tarif Khusus EO';
           }
-          if (!Number.isFinite(price) || price < 0) throw new Error('Nominal tarif tidak valid.');
+          if (!Number.isInteger(price) || price < 0) throw new Error('Nominal tarif harus bilangan bulat minimal Rp0.');
           setEventPaymentPreview({ price, category, bank: cfg.payment_bank || '', account: cfg.payment_account_number || '', holder: cfg.payment_account_name || '', whatsapp: cfg.payment_whatsapp || '' });
         } catch (err) {
           alert(`Tarif belum bisa ditampilkan: ${err.message}. Event belum dibuat.`);
         } finally { setEventPaymentBusy(false); }
         return;
       }
-      const isFreeEvent = isEO && eventPaymentPreview?.price === 0;
+      // Nilai 0 adalah harga akhir GRATIS, bukan potongan.
+      // Konversi eksplisit mencegah angka 0 berbentuk string dianggap berbayar.
+      const payableAmount = Number(eventPaymentPreview?.price);
+      if (isEO && (!Number.isInteger(payableAmount) || payableAmount < 0)) {
+        alert('Tarif tidak valid. Silakan kembali dan muat ulang tarif.');
+        setEventPaymentPreview(null);
+        return;
+      }
+      const isFreeEvent = isEO && payableAmount === 0;
       const newEvent = {
         id: Date.now(),
         nama: formNama,
@@ -1649,9 +1710,9 @@ const AuthenticatedContent = () => {
       };
 
       setEventPaymentBusy(true);
-      const { error } = await supabase
+      const { data: insertedRows, error } = await supabase
         .from('Events')
-        .insert(eventToSupabase(newEvent));
+        .insert(eventToSupabase(newEvent)).select('*');
       setEventPaymentBusy(false);
 
       if (error) {
@@ -1660,7 +1721,8 @@ const AuthenticatedContent = () => {
         return;
       }
 
-      const updatedEvents = [...events, newEvent];
+      const confirmedEvent = insertedRows?.[0] ? eventFromSupabase(insertedRows[0]) : newEvent;
+      const updatedEvents = [...events, confirmedEvent];
       setEvents(updatedEvents);
       localStorage.setItem('spinmatch_events', JSON.stringify(updatedEvents));
       alert(isEO ? (isFreeEvent ? 'Event GRATIS berhasil dibuat dan langsung aktif. Tidak perlu transfer.' : 'Event tersimpan dengan status Menunggu Pembayaran. Konfirmasi pembayaran ke admin; aktivasi masih memerlukan verifikasi.') : 'Event berhasil dibuat dan disimpan');
@@ -5910,7 +5972,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               {settingsSection === 'PRICING' && isSuperAdmin ? (
                 <div><button type="button" onClick={() => setSettingsSection('HOME')} className="mb-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4"/>Kembali</button><PricingAdminPanel /></div>
               ) : settingsSection === 'PAYMENT_REVIEW' && isSuperAdmin ? (
-                <div className="space-y-4"><button type="button" onClick={() => setSettingsSection('HOME')} className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4"/>Kembali</button><div className="rounded-2xl bg-white p-5 shadow-sm"><h3 className="text-lg font-black text-slate-900">Verifikasi Pembayaran EO</h3><p className="mt-2 text-sm text-slate-600">Belum ada daftar tagihan yang terhubung. Fitur persetujuan pembayaran akan tersedia setelah tabel tagihan dan bukti transfer di Supabase dibuat. Belum ada event yang otomatis diaktifkan melalui halaman ini.</p></div></div>
+                <div className="space-y-4"><button type="button" onClick={() => setSettingsSection('HOME')} className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black"><ArrowLeft className="h-4 w-4"/>Kembali</button><PaymentReviewPanel onEventUpdated={async () => { const {data,error}=await supabase.from('Events').select('*').order('id',{ascending:true}); if(!error && Array.isArray(data)) setEvents(data.map(eventFromSupabase)); }} /></div>
               ) : !selectedSettingsEvent && !(isSuperAdmin && settingsSection === 'HOME') ? (
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm font-bold text-slate-400">Belum ada event.</div>
               ) : settingsSection === 'HOME' ? (
