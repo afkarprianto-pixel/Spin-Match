@@ -4770,8 +4770,34 @@ const handleUpdatePlayerSubmit = async (e) => {
       {/* ===================== LOWER CONTENT ===================== */}
       <section className="sm-dashboard-lower grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_.65fr]">
 
+        {/* EVENTS: Publik melihat daftar meja, EO/Super Admin tetap Event Saya */}
+        {isPublic && (
+          <div id="dashboard-live-meja-publik" className="overflow-hidden rounded-[26px] border border-blue-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-4 py-3">
+              <h2 className="flex items-center gap-2 text-base font-black text-[#0a3971]"><Radio className="h-5 w-5 text-emerald-600" /> Live Meja</h2>
+              <p className="mt-1 truncate text-[11px] font-semibold text-slate-600">{dashboardActiveEvent?.nama || 'Pilih event untuk melihat meja'}</p>
+              <p className="text-[10px] text-slate-500">Ketuk meja untuk melihat skor. Gulir daftar jika lebih dari enam meja.</p>
+            </div>
+            <div className="sm-public-tables-scroll overflow-y-auto overscroll-contain p-3" tabIndex={0} aria-label="Daftar Live Meja Publik">
+              <div className="grid grid-cols-2 gap-2">
+                {dashboardTableCards.map(card => (
+                  <button key={card.tableNo} type="button" disabled={!card.row} onClick={() => {
+                    if (!dashboardActiveEvent || !card.row) return;
+                    setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                    openLiveScore(card.row);
+                  }} className={`flex min-w-0 flex-col items-center rounded-xl border p-2 text-center transition ${card.isLive ? 'border-emerald-400 bg-emerald-50' : card.isFinished ? 'border-blue-200 bg-blue-50' : card.hasSchedule ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'} ${card.row ? 'cursor-pointer active:scale-[.98]' : 'cursor-default'}`}>
+                    <div className="flex w-full items-center justify-between gap-1"><span className="text-[11px] font-black text-slate-900">Meja {card.tableNo}</span><span className={`rounded-md px-1.5 py-0.5 text-[8px] font-black ${card.isLive ? 'bg-emerald-600 text-white' : card.isFinished ? 'bg-blue-600 text-white' : card.hasSchedule ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-600'}`}>{card.isLive ? 'LIVE' : card.isFinished ? 'SELESAI' : card.hasSchedule ? 'SIAP' : 'KOSONG'}</span></div>
+                    <svg viewBox="0 0 120 67" className="mt-1 h-[49px] w-[96px]" aria-hidden="true"><path d="M14 25 60 9 106 25 60 42Z" fill="#0874c9" stroke="#064374" strokeWidth="2"/><path d="M60 9V42M14 25h92" fill="none" stroke="#fff" strokeWidth="2"/><path d="M22 31v28M98 31v28" stroke="#475569" strokeWidth="4" strokeLinecap="round"/><path d="M60 12v27" stroke="white" strokeWidth="3" strokeDasharray="3 2"/><circle cx="85" cy="8" r="5" fill="#f97316"/></svg>
+                    <span className="text-[11px] font-black text-[#0a3971]">{card.isLive ? `${card.point1} - ${card.point2}` : card.isFinished ? (card.result?.score || 'Selesai') : card.hasSchedule ? 'Menunggu mulai' : 'Belum ada jadwal'}</span>
+                  </button>
+                ))}
+                {!dashboardActiveEvent && <p className="col-span-2 py-6 text-center text-xs text-slate-500">Belum ada event aktif.</p>}
+              </div>
+            </div>
+          </div>
+        )}
         {/* EVENTS */}
-        <div id="dashboard-event-saya" className="scroll-mt-24 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
+        {!isPublic && <div id="dashboard-event-saya" className="scroll-mt-24 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
 
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5">
             <div>
@@ -4880,7 +4906,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
             </div>
           )}
-        </div>
+        </div>}
 
 
         {/* RIGHT COLUMN */}
@@ -7349,6 +7375,8 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > span { grid-column:3; grid-row:1; justify-self:end; padding:3px 7px !important; font-size:8px !important; }
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child { grid-column:3; grid-row:2; justify-self:end; margin:0 !important; gap:3px !important; }
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child button { padding:4px 6px !important; font-size:8px !important; }
+          /* Publik: tiga baris kartu meja terlihat, sisanya scroll internal. */
+          .sm-dashboard-screen .sm-public-tables-scroll { max-height:315px !important; overflow-y:auto !important; overscroll-behavior:contain !important; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
           /* Dashboard HP: Event Saya scroll sendiri, Menu Cepat selalu di dasar layar. */
           .sm-dashboard-screen { padding-bottom:calc(196px + env(safe-area-inset-bottom, 0px)) !important; }
           .sm-dashboard-screen #dashboard-event-saya > div[aria-label^="Daftar Event Saya"] {
