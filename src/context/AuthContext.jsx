@@ -21,16 +21,12 @@ export const AuthProvider = ({ children }) => {
   const [recoveryMode, setRecoveryMode] = useState(recoveryRef.current);
   useEffect(() => {
     let active = true;
-    const refresh = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (!active) return;
-      if (error && error.name !== 'AuthSessionMissingError') console.warn('Supabase auth:', error.message);
-      setUser(recoveryRef.current ? null : fromAuthUser(data?.user));
-      setLoading(false);
-    };
-    refresh();
+    let authEventReceived = false;
+    // Supabase mengirim INITIAL_SESSION; jangan biarkan getUser awal
+    // menimpa sesi yang baru berubah saat pengguna sedang login/logout.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
+      authEventReceived = true;
       if (event === 'PASSWORD_RECOVERY') {
         recoveryRef.current = true;
         setRecoveryMode(true);
@@ -40,6 +36,19 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false);
     });
+    const refresh = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (!active || authEventReceived) return;
+        if (error && error.name !== 'AuthSessionMissingError') console.warn('Supabase auth:', error.message);
+        setUser(recoveryRef.current ? null : fromAuthUser(data?.user));
+      } catch (error) {
+        if (active && !authEventReceived) console.warn('Gagal memeriksa sesi:', error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    refresh();
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
@@ -162,7 +171,17 @@ export const AuthProvider = ({ children }) => {
     setUser(guest);
     return { success: true, user: guest };
   };
-  const logout = async () => { setUser(null); await supabase.auth.signOut(); };
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      return { success: true };
+    } catch (error) {
+      console.error('Logout gagal:', error);
+      return { success: false, message: error?.message || 'Gagal keluar. Coba lagi.' };
+    }
+  };
   return (
     <AuthContext.Provider value={{ user, loading, login, register, resendVerification, requestPasswordReset, updateRecoveredPassword, recoveryMode, loginAsPublic, logout }}>
       {loading ? <div className="min-h-screen flex items-center justify-center">Memeriksa sesi SpinMatch...</div> : children}

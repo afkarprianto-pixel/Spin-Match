@@ -283,7 +283,7 @@ const SignaturePad = ({ value, onChange, label }) => {
   );
 };
 
-const MainContent = () => {
+const AuthenticatedContent = () => {
   const { user, logout } = useAuth();
   const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
@@ -1312,11 +1312,7 @@ const MainContent = () => {
     else setLiveWinner('');
   }, [liveScoreMatch, liveGameHistory]);
 
-  // Semua Hooks MainContent sudah dipanggil secara konsisten.
-  // Baru setelah titik ini aman melakukan conditional return untuk halaman login.
-  if (!user) {
-    return <LoginPage />;
-  }
+  // AuthenticatedContent hanya dipasang ketika user sudah tersedia.
 
   const generateCustomId = (divisiName, existingList = []) => {
     const currentYearShort = String(new Date().getFullYear()).slice(-2);
@@ -7186,6 +7182,12 @@ const handleUpdatePlayerSubmit = async (e) => {
       `}</style>
     </div>
   );
+};
+
+// LoginPage dan Dashboard adalah komponen terpisah agar urutan React Hooks stabil.
+const MainContent = () => {
+  const { user } = useAuth();
+  return user ? <AuthenticatedContent key={user.id || 'PUBLIC'} /> : <LoginPage />;
 };
 
 export default function App() {
