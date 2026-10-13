@@ -505,12 +505,16 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-panel button.text-blue-100\/55{color:#345a87 !important;opacity:1 !important;font-weight:500 !important;}
         .sm-login .sm-panel button.text-blue-100\/55 span{color:#103e7d !important;opacity:1 !important;}
         .sm-login .sm-panel button.text-blue-100\/55 span.text-blue-100\/35{color:#526d8b !important;}
-        .sm-login .sm-panel .grid.grid-cols-3.text-center>div{background:#edf5ff !important;border:1.5px solid #bfd9f6 !important;opacity:1 !important;box-shadow:0 2px 8px #0b5db10b;}
-        .sm-login .sm-panel .grid.grid-cols-3.text-center>div p{color:#173d70 !important;font-weight:800 !important;font-size:11px !important;opacity:1 !important;}
-        .sm-login .sm-panel .grid.grid-cols-3.text-center>div svg{opacity:1 !important;stroke-width:2.4 !important;}
-        .sm-login .sm-panel .grid.grid-cols-3.text-center>div:nth-child(1) svg{color:#e47b08 !important;}
-        .sm-login .sm-panel .grid.grid-cols-3.text-center>div:nth-child(2) svg{color:#1165ca !important;}
-        .sm-login .sm-panel .grid.grid-cols-3.text-center>div:nth-child(3) svg{color:#0788bb !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div{background:#edf5ff !important;border:1.5px solid #bfd9f6 !important;opacity:1 !important;box-shadow:0 2px 8px #0b5db10b;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div p{color:#173d70 !important;font-weight:800 !important;font-size:11px !important;opacity:1 !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div svg{opacity:1 !important;stroke-width:2.4 !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div:nth-child(1) svg{color:#e47b08 !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div:nth-child(2) svg{color:#1165ca !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div:nth-child(3) svg{color:#1165ca !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>button{background:#d7e9ff !important;border:1.5px solid #9dc9fa !important;color:#103e7d !important;opacity:1 !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>button p{color:#103e7d !important;font-weight:900 !important;opacity:1 !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>button svg{color:#0878df !important;}
+        .sm-login .sm-panel .grid.grid-cols-4.text-center>div:nth-child(4) svg{color:#0788bb !important;}\n        .sm-login .sm-panel button[title="Login Referee"] p{font-size:11px !important;font-weight:800 !important;color:#173d70 !important;}
         .sm-login .sm-panel input+svg,.sm-login .sm-panel input~svg{opacity:1 !important;}
 
       `}</style>
@@ -914,9 +918,14 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-4 gap-1.5 text-center">
 
 
+
+                  <button type="button" title="Login Referee" onClick={() => document.querySelector('input[name="username"], input[autocomplete="username"], .sm-panel form input')?.focus()} className="rounded-xl border-2 border-blue-300 bg-blue-50 py-1.5 cursor-pointer hover:ring-2 hover:ring-blue-300">
+                    <ShieldCheck className="w-3.5 h-3.5 mx-auto text-blue-600 mb-1" />
+                    <p className="text-[11px] font-extrabold text-[#173d70]">Referee</p>
+                  </button>
 
                   <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] py-1.5">
 

@@ -4,12 +4,12 @@ import { supabase } from '../lib/supabaseClient';
 const AuthContext = createContext(null);
 const fromAuthUser = (authUser) => {
   if (!authUser) return null;
-  const role = String(authUser.app_metadata?.spinmatch_role || (authUser.app_metadata?.role === 'WASIT' ? 'WASIT' : '')).toUpperCase();
-  if (!['SUPER_ADMIN', 'EO', 'WASIT'].includes(role)) return null;
+  const role = String(authUser.app_metadata?.spinmatch_role || authUser.app_metadata?.role || '').toUpperCase();
+  if (!['SUPER_ADMIN', 'EO', 'WASIT', 'REFEREE'].includes(role)) return null;
   return {
     id: authUser.id, email: authUser.email || '',
     name: authUser.user_metadata?.full_name || authUser.email || '',
-    role, roleLabel: role === 'SUPER_ADMIN' ? 'Super Admin' : role === 'EO' ? 'EO' : 'Wasit',
+    role, roleLabel: role === 'SUPER_ADMIN' ? 'Super Admin' : role === 'EO' ? 'EO' : role === 'REFEREE' ? 'Referee' : 'Wasit',
     app_metadata: authUser.app_metadata, user_metadata: authUser.user_metadata,
   };
 };

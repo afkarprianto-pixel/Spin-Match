@@ -12,11 +12,11 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw
+  Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false, onManageSupervisor, supervisorSectionActive = false }) => {
   const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
   const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
   const handleDesktopLogout = () => {
@@ -26,9 +26,11 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
   const normalizedRole = String(role || '').toUpperCase();
   const isPublicRole = normalizedRole === 'PUBLIC' || normalizedRole === 'PUBLIK';
   const isWasitRole = normalizedRole === 'WASIT';
+  const isRefereeRole = normalizedRole === 'REFEREE';
 
   const openView = (view) => {
-    const publicBlocked = ['REGISTRATION', 'SETTINGS', 'REFEREE_MANAGEMENT'];
+    if (isRefereeRole && !['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE'].includes(view)) return;
+    const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS', 'REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'];
     if (isWasitRole && !['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(view)) {
       alert('Akun Wasit hanya dapat mengelola skor meja tugasnya dan melihat informasi pertandingan.');
       return;
@@ -38,15 +40,24 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       return;
     }
     if (view === 'REFEREE_MANAGEMENT') { onManageReferees?.(); return; }
+    if (view === 'SUPERVISOR_MANAGEMENT') { onManageSupervisor?.(); return; }
     setActiveView(view);
   };
 
   const menu = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: Activity },
+    ...(isRefereeRole ? [
+      { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
+      { view: 'REF_CALLS', label: 'Panggilan Pertandingan', icon: Radio },
+      { view: 'REF_TABLES', label: 'Penempatan Meja', icon: Target },
+      { view: 'REF_WASIT', label: 'Kelola Wasit', icon: Users },
+      { view: 'REF_LIVE', label: 'Pantau Live Score', icon: Activity },
+    ] : []),
     { view: 'REGISTRATION', label: 'Kelola Pemain', icon: Users },
     { view: 'REFEREE_MANAGEMENT', label: 'Kelola Wasit', icon: Users },
+    { view: 'SUPERVISOR_MANAGEMENT', label: 'Kelola Referee', icon: ShieldCheck },
     { view: 'DRAW', label: 'Undian Pool', icon: Dices },
-    { view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar },
+    ...(!isRefereeRole ? [{ view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar }] : []),
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
     { view: 'KNOCKOUT', label: 'Knockout', icon: Trophy },
@@ -63,19 +74,19 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-        {menu.filter(item => (item.view !== 'REFEREE_MANAGEMENT' || !isPublicRole) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
-          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive)) ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
-            <Icon className={`h-[18px] w-[18px] shrink-0 ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive)) ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
+        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
+          <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
         ))}
 
         <div className="my-1.5 border-t border-white/10" />
-        {!isWasitRole && <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>}
-        {!isWasitRole && <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>}
+        {!isPublicRole && !isWasitRole && !isRefereeRole && <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>}
+        {!isWasitRole && !isRefereeRole && <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>}
       </nav>
 
       <div className="relative border-t border-white/10 p-2.5">
-        {!isWasitRole && <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
+        {!isPublicRole && !isWasitRole && !isRefereeRole && <button type="button" onClick={() => openView('SETTINGS')} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${activeView === 'SETTINGS' ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
           <Settings className="h-[17px] w-[17px] shrink-0" /><span>Pengaturan</span>
         </button>}
 
@@ -186,6 +197,151 @@ const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => 
       </div>
     </div>
   );
+};
+
+
+// Pengawas pertandingan: akun permanen dan penugasan event melalui Supabase.
+// Seluruh perubahan penugasan diputuskan oleh RPC server, bukan localStorage.
+const SupervisorManagementPanel = ({ eventItem }) => {
+  const [accounts, setAccounts] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [nama, setNama] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [selectedReferee, setSelectedReferee] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState('');
+  const [notice, setNotice] = useState('');
+  const [createdAccount, setCreatedAccount] = useState(null);
+  const eventId = Number(eventItem?.id);
+  const activeAssignment = assignments.find(row => Number(row.event_id) === eventId && row.status === 'AKTIF');
+  const activeAccount = accounts.find(row => row.auth_user_id === activeAssignment?.referee_auth_id);
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const [refereesResult, assignmentsResult] = await Promise.all([
+        supabase.from('spinmatch_referees').select('id, auth_user_id, kode_referee, nama_referee').order('id'),
+        supabase.from('spinmatch_referee_assignments').select('id, event_id, referee_auth_id, status, assigned_at').eq('status', 'AKTIF'),
+      ]);
+      if (refereesResult.error) throw new Error(`Daftar Referee: ${refereesResult.error.message}`);
+      if (assignmentsResult.error) throw new Error(`Penugasan Referee: ${assignmentsResult.error.message}`);
+      setAccounts(refereesResult.data || []);
+      setAssignments(assignmentsResult.data || []);
+      setErrorText('');
+    } catch (error) {
+      setErrorText(error?.message || 'Data Referee tidak dapat dimuat. Periksa izin SELECT/RLS di Supabase.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { refresh(); }, [eventId]);
+
+  const createAccount = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    setErrorText(''); setNotice(''); setCreatedAccount(null);
+    const normalizedUsername = username.trim().toLowerCase();
+    if (nama.trim().length < 2 || !/^[a-z0-9][a-z0-9._-]{3,31}$/.test(normalizedUsername) || password.length < 8 || password.length > 128) {
+      setErrorText('Nama minimal 2 karakter, username 4–32 karakter, dan password 8–128 karakter.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error('Sesi login tidak tersedia. Silakan login ulang.');
+      const { data, error } = await supabase.functions.invoke('spinmatch-create-referee', {
+        headers: { Authorization: `Bearer ${token}` },
+        body: { nama_referee: nama.trim(), username: normalizedUsername, password },
+      });
+      if (error || !data?.success) {
+        let message = data?.error || error?.message || 'Gagal membuat akun Referee.';
+        if (error?.context?.json) {
+          try { const detail = await error.context.json(); message = detail?.error || message; } catch (_) {}
+        }
+        throw new Error(message);
+      }
+      setCreatedAccount({ ...data.referee, password });
+      setNama(''); setUsername(''); setPassword('');
+      setNotice('Akun berhasil dibuat. Referee belum ditugaskan ke event.');
+      await refresh();
+    } catch (error) {
+      setErrorText(error?.message || 'Gagal membuat akun Referee.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const assign = async () => {
+    if (busy || !selectedReferee || !Number.isSafeInteger(eventId)) return;
+    const selected = accounts.find(row => row.auth_user_id === selectedReferee);
+    if (!window.confirm(`Tugaskan ${selected?.nama_referee || 'Referee'} ke event "${eventItem.nama}"? Penugasan aktif sebelumnya pada event ini akan diganti.`)) return;
+    setBusy(true); setErrorText(''); setNotice('');
+    try {
+      const { error } = await supabase.rpc('spinmatch_assign_referee', {
+        p_event_id: eventId, p_referee_auth_id: selectedReferee,
+      });
+      if (error) throw error;
+      setNotice('Penugasan Referee berhasil disimpan.');
+      await refresh();
+    } catch (error) { setErrorText(error?.message || 'Gagal menugaskan Referee.'); }
+    finally { setBusy(false); }
+  };
+
+  const endAssignment = async () => {
+    if (busy || !activeAssignment) return;
+    if (!window.confirm(`Akhiri penugasan Referee pada event "${eventItem.nama}"?`)) return;
+    setBusy(true); setErrorText(''); setNotice('');
+    try {
+      const { error } = await supabase.rpc('spinmatch_end_referee_assignment', { p_event_id: eventId });
+      if (error) throw error;
+      setNotice('Penugasan telah diakhiri. Akun Referee dapat digunakan kembali.');
+      await refresh();
+    } catch (error) { setErrorText(error?.message || 'Gagal mengakhiri penugasan.'); }
+    finally { setBusy(false); }
+  };
+
+  return <div className="mt-5 space-y-4">
+    {errorText && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-800">{errorText}</p>}
+    {notice && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-800">{notice}</p>}
+    <div className="rounded-xl border border-slate-200 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-black text-slate-900">Penugasan Referee Event</h4>
+        <button type="button" onClick={refresh} disabled={loading || busy} className="rounded-lg border px-3 py-2 text-xs font-bold disabled:opacity-50">Muat Ulang</button>
+      </div>
+      <p className="mt-2 text-xs text-slate-600">Referee aktif: <strong>{activeAssignment ? (activeAccount ? `${activeAccount.nama_referee} (${activeAccount.kode_referee})` : `Akun ${activeAssignment.referee_auth_id}`) : 'Belum ada'}</strong></p>
+      <div className="mt-3 flex flex-col gap-2 md:flex-row">
+        <select value={selectedReferee} onChange={e => setSelectedReferee(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-3 text-sm">
+          <option value="">Pilih akun Referee</option>
+          {accounts.map(row => {
+            const otherAssignment = assignments.find(a => a.referee_auth_id === row.auth_user_id && Number(a.event_id) !== eventId);
+            return <option key={row.id} value={row.auth_user_id} disabled={!!otherAssignment}>{row.kode_referee} — {row.nama_referee}{otherAssignment ? ' (bertugas di event lain)' : ''}</option>;
+          })}
+        </select>
+        <button type="button" disabled={busy || loading || !selectedReferee || !eventItem} onClick={assign} className="rounded-xl bg-blue-700 px-4 py-3 text-xs font-black text-white disabled:opacity-50">Tugaskan / Ganti</button>
+        <button type="button" disabled={busy || loading || !activeAssignment} onClick={endAssignment} className="rounded-xl border border-red-200 px-4 py-3 text-xs font-black text-red-700 disabled:opacity-50">Akhiri Tugas</button>
+      </div>
+      <p className="mt-2 text-[11px] text-slate-500">Satu akun hanya boleh bertugas pada satu event aktif. Validasi dilakukan di server.</p>
+    </div>
+    <div className="rounded-xl border border-slate-200 p-4">
+      <h4 className="text-sm font-black text-slate-900">Daftarkan Akun Referee Baru</h4>
+      <form onSubmit={createAccount} className="mt-3 grid gap-3 md:grid-cols-4">
+        <label className="text-xs font-bold text-slate-700">Nama Referee<input required minLength={2} maxLength={100} value={nama} onChange={e => setNama(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm" placeholder="Nama lengkap" /></label>
+        <label className="text-xs font-bold text-slate-700">Username<input required minLength={4} maxLength={32} value={username} onChange={e => setUsername(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm" placeholder="contoh: referee01" /></label>
+        <label className="text-xs font-bold text-slate-700">Password<input required minLength={8} maxLength={128} type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1 w-full rounded-xl border p-3 text-sm" placeholder="Minimal 8 karakter" /></label>
+        <button type="submit" disabled={busy} className="self-end rounded-xl bg-emerald-600 p-3 text-xs font-black text-white disabled:opacity-50">{busy ? 'Memproses...' : '+ Buat Akun Referee'}</button>
+      </form>
+      {createdAccount && <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-950">
+        <strong>Akun dibuat: {createdAccount.kode_referee} — {createdAccount.nama_referee}</strong>
+        <p className="mt-1">Username: <strong>{createdAccount.username}</strong></p>
+        <p>Password yang Anda masukkan: <strong>{createdAccount.password}</strong></p>
+        <p className="mt-1">Simpan kredensial dengan aman dan serahkan langsung kepada Referee. Informasi ini hilang saat halaman ditutup.</p>
+      </div>}
+    </div>
+    <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Pendaftaran dan penugasan tersedia untuk pengujian. Dashboard operasional Referee dan kebijakan akses pertandingan di server belum selesai; jangan gunakan akun Referee untuk pertandingan resmi.</p>
+  </div>;
 };
 
 const SignaturePad = ({ value, onChange, label }) => {
@@ -419,16 +575,159 @@ const PaymentReviewPanel = ({ onEventUpdated }) => {
   </div>;
 };
 
+
+
+// Jeda bersama seluruh meja; jam dasar tidak pernah ditimpa.
+const smClock = value => { const m = /^(\d{2}):(\d{2})$/.exec(String(value || '')); return m && +m[1] < 24 && +m[2] < 60 ? (+m[1] * 60 + +m[2]) : null; };
+const smTime = n => `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+const smBreaks = rows => (Array.isArray(rows) ? rows : []).filter(x => x.enabled).map(x => ({ ...x, a: smClock(x.start_time), b: smClock(x.end_time) })).filter(x => x.a !== null && x.b !== null && x.b > x.a).sort((a,b) => a.a - b.a);
+const smMovePastBreaks = (start, duration, breaks) => {
+  let next = start;
+  for (const b of breaks) {
+    if (start >= b.a) next += b.b - b.a;
+    else if (next < b.b && next + duration > b.a) next = b.b;
+  }
+  return next;
+};
+const smApplyBreaks = (schedule, breaks) => {
+  const active = smBreaks(breaks);
+  if (!active.length) return schedule;
+  const times = new Map();
+  return schedule.map(row => {
+    if (!row?.showMatch || !row.jam || row.result?.winner) return row;
+    const match = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/.exec(row.jam);
+    if (!match) return row;
+    const start = smClock(match[1]), end = smClock(match[2]);
+    if (start === null || end === null || end <= start) return row;
+    // Pertandingan dengan waktu dasar sama memakai waktu baru yang sama.
+    const key = `${start}:${end}`;
+    if (!times.has(key)) times.set(key, smMovePastBreaks(start, end - start, active));
+    const shifted = times.get(key);
+    return { ...row, jam: `${smTime(shifted)} - ${smTime(shifted + end - start)}` };
+  });
+};
+const SpinMatchBreakEditor = ({ eventId, breaks, onSaved, canEdit }) => {
+  const empty = () => Array.from({ length: 3 }, (_, i) => ({ slot: i + 1, enabled: false, start_time: '', end_time: '', label: '' }));
+  const [draft, setDraft] = useState(empty);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  useEffect(() => { setDraft(Array.from({ length: 3 }, (_, i) => ({ ...empty()[i], ...(breaks || []).find(x => Number(x.slot) === i + 1) }))); setMessage(''); }, [eventId, JSON.stringify(breaks || [])]);
+  const change = (i, key, value) => setDraft(old => old.map((x, j) => j === i ? { ...x, [key]: value } : x));
+  const save = async () => {
+    if (!eventId || busy) return;
+    const active = draft.filter(x => x.enabled);
+    for (const item of active) if (smClock(item.start_time) === null || smClock(item.end_time) === null || smClock(item.end_time) <= smClock(item.start_time)) { setMessage('Jam jeda harus valid, selesai lebih besar dari mulai, dan dalam hari yang sama.'); return; }
+    const ordered = smBreaks(draft);
+    if (ordered.some((x, i) => i && x.a < ordered[i-1].b)) { setMessage('Sesi jeda tidak boleh saling bertumpuk.'); return; }
+    if (!window.confirm('Simpan jeda untuk seluruh meja? Jadwal pertandingan yang belum selesai akan dihitung ulang.')) return;
+    setBusy(true); setMessage('');
+    const { error } = await supabase.from('spinmatch_event_breaks').upsert(draft.map(x => ({ event_id: Number(eventId), slot: x.slot, enabled: x.enabled, start_time: x.start_time || null, end_time: x.end_time || null, label: x.label || '' })), { onConflict: 'event_id,slot' });
+    if (error) setMessage(`Gagal menyimpan: ${error.message}`);
+    else { setMessage('Jeda berhasil disimpan untuk event ini.'); onSaved?.(); }
+    setBusy(false);
+  };
+  return <div className="rounded-xl border border-sky-200 bg-white p-3 space-y-2">
+    <div className="font-black text-sm text-sky-950">Pengaturan Jeda Pertandingan <span className="font-normal text-xs">(maksimal 3 sesi, semua meja)</span></div>
+    {draft.map((item, i) => <div key={i} className="flex flex-wrap items-center gap-2 border-t pt-2 text-xs">
+      <label className="flex items-center gap-1 font-bold"><input type="checkbox" disabled={!canEdit} checked={!!item.enabled} onChange={e => change(i, 'enabled', e.target.checked)} />Jeda {i + 1}</label>
+      <input aria-label={`Mulai jeda ${i+1}`} type="time" disabled={!canEdit || !item.enabled} value={item.start_time || ''} onChange={e => change(i, 'start_time', e.target.value)} className="rounded border p-1" />
+      <span>s.d.</span><input aria-label={`Selesai jeda ${i+1}`} type="time" disabled={!canEdit || !item.enabled} value={item.end_time || ''} onChange={e => change(i, 'end_time', e.target.value)} className="rounded border p-1" />
+      <input aria-label={`Alasan jeda ${i+1}`} disabled={!canEdit || !item.enabled} value={item.label || ''} onChange={e => change(i, 'label', e.target.value)} placeholder="Istirahat / salat" className="min-w-[140px] flex-1 rounded border p-1" />
+    </div>)}
+    {canEdit && <button type="button" disabled={busy || !eventId} onClick={save} className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busy ? 'Menyimpan...' : 'Simpan Jeda'}</button>}
+    {message && <p role="status" className="text-xs text-sky-800">{message}</p>}
+  </div>;
+};
+
+const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, getMatchPlayers, eventBreaks, onBreaksSaved }) => {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const load = async () => {
+    setLoading(true); setError('');
+    const { data, error: queryError } = await supabase.from('spinmatch_referee_assignments')
+      .select('event_id, status, assigned_at').eq('referee_auth_id', user?.id).eq('status', 'AKTIF');
+    if (queryError) setError(queryError.message);
+    setRows(data || []); setLoading(false);
+  };
+  useEffect(() => { if (user?.id) load(); else setLoading(false); }, [user?.id]);
+  const sections = {
+    SCHEDULE: { title: 'Jadwal Pertandingan', detail: 'Jadwal event yang ditugaskan akan ditampilkan setelah akses baca data jadwal diverifikasi.' },
+    REF_CALLS: { title: 'Panggilan Pertandingan', detail: 'Panggilan pemain belum diaktifkan. Fitur ini akan menggunakan data jadwal event.' },
+    REF_TABLES: { title: 'Penempatan Meja', detail: 'Pengaturan meja belum diaktifkan. Perubahan meja nantinya harus divalidasi server.' },
+    REF_WASIT: { title: 'Kelola Wasit', detail: 'Rotasi dan penugasan Wasit belum diaktifkan. Data Wasit tidak dapat diubah dari halaman ini.' },
+    REF_LIVE: { title: 'Pantau Live Score', detail: 'Pemantauan skor baca-saja belum dihubungkan. Referee tidak diberikan akses mengubah skor.' },
+  };
+  const section = sections[activeView];
+  const assignedEventId = rows[0]?.event_id;
+  const assignedEvent = events.find(ev => String(ev.id) === String(assignedEventId));
+  const scheduledMatches = assignedEventId && assignedEvent && activeView === 'SCHEDULE'
+    ? getSchedule(assignedEventId).filter(row => row.type === 'player' && row.showMatch && row.matchId)
+    : [];
+  if (section && activeView === 'SCHEDULE') return <div className="mx-auto max-w-6xl space-y-5">
+    {assignedEventId && <SpinMatchBreakEditor eventId={assignedEventId} breaks={eventBreaks[String(assignedEventId)] || []} onSaved={onBreaksSaved} canEdit={true} />}
+    {loading ? <div className="rounded-2xl bg-white p-5">Memeriksa penugasan...</div>
+      : error ? <div role="alert" className="rounded-2xl bg-red-50 p-5 text-red-700">{error}</div>
+      : !assignedEventId ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</div>
+      : !assignedEvent ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Data event belum dapat dibaca. Periksa izin baca event di Supabase.</div>
+      : scheduledMatches.length === 0 ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada jadwal pool yang bisa ditampilkan untuk event ini. Pastikan undian pool sudah tersimpan di Supabase dan akun Referee memiliki izin baca.</div>
+      : <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full table-fixed text-left text-[11px] leading-tight">
+          <colgroup>
+            <col style={{ width: '6%' }} /><col style={{ width: '15%' }} /><col style={{ width: '13%' }} />
+            <col style={{ width: '7%' }} /><col style={{ width: '23%' }} /><col style={{ width: '11%' }} />
+            <col style={{ width: '7%' }} /><col style={{ width: '10%' }} /><col style={{ width: '8%' }} />
+          </colgroup>
+          <thead className="bg-slate-100 text-slate-700"><tr>
+            {['Pool', 'Nama Pemain', 'Club/PTM', 'Match', 'Urutan Pertandingan (EO)', 'Jam', 'Meja', 'Wasit', 'Status'].map(label => <th key={label} className="px-1.5 py-2 font-bold break-words">{label}</th>)}
+          </tr></thead>
+          <tbody>{scheduledMatches.map((row, i) => {
+            const pair = getMatchPlayers(row, assignedEventId);
+            const matchNames = [pair?.player1?.nama, pair?.player2?.nama].filter(Boolean).join(' vs ');
+            return <tr key={`${row.matchId}-${i}`} className="border-t border-slate-100 hover:bg-slate-50">
+              <td className="px-1.5 py-1 font-bold align-top">{row.playerCode || row.pool || '-'}</td>
+              <td className="px-1.5 py-1 font-semibold align-top break-words">{row.player?.nama || '-'}</td>
+              <td className="px-1.5 py-1 align-top break-words">{row.player?.ptm || row.player?.club || '-'}</td>
+              <td className="px-1.5 py-1 align-top break-words">{row.matchRef || '-'}</td>
+              <td className="px-1.5 py-1 font-semibold text-emerald-800 align-top break-words">{row.matchLabel || 'Menunggu jadwal EO'}{matchNames && <div className="text-[10px] font-normal text-slate-600 break-words">{matchNames}</div>}</td>
+              <td className="px-1.5 py-1 align-top">{row.jam || '-'}</td>
+              <td className="px-1.5 py-1 align-top">{row.meja || '-'}</td>
+              <td className="px-1.5 py-1 text-indigo-700 align-top break-words">{getWasit(assignedEventId, row.meja)}</td>
+              <td className="px-1.5 py-1 font-bold align-top break-words">{row.result?.winner ? 'Selesai' : 'Belum selesai'}</td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>}
+    <p className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">Urutan dan pasangan mengikuti label jadwal EO (misalnya A2 VS A3, PK M1 VS A1, PM M1 VS A1); PK berarti pihak kalah dan PM pihak menang pada match sebelumnya. Nama peserta untuk pertandingan lanjutan belum diresolusikan otomatis pada tampilan ini. Referee hanya dapat melihat; tidak tersedia tombol mengubah undian, skor, atau hasil. Pengamanan akses data tetap harus diterapkan melalui RLS Supabase.</p>
+  </div>;
+  if (section) return <div className="mx-auto max-w-4xl space-y-5">
+    <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-6 text-white shadow-xl"><h2 className="text-xl font-black">{section.title}</h2><p className="mt-2 text-sm text-blue-100">Dashboard operasional Referee • {rows.length ? `Event ID ${rows[0].event_id}` : 'Belum ada event aktif'}</p></div>
+    {loading ? <div className="rounded-2xl bg-white p-5">Memeriksa penugasan...</div> : error ? <div role="alert" className="rounded-2xl bg-red-50 p-5 text-red-700">{error}</div> : !rows.length ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</div> : <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><strong>Belum aktif — tahap pengembangan</strong><p className="mt-2">{section.detail}</p><p className="mt-2">Belum ada tombol untuk mengubah data pertandingan.</p></div>}
+  </div>;
+  return <div className="mx-auto max-w-4xl space-y-5">
+    <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-6 text-white shadow-xl">
+      <div className="flex items-center gap-3"><ShieldCheck className="h-9 w-9 text-cyan-200" /><div><h2 className="text-xl font-black">Dashboard Referee</h2><p className="text-xs text-blue-100">Pengawas pertandingan • Akses operasional</p></div></div>
+      <p className="mt-4 text-sm text-blue-50">Selamat datang. Akun Referee hanya ditugaskan pada satu event aktif.</p>
+    </div>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-2"><h3 className="font-black text-slate-900">Penugasan Saya</h3><button type="button" onClick={load} className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700">Muat Ulang</button></div>
+      {loading ? <p className="mt-3 text-sm text-slate-500">Memeriksa penugasan...</p> : error ? <p role="alert" className="mt-3 text-sm text-red-700">{error}</p> : rows.length ? rows.map(row => <div key={row.event_id} className="mt-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Penugasan aktif</strong><p className="mt-1">ID Event: {row.event_id}</p><p className="text-xs">Ditugaskan: {row.assigned_at ? new Date(row.assigned_at).toLocaleString('id-ID') : '-'}</p></div>) : <p className="mt-3 text-sm text-slate-600">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</p>}
+    </div>
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><strong>Fitur operasional dalam pengembangan.</strong><p className="mt-2">Pengaturan jadwal, panggilan pertandingan, penempatan meja, rotasi Wasit, dan pemantauan Live Score belum diaktifkan. Referee tidak dapat mengubah skor, peserta, undian, atau hasil pertandingan dari dashboard ini.</p></div>
+  </div>;
+};
+
 const AuthenticatedContent = () => {
   const { user, logout } = useAuth();
-  const userRole = String(user?.role || user?.user_metadata?.role || user?.app_metadata?.role || '').toUpperCase();
+  const userRole = String(user?.app_metadata?.spinmatch_role || user?.app_metadata?.role || user?.role || user?.user_metadata?.role || '').toUpperCase();
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
   const isEO = userRole === 'EO';
   const isWasit = userRole === 'WASIT';
+  const isReferee = userRole === 'REFEREE';
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : userRole === 'WASIT' ? 'Wasit' : 'Pengguna';
+  const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : userRole === 'WASIT' ? 'Wasit' : isReferee ? 'Referee' : 'Pengguna';
 
   const handleMobileRestart = () => {
     setShowMobileMoreMenu(false);
@@ -547,6 +846,17 @@ const AuthenticatedContent = () => {
     catch { return []; }
   });
 
+  const [eventBreaks, setEventBreaks] = useState({});
+  const [eventBreaksReadError, setEventBreaksReadError] = useState('');
+  const loadEventBreaks = async () => {
+    const { data, error } = await supabase.from('spinmatch_event_breaks').select('event_id,slot,enabled,start_time,end_time,label');
+    if (error) { console.warn('Pengaturan jeda belum bisa dibaca:', error.message); setEventBreaksReadError(error.message); return; }
+    setEventBreaksReadError('');
+    const grouped = {};
+    (data || []).forEach(x => { const k = String(x.event_id); (grouped[k] ||= []).push(x); });
+    setEventBreaks(grouped);
+  };
+  useEffect(() => { loadEventBreaks(); }, [user?.id]);
   const [events, setEvents] = useState(() => {
     const savedEvents = localStorage.getItem('spinmatch_events');
     if (savedEvents) {
@@ -2813,7 +3123,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         scheduleRows.push({ type: 'empty_row' });
       }
     });
-    return scheduleRows;
+    return smApplyBreaks(scheduleRows, eventBreaks[String(eventId)] || []);
   };
 
   const getLiveMatchPlayers = (row, eventId) => {
@@ -4151,6 +4461,8 @@ const handleUpdatePlayerSubmit = async (e) => {
           setActiveView={setActiveView}
           role={userRole}
           refereeSectionActive={activeView === 'SETTINGS' && settingsSection === 'REFEREE'}
+          supervisorSectionActive={activeView === 'SETTINGS' && settingsSection === 'SUPERVISOR'}
+          onManageSupervisor={() => { setSettingsSection('SUPERVISOR'); setActiveView('SETTINGS'); }}
           onManageReferees={() => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }}
           onMyEvents={() => {
             if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
@@ -4221,17 +4533,17 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </h1>
               </div>
 
-              <div className="flex shrink-0 flex-col items-end gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-2 text-[10px] font-bold text-emerald-700">
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-[9px] font-bold text-emerald-700">
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
                     Sistem online
                   </span>
 
                   <div className="relative">
-                    <button type="button" onClick={() => setShowAccountMenu(v => !v)} aria-expanded={showAccountMenu} aria-label="Lihat identitas akun" className="flex max-w-[230px] items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-1.5 text-left shadow-sm hover:border-orange-300">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a3971] text-[10px] font-black text-white">{isSuperAdmin ? 'SA' : isEO ? 'EO' : isPublic ? 'PU' : 'WS'}</span>
-                      <span className="min-w-0"><span className="block truncate text-[11px] font-black text-slate-900">{accountRoleLabel}</span><span className="block truncate text-[10px] text-slate-500">{isPublic ? 'Pengunjung SpinMatch' : currentUserName}</span></span>
+                    <button type="button" onClick={() => setShowAccountMenu(v => !v)} aria-expanded={showAccountMenu} aria-label="Lihat identitas akun" className="flex max-w-[205px] items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-2.5 py-1 text-left shadow-sm hover:border-orange-300">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a3971] text-[10px] font-black text-white">{isSuperAdmin ? 'SA' : isEO ? 'EO' : isPublic ? 'PU' : isReferee ? 'RF' : 'WS'}</span>
+                      <span className="min-w-0"><span className="block truncate text-[10px] font-black text-slate-900">{accountRoleLabel}</span><span className="block truncate text-[9px] text-slate-500">{isPublic ? 'Pengunjung SpinMatch' : currentUserName}</span></span>
                       <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                     </button>
                     {showAccountMenu && <div className="absolute right-0 top-full z-[100] mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -4242,16 +4554,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </div>}
                   </div>
 
-                  {(isEO || isSuperAdmin) && (
-                    <button
-                      type="button"
-                      onClick={handleOpenCreate}
-                      className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#07101f] px-4 text-[11px] font-black text-white shadow-[0_5px_14px_rgba(2,6,23,.22)] transition hover:-translate-y-0.5 hover:bg-[#0a3971]"
-                    >
-                      <Plus className="h-4 w-4 text-[#8DFF63]" />
-                      Buat Event
-                    </button>
-                  )}
+
                 </div>
 
                 {/* Tombol persiapan fitur berikutnya - sengaja belum diberi aksi */}
@@ -4259,7 +4562,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <button
                     type="button"
                     title="Fitur Berita Pingpong akan diaktifkan berikutnya"
-                    className="inline-flex h-8 cursor-default items-center gap-1.5 rounded-full border border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-3 text-[9px] font-black text-[#0a3971] shadow-sm"
+                    className="inline-flex h-7 cursor-default items-center gap-1.5 rounded-full border border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-2.5 text-[9px] font-black text-[#0a3971] shadow-sm"
                   >
                     <FileText className="h-3.5 w-3.5 text-cyan-600" />
                     Berita Pingpong
@@ -4268,11 +4571,21 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <button
                     type="button"
                     title="Fitur Cari Pelatih akan diaktifkan berikutnya"
-                    className="inline-flex h-8 cursor-default items-center gap-1.5 rounded-full border border-lime-200 bg-gradient-to-r from-lime-50 to-emerald-50 px-3 text-[9px] font-black text-emerald-700 shadow-sm"
+                    className="inline-flex h-7 cursor-default items-center gap-1.5 rounded-full border border-lime-200 bg-gradient-to-r from-lime-50 to-emerald-50 px-2.5 text-[9px] font-black text-emerald-700 shadow-sm"
                   >
                     <Search className="h-3.5 w-3.5 text-emerald-600" />
                     Cari Pelatih
                   </button>
+                  {(isEO || isSuperAdmin) && (
+                    <button
+                      type="button"
+                      onClick={handleOpenCreate}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#07101f] px-3 text-[10px] font-black text-white shadow-[0_5px_14px_rgba(2,6,23,.22)] transition hover:-translate-y-0.5 hover:bg-[#0a3971]"
+                    >
+                      <Plus className="h-4 w-4 text-[#8DFF63]" />
+                      Buat Event
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -4415,9 +4728,10 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
+                {isReferee && <span className="col-span-2 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
+                {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Shuffle className="w-3.5 h-3.5" /> Undian
-                </button>
+                </button>}
                 <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Printer className="w-3.5 h-3.5" /> Print
                 </button>
@@ -4494,7 +4808,9 @@ const handleUpdatePlayerSubmit = async (e) => {
     Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
   </div>
 )}
-{isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
+{isReferee ? (
+  <RefereeWorkspace user={user} activeView={activeView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} />
+) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
   <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">{wasitAssignmentLoading ? 'Memeriksa penugasan wasit...' : 'Belum ada penugasan wasit aktif. Hubungi EO.'}</div>
 ) : activeView === 'DASHBOARD' ? (
   <>
@@ -5206,7 +5522,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForKnockout(String(ev.id)); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
-          ].map(({ label, icon: Icon, action, box, iconColor }) => (
+          ].filter(item => !isPublic || ['Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className="group flex flex-col items-center gap-2">
               <span className={`flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
@@ -5487,6 +5803,8 @@ const handleUpdatePlayerSubmit = async (e) => {
             </div>
           ) : activeView === 'SCHEDULE' ? (
             <div className="sm-schedule space-y-6">
+              {eventBreaksReadError && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900">Jeda pertandingan belum dapat dibaca dari Supabase. Jam jadwal mungkin belum mengikuti jeda. Periksa izin SELECT tabel spinmatch_event_breaks. ({eventBreaksReadError})</div>}
+              {selectedScheduleEvent && !isPublic && !isWasit && <SpinMatchBreakEditor eventId={selectedScheduleEvent.id} breaks={eventBreaks[String(selectedScheduleEvent.id)] || []} onSaved={loadEventBreaks} canEdit={isEO || isSuperAdmin} />}
               {selectedScheduleEvent && (
                 <div className="bg-white border border-slate-200 rounded-lg p-6 text-center">
                   <h2 className="text-lg font-black text-slate-900 mb-1">JADWAL PERTANDINGAN</h2>
@@ -5622,7 +5940,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Hasil Undian</h4>
                   <p className="text-xs text-slate-400 mb-4">Lakukan undian terlebih dahulu untuk membuat jadwal pertandingan.</p>
-                  <button onClick={() => setActiveView('DRAW')} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Buka Halaman Undian</button>
+                  {!isPublic && <button onClick={() => setActiveView('DRAW')} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Buka Halaman Undian</button>}
                 </div>
               ) : null}
             </div>
@@ -5884,7 +6202,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Radio className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Jadwal</h4>
                   <p className="text-xs text-slate-400 mb-4">Lakukan undian terlebih dahulu.</p>
-                  <button onClick={() => setActiveView('DRAW')} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Buka Halaman Undian</button>
+                  {!isPublic && <button onClick={() => setActiveView('DRAW')} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Buka Halaman Undian</button>}
                 </div>
               ) : null}
             </div>
@@ -6011,6 +6329,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     <div className="mt-1 text-xs font-semibold text-slate-400">{selectedSettingsEvent.tanggal}</div>
                   </div>}
 
+                  {selectedSettingsEvent && canManageEvent(selectedSettingsEvent) && <button type="button" onClick={() => setSettingsSection('SUPERVISOR')} className="flex w-full items-center justify-between rounded-2xl border border-blue-200 bg-white p-4 text-left shadow-sm"><span className="flex items-center gap-3 text-sm font-black text-blue-950"><ShieldCheck className="h-6 w-6 text-blue-700" />Kelola Referee (Pengawas Pertandingan)</span><span className="text-xs font-bold text-blue-700">BUKA →</span></button>}
                   {selectedSettingsEvent && <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <button onClick={() => { handleRowClick(selectedSettingsEvent); }} className="group relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-left text-white shadow-lg transition hover:-translate-y-1">
                       <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
@@ -6037,6 +6356,25 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </button>
                   </div>}
                 </>
+              ) : settingsSection === 'SUPERVISOR' && (isEO || isSuperAdmin) ? (
+                <div className="space-y-4">
+                  <div className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => setSettingsSection('HOME')} className="rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
+                      <ShieldCheck className="h-7 w-7 text-blue-700" />
+                      <div><h3 className="text-lg font-black text-slate-900">Kelola Referee</h3><p className="text-xs text-slate-500">Pengawas pertandingan — berbeda dari Wasit meja</p></div>
+                    </div>
+                    <div className="mt-5 rounded-xl bg-blue-50 p-4">
+                      <p className="text-sm font-bold text-blue-950">{selectedSettingsEvent?.nama || 'Pilih event terlebih dahulu'}</p>
+                      <p className="mt-1 text-xs text-blue-800">Satu event memiliki satu Referee aktif. Akun Referee boleh digunakan kembali untuk event berikutnya setelah penugasan sebelumnya selesai.</p>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-xl border border-slate-200 p-4"><h4 className="text-sm font-black text-slate-800">Kewenangan Referee</h4><p className="mt-2 text-xs leading-6 text-slate-600">Memantau pertandingan, mengatur urutan dan pemanggilan, penempatan meja, pergantian Wasit, serta status operasional pertandingan.</p></div>
+                      <div className="rounded-xl border border-rose-100 bg-rose-50 p-4"><h4 className="text-sm font-black text-rose-900">Tidak boleh mengubah hasil</h4><p className="mt-2 text-xs leading-6 text-rose-800">Tidak dapat mengubah skor, poin klasemen, ranking, peserta, undian, atau menghapus event.</p></div>
+                    </div>
+                    {selectedSettingsEvent && canManageEvent(selectedSettingsEvent) && <SupervisorManagementPanel eventItem={selectedSettingsEvent} />}
+                  </div>
+                </div>
               ) : settingsSection === 'REFEREE' ? (
                 <div className="space-y-4">
                   {canManageEvent(selectedSettingsEvent) && <RefereeOnlineAccounts eventItem={selectedSettingsEvent} tableCount={settingsTableCount} onAccountsChanged={setOnlineReferees} />}
@@ -6299,9 +6637,9 @@ const handleUpdatePlayerSubmit = async (e) => {
         }
       `}</style>
 
-      {/* LIVE SCORE MODAL */}
+      {/* LIVE SCORE MODAL — di atas header sticky (z-[100]) */}
       {liveScoreMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-0 backdrop-blur-md sm:p-3">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/70 p-0 backdrop-blur-md sm:p-3">
           <div className="spinmatch-live-compact flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden rounded-none border border-slate-200 bg-white shadow-2xl sm:h-[min(96vh,720px)] sm:rounded-[28px]">
             <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-red-600 via-red-500 to-orange-500 px-2.5 py-1.5 text-white sm:px-5 sm:py-1.5">
               <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full border-[16px] border-white/10" />
