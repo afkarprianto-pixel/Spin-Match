@@ -4497,6 +4497,24 @@ const handleUpdatePlayerSubmit = async (e) => {
                   className="fixed inset-0 z-40 cursor-default bg-transparent"
                 />
                 <div className="sm-mobile-more-panel absolute right-0 top-11 z-50 w-[min(310px,calc(100vw-24px))] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_rgba(15,23,42,.24)]">
+                  {isReferee && <>
+                    <div className="px-3 pb-2 pt-1 text-[11px] font-black uppercase tracking-wide text-blue-900">Menu Operasional Referee</div>
+                    {[
+                      { view: 'DASHBOARD', label: 'Dashboard', Icon: Activity },
+                      { view: 'SCHEDULE', label: 'Jadwal Pertandingan', Icon: Calendar },
+                      { view: 'REF_CALLS', label: 'Panggilan Pertandingan', Icon: Radio },
+                      { view: 'REF_TABLES', label: 'Penempatan Meja', Icon: Target },
+                      { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users },
+                      { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity },
+                    ].map(({ view, label, Icon }) => (
+                      <button key={view} type="button"
+                        onClick={() => { setActiveView(view); setShowMobileMoreMenu(false); }}
+                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold ${activeView === view ? 'bg-blue-700 text-white' : 'text-slate-700 hover:bg-blue-50'}`}>
+                        <Icon className="h-4 w-4 shrink-0" />{label}
+                      </button>
+                    ))}
+                    <div className="my-1 border-t border-slate-100" />
+                  </>}
                   {isSuperAdmin && <>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PRICING'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-orange-700 hover:bg-orange-50"><Wallet className="h-4 w-4"/>Tarif & Pembayaran</button>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PAYMENT_REVIEW'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"><CheckCircle2 className="h-4 w-4"/>Verifikasi Pembayaran EO</button>
