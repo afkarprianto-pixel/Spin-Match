@@ -582,10 +582,11 @@ const smClock = value => { const m = /^(\d{2}):(\d{2})$/.exec(String(value || ''
 const smTime = n => `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
 const smBreaks = rows => (Array.isArray(rows) ? rows : []).filter(x => x.enabled).map(x => ({ ...x, a: smClock(x.start_time), b: smClock(x.end_time) })).filter(x => x.a !== null && x.b !== null && x.b > x.a).sort((a,b) => a.a - b.a);
 const smMovePastBreaks = (start, duration, breaks) => {
+  // Geser seluruh pertandingan yang bertabrakan dengan jeda, termasuk
+  // pertandingan yang dimulai sebelum jeda tetapi selesai di dalam jeda.
   let next = start;
   for (const b of breaks) {
-    if (start >= b.a) next += b.b - b.a;
-    else if (next < b.b && next + duration > b.a) next = b.b;
+    if (next < b.b && next + duration > b.a) next = b.b;
   }
   return next;
 };
@@ -595,11 +596,10 @@ const smApplyBreaks = (schedule, breaks) => {
   const times = new Map();
   return schedule.map(row => {
     if (!row?.showMatch || !row.jam || row.result?.winner) return row;
-    const match = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/.exec(row.jam);
+    const match = /^(\\d{2}:\\d{2})\\s*-\\s*(\\d{2}:\\d{2})$/.exec(row.jam);
     if (!match) return row;
     const start = smClock(match[1]), end = smClock(match[2]);
     if (start === null || end === null || end <= start) return row;
-    // Pertandingan dengan waktu dasar sama memakai waktu baru yang sama.
     const key = `${start}:${end}`;
     if (!times.has(key)) times.set(key, smMovePastBreaks(start, end - start, active));
     const shifted = times.get(key);
@@ -671,13 +671,9 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
       : !assignedEventId ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</div>
       : !assignedEvent ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Data event belum dapat dibaca. Periksa izin baca event di Supabase.</div>
       : scheduledMatches.length === 0 ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada jadwal pool yang bisa ditampilkan untuk event ini. Pastikan undian pool sudah tersimpan di Supabase dan akun Referee memiliki izin baca.</div>
-      : <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full table-fixed text-left text-[11px] leading-tight">
-          <colgroup>
-            <col style={{ width: '6%' }} /><col style={{ width: '15%' }} /><col style={{ width: '13%' }} />
-            <col style={{ width: '7%' }} /><col style={{ width: '23%' }} /><col style={{ width: '11%' }} />
-            <col style={{ width: '7%' }} /><col style={{ width: '10%' }} /><col style={{ width: '8%' }} />
-          </colgroup>
+      : <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm" >
+        <table className="w-max min-w-[1150px] table-auto whitespace-nowrap text-left text-[12px] leading-relaxed">
+
           <thead className="bg-slate-100 text-slate-700"><tr>
             {['Pool', 'Nama Pemain', 'Club/PTM', 'Match', 'Urutan Pertandingan (EO)', 'Jam', 'Meja', 'Wasit', 'Status'].map(label => <th key={label} className="px-1.5 py-2 font-bold break-words">{label}</th>)}
           </tr></thead>
@@ -686,14 +682,14 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
             const matchNames = [pair?.player1?.nama, pair?.player2?.nama].filter(Boolean).join(' vs ');
             return <tr key={`${row.matchId}-${i}`} className="border-t border-slate-100 hover:bg-slate-50">
               <td className="px-1.5 py-1 font-bold align-top">{row.playerCode || row.pool || '-'}</td>
-              <td className="px-1.5 py-1 font-semibold align-top break-words">{row.player?.nama || '-'}</td>
-              <td className="px-1.5 py-1 align-top break-words">{row.player?.ptm || row.player?.club || '-'}</td>
-              <td className="px-1.5 py-1 align-top break-words">{row.matchRef || '-'}</td>
-              <td className="px-1.5 py-1 font-semibold text-emerald-800 align-top break-words">{row.matchLabel || 'Menunggu jadwal EO'}{matchNames && <div className="text-[10px] font-normal text-slate-600 break-words">{matchNames}</div>}</td>
-              <td className="px-1.5 py-1 align-top">{row.jam || '-'}</td>
+              <td className="px-1.5 py-1 font-semibold align-top whitespace-nowrap">{row.player?.nama || '-'}</td>
+              <td className="px-1.5 py-1 align-top whitespace-nowrap">{row.player?.ptm || row.player?.club || '-'}</td>
+              <td className="px-1.5 py-1 align-top whitespace-nowrap">{row.matchRef || '-'}</td>
+              <td className="px-1.5 py-1 font-semibold text-emerald-800 align-top whitespace-nowrap">{row.matchLabel || 'Menunggu jadwal EO'}{matchNames && <div className="text-[10px] font-normal text-slate-600 whitespace-nowrap">{matchNames}</div>}</td>
+              <td className="px-1.5 py-1 align-top">{(row.jam || '-').replace(/\\s*-\\s*/g, '–')}</td>
               <td className="px-1.5 py-1 align-top">{row.meja || '-'}</td>
-              <td className="px-1.5 py-1 text-indigo-700 align-top break-words">{getWasit(assignedEventId, row.meja)}</td>
-              <td className="px-1.5 py-1 font-bold align-top break-words">{row.result?.winner ? 'Selesai' : 'Belum selesai'}</td>
+              <td className="px-1.5 py-1 text-indigo-700 align-top whitespace-nowrap">{getWasit(assignedEventId, row.meja)}</td>
+              <td className="px-1.5 py-1 font-bold align-top whitespace-nowrap">{row.result?.winner ? 'Selesai' : 'Belum selesai'}</td>
             </tr>;
           })}</tbody>
         </table>
