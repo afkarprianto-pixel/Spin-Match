@@ -596,7 +596,7 @@ const smApplyBreaks = (schedule, breaks) => {
   const times = new Map();
   return schedule.map(row => {
     if (!row?.showMatch || !row.jam || row.result?.winner) return row;
-    const match = /^(\\d{2}:\\d{2})\\s*-\\s*(\\d{2}:\\d{2})$/.exec(row.jam);
+    const match = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/.exec(row.jam);
     if (!match) return row;
     const start = smClock(match[1]), end = smClock(match[2]);
     if (start === null || end === null || end <= start) return row;
@@ -686,7 +686,7 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
               <td className="px-1.5 py-1 align-top whitespace-nowrap">{row.player?.ptm || row.player?.club || '-'}</td>
               <td className="px-1.5 py-1 align-top whitespace-nowrap">{row.matchRef || '-'}</td>
               <td className="px-1.5 py-1 font-semibold text-emerald-800 align-top whitespace-nowrap">{row.matchLabel || 'Menunggu jadwal EO'}{matchNames && <div className="text-[10px] font-normal text-slate-600 whitespace-nowrap">{matchNames}</div>}</td>
-              <td className="px-1.5 py-1 align-top">{(row.jam || '-').replace(/\\s*-\\s*/g, '–')}</td>
+              <td className="px-1.5 py-1 align-top">{(row.jam || '-').replace(/\s*-\s*/g, '–')}</td>
               <td className="px-1.5 py-1 align-top">{row.meja || '-'}</td>
               <td className="px-1.5 py-1 text-indigo-700 align-top whitespace-nowrap">{getWasit(assignedEventId, row.meja)}</td>
               <td className="px-1.5 py-1 font-bold align-top whitespace-nowrap">{row.result?.winner ? 'Selesai' : 'Belum selesai'}</td>
