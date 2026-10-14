@@ -582,20 +582,11 @@ const smClock = value => { const m = /^(\d{2}):(\d{2})$/.exec(String(value || ''
 const smTime = n => `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
 const smBreaks = rows => (Array.isArray(rows) ? rows : []).filter(x => x.enabled).map(x => ({ ...x, a: smClock(x.start_time), b: smClock(x.end_time) })).filter(x => x.a !== null && x.b !== null && x.b > x.a).sort((a,b) => a.a - b.a);
 const smMovePastBreaks = (start, duration, breaks) => {
-  // Geser interval pertandingan melewati setiap jeda yang bersinggungan.
-  // Ulangi pemeriksaan karena pemindahan melewati jeda pertama bisa
-  // membuat pertandingan bersinggungan dengan jeda berikutnya.
+  // Geser seluruh pertandingan yang bertabrakan dengan jeda, termasuk
+  // pertandingan yang dimulai sebelum jeda tetapi selesai di dalam jeda.
   let next = start;
-  let changed = true;
-  let guard = 0;
-  while (changed && guard++ < breaks.length + 2) {
-    changed = false;
-    for (const b of breaks) {
-      if (next < b.b && next + duration > b.a) {
-        next = b.b;
-        changed = true;
-      }
-    }
+  for (const b of breaks) {
+    if (next < b.b && next + duration > b.a) next = b.b;
   }
   return next;
 };
@@ -605,11 +596,10 @@ const smApplyBreaks = (schedule, breaks) => {
   const times = new Map();
   return schedule.map(row => {
     if (!row?.showMatch || !row.jam || row.result?.winner) return row;
-    const match = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/.exec(row.jam);
+    const match = /^(\\d{2}:\\d{2})\\s*-\\s*(\\d{2}:\\d{2})$/.exec(row.jam);
     if (!match) return row;
     const start = smClock(match[1]), end = smClock(match[2]);
     if (start === null || end === null || end <= start) return row;
-    // Pertandingan dengan waktu dasar sama memakai waktu baru yang sama.
     const key = `${start}:${end}`;
     if (!times.has(key)) times.set(key, smMovePastBreaks(start, end - start, active));
     const shifted = times.get(key);
@@ -681,8 +671,8 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
       : !assignedEventId ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</div>
       : !assignedEvent ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Data event belum dapat dibaca. Periksa izin baca event di Supabase.</div>
       : scheduledMatches.length === 0 ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada jadwal pool yang bisa ditampilkan untuk event ini. Pastikan undian pool sudah tersimpan di Supabase dan akun Referee memiliki izin baca.</div>
-      : <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-max min-w-[1120px] table-auto whitespace-nowrap text-left text-xs leading-snug">
+      : <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm" >
+        <table className="w-max min-w-[1150px] table-auto whitespace-nowrap text-left text-[12px] leading-relaxed">
 
           <thead className="bg-slate-100 text-slate-700"><tr>
             {['Pool', 'Nama Pemain', 'Club/PTM', 'Match', 'Urutan Pertandingan (EO)', 'Jam', 'Meja', 'Wasit', 'Status'].map(label => <th key={label} className="px-1.5 py-2 font-bold break-words">{label}</th>)}
@@ -692,14 +682,14 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
             const matchNames = [pair?.player1?.nama, pair?.player2?.nama].filter(Boolean).join(' vs ');
             return <tr key={`${row.matchId}-${i}`} className="border-t border-slate-100 hover:bg-slate-50">
               <td className="px-1.5 py-1 font-bold align-top">{row.playerCode || row.pool || '-'}</td>
-              <td className="px-1.5 py-1 font-semibold align-top whitespace-normal">{row.player?.nama || '-'}</td>
-              <td className="px-1.5 py-1 align-top whitespace-normal">{row.player?.ptm || row.player?.club || '-'}</td>
-              <td className="px-1.5 py-1 align-top whitespace-normal">{row.matchRef || '-'}</td>
-              <td className="px-1.5 py-1 font-semibold text-emerald-800 align-top whitespace-normal">{row.matchLabel || 'Menunggu jadwal EO'}{matchNames && <div className="text-[10px] font-normal text-slate-600 whitespace-normal">{matchNames}</div>}</td>
-              <td className="px-2 py-1 align-top whitespace-nowrap font-semibold tabular-nums">{(row.jam || '-').replace(/\s*-\s*/, '–')}</td>
+              <td className="px-1.5 py-1 font-semibold align-top whitespace-nowrap">{row.player?.nama || '-'}</td>
+              <td className="px-1.5 py-1 align-top whitespace-nowrap">{row.player?.ptm || row.player?.club || '-'}</td>
+              <td className="px-1.5 py-1 align-top whitespace-nowrap">{row.matchRef || '-'}</td>
+              <td className="px-1.5 py-1 font-semibold text-emerald-800 align-top whitespace-nowrap">{row.matchLabel || 'Menunggu jadwal EO'}{matchNames && <div className="text-[10px] font-normal text-slate-600 whitespace-nowrap">{matchNames}</div>}</td>
+              <td className="px-1.5 py-1 align-top">{(row.jam || '-').replace(/\\s*-\\s*/g, '–')}</td>
               <td className="px-1.5 py-1 align-top">{row.meja || '-'}</td>
-              <td className="px-1.5 py-1 text-indigo-700 align-top whitespace-normal">{getWasit(assignedEventId, row.meja)}</td>
-              <td className="px-1.5 py-1 font-bold align-top whitespace-normal">{row.result?.winner ? 'Selesai' : 'Belum selesai'}</td>
+              <td className="px-1.5 py-1 text-indigo-700 align-top whitespace-nowrap">{getWasit(assignedEventId, row.meja)}</td>
+              <td className="px-1.5 py-1 font-bold align-top whitespace-nowrap">{row.result?.winner ? 'Selesai' : 'Belum selesai'}</td>
             </tr>;
           })}</tbody>
         </table>
@@ -4503,6 +4493,24 @@ const handleUpdatePlayerSubmit = async (e) => {
                   className="fixed inset-0 z-40 cursor-default bg-transparent"
                 />
                 <div className="sm-mobile-more-panel absolute right-0 top-11 z-50 w-[min(310px,calc(100vw-24px))] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_rgba(15,23,42,.24)]">
+                  {isReferee && <>
+                    <div className="px-3 pb-2 pt-1 text-[11px] font-black uppercase tracking-wide text-blue-900">Menu Operasional Referee</div>
+                    {[
+                      { view: 'DASHBOARD', label: 'Dashboard', Icon: Activity },
+                      { view: 'SCHEDULE', label: 'Jadwal Pertandingan', Icon: Calendar },
+                      { view: 'REF_CALLS', label: 'Panggilan Pertandingan', Icon: Radio },
+                      { view: 'REF_TABLES', label: 'Penempatan Meja', Icon: Target },
+                      { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users },
+                      { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity },
+                    ].map(({ view, label, Icon }) => (
+                      <button key={view} type="button"
+                        onClick={() => { setActiveView(view); setShowMobileMoreMenu(false); }}
+                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold ${activeView === view ? 'bg-blue-700 text-white' : 'text-slate-700 hover:bg-blue-50'}`}>
+                        <Icon className="h-4 w-4 shrink-0" />{label}
+                      </button>
+                    ))}
+                    <div className="my-1 border-t border-slate-100" />
+                  </>}
                   {isSuperAdmin && <>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PRICING'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-orange-700 hover:bg-orange-50"><Wallet className="h-4 w-4"/>Tarif & Pembayaran</button>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PAYMENT_REVIEW'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"><CheckCircle2 className="h-4 w-4"/>Verifikasi Pembayaran EO</button>
