@@ -921,6 +921,13 @@ const AuthenticatedContent = () => {
     }
     return {};
   });
+  const [knockoutPrizes, setKnockoutPrizes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('spinmatch_knockout_prizes') || '{}'); }
+    catch (e) { console.error(e); return {}; }
+  });
+  const [knockoutZoom, setKnockoutZoom] = useState(1);
+  const knockoutPinchRef = useRef(null);
+  const [showKnockoutTopEight, setShowKnockoutTopEight] = useState(false);
 
   useEffect(() => { localStorage.setItem('spinmatch_events', JSON.stringify(events)); }, [events]);
   useEffect(() => { localStorage.setItem('spinmatch_participants', JSON.stringify(participants)); }, [participants]);
@@ -929,6 +936,7 @@ const AuthenticatedContent = () => {
   useEffect(() => { localStorage.setItem('spinmatch_match_results', JSON.stringify(matchResults)); }, [matchResults]);
   useEffect(() => { localStorage.setItem('spinmatch_pool_rankings', JSON.stringify(poolRankings)); }, [poolRankings]);
   useEffect(() => { localStorage.setItem('spinmatch_knockout_results', JSON.stringify(knockoutResults)); }, [knockoutResults]);
+  useEffect(() => { localStorage.setItem('spinmatch_knockout_prizes', JSON.stringify(knockoutPrizes)); }, [knockoutPrizes]);
 
   // Data undian dan skor online: Supabase adalah sumber bersama antar perangkat.
   // Jangan mengunggah cache lokal otomatis saat login (dapat menimpa data EO).
@@ -4533,6 +4541,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                       type="button"
                       onClick={() => {
                         setShowMobileMoreMenu(false);
+                        const eventToManage = canManageEvent(selectedSettingsEvent)
+                          ? selectedSettingsEvent
+                          : myEvents[0];
+                        if (eventToManage) {
+                          setSelectedEventIdForSettings(String(eventToManage.id));
+                        }
                         setSettingsSection('SUPERVISOR');
                         setActiveView('SETTINGS');
                       }}
@@ -5990,12 +6004,6 @@ const handleUpdatePlayerSubmit = async (e) => {
               {selectedKnockoutEvent && poolResults[selectedKnockoutEvent.id] ? (() => {
                 const ko = buildKnockoutBracket(selectedKnockoutEvent.id);
                 const divisi = selectedKnockoutEvent.divisiList?.[0]?.nama || '-';
-                const roundName = (idx) => {
-                  const playerCount = ko.rounds[idx]?.length * 2;
-                  if (playerCount === 2) return 'FINAL';
-                  if (playerCount === 4) return 'SEMIFINAL';
-                  return `${playerCount} BESAR`;
-                };
                 const finalMatch = ko.rounds[ko.rounds.length - 1]?.[0];
                 const finalResult = finalMatch ? knockoutResults[`${selectedKnockoutEvent.id}_${finalMatch.id}`] : null;
                 const runnerUp = finalResult?.winner === 'player1' ? finalMatch?.player2 : finalResult?.winner === 'player2' ? finalMatch?.player1 : null;
@@ -6005,10 +6013,26 @@ const handleUpdatePlayerSubmit = async (e) => {
                   if (!r?.winner) return null;
                   return r.winner === 'player1' ? m.player2 : m.player1;
                 }).filter(Boolean);
-
-                const baseMatchH = 82;
-                const baseGap = 18;
-                const unit = baseMatchH + baseGap;
+                const quarterRound = ko.rounds.find(round => round.length === 4) || [];
+                const topEight = quarterRound.flatMap(match => [match.player1, match.player2])
+                  .filter(player => player && !player.isPlaceholder).slice(0, 8);
+                const awardPrefix = `${selectedKnockoutEvent.id}_${divisi}`;
+                const eventDate = String(selectedKnockoutEvent.tanggal || '');
+                const eventYear = eventDate.match(/\b20\d{2}\b/)?.[0] || new Date().getFullYear();
+                const setPrize = (place, value) => setKnockoutPrizes(previous => ({
+                  ...previous,
+                  [`${awardPrefix}_${place}`]: value
+                }));
+                const awardRows = [
+                  { place: 'champion', label: 'Juara 1', players: ko.champion ? [ko.champion] : [] },
+                  { place: 'runner-up', label: 'Juara 2', players: runnerUp ? [runnerUp] : [] },
+                  { place: 'bronze', label: 'Juara 3 Bersama', players: bronze },
+                ];
+                const topEightRows = topEight.map((player, index) => ({
+                  place: `top-eight-${index}`,
+                  label: '8 Besar • Tentative',
+                  players: [player],
+                }));
 
                 return (
                   <>
@@ -6049,9 +6073,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                     `}</style>
                     <div id="spinmatch-knockout-print-area" className="space-y-3">
                     <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs text-center">
-                      <h1 className="text-xl font-black text-slate-950 uppercase">{selectedKnockoutEvent.nama}</h1>
+                      <h1 className="text-xl font-black text-slate-950 uppercase">HASIL KEJUARAAN {selectedKnockoutEvent.nama}</h1>
                       <div className="mt-1 text-xs font-bold text-slate-500">
-                        DIVISI: {divisi} • {selectedKnockoutEvent.tanggal}
+                        Tgl {selectedKnockoutEvent.tanggal || '-'} • Thn {eventYear}
                       </div>
                     </div>
 
@@ -6061,7 +6085,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                         const rounds = ko.rounds || [];
                         if (!rounds.length) return <p className="p-8 text-center text-sm text-slate-500">Belum ada peserta Knockout.</p>;
                         const eventId = selectedKnockoutEvent.id;
-                        const W = 224, H = 90, GAP = 28, LEFT = 18, TOP = 62;
+                        const W = 204, H = 86, GAP = 12, LEFT = 14, TOP = 62;
                         const stride = H + GAP;
                         const totalW = LEFT + rounds.length * (W + 62) + 24;
                         const totalH = TOP + (ko.bracketSize / 2) * stride + 30;
@@ -6069,13 +6093,37 @@ const handleUpdatePlayerSubmit = async (e) => {
                         const matchX = r => LEFT + r * (W + 62);
                         const getName = p => p?.nama || 'Menunggu pemenang';
                         const canScore = isSuperAdmin || (isEO && canManageEvent(selectedKnockoutEvent));
-                        return <div className="min-w-max" style={{width: totalW}}>
-                          <div className="mb-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
+                        return <div className="min-w-max" style={{width: totalW * knockoutZoom}}>
+                          <div className="knockout-screen-only mb-3 flex flex-wrap items-center gap-2 text-[10px] font-bold text-slate-600">
                             <span className="rounded-lg bg-slate-100 px-3 py-1">Bracket {ko.bracketSize} slot</span>
                             <span className="rounded-lg bg-slate-100 px-3 py-1">BYE {ko.byeCount}</span>
                             <span className="rounded-lg bg-slate-100 px-3 py-1">{ko.drawReady ? 'Juara pool sudah tersedia' : 'Menunggu hasil lengkap pool'}</span>
+                            <span className="ml-auto inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+                              <button type="button" aria-label="Perkecil bracket" title="Perkecil bracket" disabled={knockoutZoom <= 0.5} onClick={() => setKnockoutZoom(value => Math.max(0.5, Number((value - 0.1).toFixed(1))))} className="rounded px-2 py-1 text-sm font-black disabled:opacity-40">−</button>
+                              <span className="min-w-10 text-center">{Math.round(knockoutZoom * 100)}%</span>
+                              <button type="button" aria-label="Perbesar bracket" title="Perbesar bracket" disabled={knockoutZoom >= 1.3} onClick={() => setKnockoutZoom(value => Math.min(1.3, Number((value + 0.1).toFixed(1))))} className="rounded px-2 py-1 text-sm font-black disabled:opacity-40">+</button>
+                            </span>
                           </div>
-                          <div className="relative" style={{width:totalW,height:totalH}}>
+                          <div
+                            className="relative"
+                            style={{width:totalW,height:totalH * knockoutZoom,transform:`scale(${knockoutZoom})`,transformOrigin:'top left',touchAction:'pan-x pan-y'}}
+                            onTouchStart={event => {
+                              if (event.touches.length !== 2) return;
+                              const [first, second] = event.touches;
+                              const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+                              knockoutPinchRef.current = { distance, zoom: knockoutZoom };
+                            }}
+                            onTouchMove={event => {
+                              if (event.touches.length !== 2 || !knockoutPinchRef.current) return;
+                              const [first, second] = event.touches;
+                              const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+                              const nextZoom = knockoutPinchRef.current.zoom * distance / knockoutPinchRef.current.distance;
+                              setKnockoutZoom(Math.max(0.5, Math.min(1.3, Number(nextZoom.toFixed(2)))));
+                            }}
+                            onTouchEnd={event => {
+                              if (event.touches.length < 2) knockoutPinchRef.current = null;
+                            }}
+                          >
                             <svg className="pointer-events-none absolute inset-0" width={totalW} height={totalH} aria-hidden="true">
                               <g fill="none" stroke="#64748b" strokeWidth="2" strokeLinejoin="round">
                                 {rounds.slice(0,-1).flatMap((round,r) => round.map((m,i) => {
@@ -6101,14 +6149,14 @@ const handleUpdatePlayerSubmit = async (e) => {
                                   title={ready ? (canScore?'Klik untuk Live Score':'Hanya EO yang dapat memasukkan skor Knockout'):'Menunggu pemain'}
                                   className={`absolute overflow-hidden rounded-xl border bg-white text-left shadow-sm ${ready&&canScore?'cursor-pointer border-blue-300 hover:border-lime-500 hover:shadow-md':'cursor-default border-slate-200'}`}
                                   style={{left:matchX(r),top:matchY(r,i),width:W,height:H}}>
-                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[10px] font-bold ${result?.winner==='player1'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
-                                    <span className="truncate">{getName(p1)}</span><span className="ml-1">{result?.player1Score ?? ''}</span>
+                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[9px] font-bold ${result?.winner==='player1'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
+                                    <span className="min-w-0 truncate"><span className="block truncate">{getName(p1)}</span><span className="block truncate text-[7px] font-semibold text-slate-500">{p1?.ptm || 'PTM/Club belum diisi'}</span></span><span className="ml-1">{result?.player1Score ?? ''}</span>
                                   </div>
-                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[10px] font-bold ${result?.winner==='player2'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
-                                    <span className="truncate">{byeRound&&!p2?'BYE':getName(p2)}</span><span className="ml-1">{result?.player2Score ?? ''}</span>
+                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[9px] font-bold ${result?.winner==='player2'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
+                                    <span className="min-w-0 truncate"><span className="block truncate">{byeRound&&!p2?'BYE':getName(p2)}</span><span className="block truncate text-[7px] font-semibold text-slate-500">{p2?.ptm || (byeRound&&!p2 ? '' : 'PTM/Club belum diisi')}</span></span><span className="ml-1">{result?.player2Score ?? ''}</span>
                                   </div>
-                                  <div className="truncate px-2 py-1 text-[9px] font-semibold text-sky-700">{meta.jam} · {meta.meja}</div>
-                                  <div className="truncate border-t border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-indigo-700" title={`Wasit: ${getScheduledReferee(eventId, meta.meja)}`}>
+                                  <div className="truncate px-2 py-0 text-[7px] font-semibold text-sky-700">{meta.jam} · {meta.meja}</div>
+                                  <div className="truncate border-t border-slate-100 px-2 py-0 text-[7px] font-semibold text-indigo-700" title={`Wasit: ${getScheduledReferee(eventId, meta.meja)}`}>
                                     Wasit: {getScheduledReferee(eventId, meta.meja)}
                                   </div>
                                 </button>;
@@ -6120,24 +6168,44 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                        <div className="text-[10px] font-black text-amber-700">JUARA 1</div>
-                        <div className="font-black">{ko.champion?.nama || '-'}</div>
+                    <section className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                      <div className="border-b border-slate-300 bg-slate-50 p-4 text-center">
+                        <h2 className="text-sm font-black uppercase text-slate-900">HASIL KEJUARAAN {selectedKnockoutEvent.nama}</h2>
+                        <p className="mt-1 text-xs font-bold text-slate-600">Tgl {selectedKnockoutEvent.tanggal || '-'} • Thn {eventYear}</p>
                       </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                        <div className="text-[10px] font-black text-slate-500">JUARA 2</div>
-                        <div className="font-black">{runnerUp?.nama || '-'}</div>
+                      <div className="border-b border-slate-200 bg-blue-50 px-4 py-3 text-sm font-black text-blue-950">Kategori: {divisi}</div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[620px] border-collapse text-left text-xs">
+                          <thead className="bg-slate-100 text-[10px] font-black uppercase text-slate-700">
+                            <tr>
+                              <th className="border border-slate-300 px-3 py-2">Hasil Juara</th>
+                              <th className="border border-slate-300 px-3 py-2">Nama Juara</th>
+                              <th className="border border-slate-300 px-3 py-2">PTM/Club</th>
+                              <th className="border border-slate-300 px-3 py-2">Hadiah</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...awardRows, ...(showKnockoutTopEight ? topEightRows : [])].map(row => {
+                              const players = row.players;
+                              const rowKey = `${awardPrefix}_${row.place}`;
+                              return <tr key={row.place} className="odd:bg-white even:bg-slate-50">
+                                <td className="border border-slate-300 px-3 py-2 font-black text-slate-800">{row.label}</td>
+                                <td className="border border-slate-300 px-3 py-2 font-bold text-slate-900">{players.length ? players.map(player => player.nama).join(' & ') : '-'}</td>
+                                <td className="border border-slate-300 px-3 py-2 text-slate-700">{players.length ? players.map(player => player.ptm || '-').join(' & ') : '-'}</td>
+                                <td className="border border-slate-300 px-3 py-2">
+                                  <input type="number" min="0" step="1" inputMode="numeric" aria-label={`Hadiah ${row.label}`} placeholder="Isi nominal" value={knockoutPrizes[rowKey] || ''} onChange={event => setPrize(row.place, event.target.value)} className="w-full min-w-28 rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs font-bold text-slate-900" />
+                                </td>
+                              </tr>;
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-                      <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
-                        <div className="text-[10px] font-black text-orange-700">JUARA 3 BERSAMA</div>
-                        <div className="font-black text-xs">{bronze.length ? bronze.map(p=>p.nama).join(' & ') : '-'}</div>
-                      </div>
-                      <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4">
-                        <div className="text-[10px] font-black text-sky-700">8 BESAR • TENTATIVE</div>
-                        <div className="font-bold text-xs">Mengikuti hasil bracket</div>
-                      </div>
-                    </div>
+                      <button type="button" onClick={() => setShowKnockoutTopEight(value => !value)} className="flex w-full items-center justify-center gap-2 border-t border-slate-200 bg-white px-4 py-3 text-xs font-black text-blue-800 hover:bg-blue-50">
+                        <span className="text-lg leading-none">{showKnockoutTopEight ? '−' : '+'}</span>
+                        {showKnockoutTopEight ? 'Sembunyikan 8 Besar Tentative' : 'Tampilkan 8 Besar Tentative'}
+                      </button>
+                      {showKnockoutTopEight && topEight.length === 0 && <p className="border-t border-slate-200 p-3 text-center text-xs text-slate-500">Data 8 besar tersedia setelah bracket mencapai babak 8 besar.</p>}
+                    </section>
                   </>
                 );
               })() : (
