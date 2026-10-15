@@ -4527,6 +4527,19 @@ const handleUpdatePlayerSubmit = async (e) => {
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PAYMENT_REVIEW'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"><CheckCircle2 className="h-4 w-4"/>Verifikasi Pembayaran EO</button>
                     <div className="my-1 border-t border-slate-100"/>
                   </>}
+
+                    <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileMoreMenu(false);
+                      onManageReferees?.();
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"
+                  >
+                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                    Kelola Referee
+                  </button>
+
                   <button
                     type="button"
                     onClick={handleMobileRestart}
