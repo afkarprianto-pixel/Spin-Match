@@ -688,6 +688,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     return () => { cancelled = true; };
   }, [assignedEventId]);
   const sections = {
+    SCHEDULE: { title: 'Jadwal Pertandingan' },
     REF_CALLS: { title: 'Panggilan Pertandingan' },
     REF_TABLES: { title: 'Penempatan Meja' },
     REF_WASIT: { title: 'Kelola Wasit' },
@@ -721,14 +722,20 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   const updateWasitTable = async (wasit, tableNumber) => {
     setWasitError('');
     setSavingWasitId(wasit.id);
-    const { error: updateError } = await supabase.from('spinmatch_wasit_event')
-      .update({ nomor_meja: Number(tableNumber) })
-      .eq('id', wasit.id)
-      .eq('event_id', Number(assignedEventId));
-    if (updateError) {
-      setWasitError(`Gagal memperbarui meja Wasit ${wasit.nama_wasit}: ${updateError.message}`);
-    } else {
-      setEventWasits(previous => previous.map(item => item.id === wasit.id ? { ...item, nomor_meja: Number(tableNumber) } : item).sort((a, b) => Number(a.nomor_meja) - Number(b.nomor_meja)));
+    try {
+      const { data: updatedWasit, error: updateError } = await supabase.from('spinmatch_wasit_event')
+        .update({ nomor_meja: Number(tableNumber) })
+        .eq('id', wasit.id)
+        .eq('event_id', Number(assignedEventId))
+        .select('id')
+        .maybeSingle();
+      if (updateError || !updatedWasit) {
+        setWasitError(`Gagal memperbarui meja Wasit ${wasit.nama_wasit}: ${updateError?.message || 'Tidak ada baris yang dapat diperbarui. Periksa izin akun Referee.'}`);
+      } else {
+        setEventWasits(previous => previous.map(item => item.id === wasit.id ? { ...item, nomor_meja: Number(tableNumber) } : item).sort((a, b) => Number(a.nomor_meja) - Number(b.nomor_meja)));
+      }
+    } catch (updateError) {
+      setWasitError(`Gagal memperbarui meja Wasit ${wasit.nama_wasit}: ${updateError?.message || 'Terjadi kesalahan koneksi.'}`);
     }
     setSavingWasitId(null);
   };
@@ -843,17 +850,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
         })}</tbody></table></div> : <p className="p-5 text-sm text-slate-500">Belum ada jadwal untuk dipantau.</p>}
       </div>}
   </div>;
-  return <div className="mx-auto max-w-4xl space-y-5">
-    <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-6 text-white shadow-xl">
-      <div className="flex items-center gap-3"><ShieldCheck className="h-9 w-9 text-cyan-200" /><div><h2 className="text-xl font-black">Dashboard Referee</h2><p className="text-xs text-blue-100">Pengawas pertandingan • Akses operasional</p></div></div>
-      <p className="mt-4 text-sm text-blue-50">Selamat datang. Akun Referee hanya ditugaskan pada satu event aktif.</p>
-    </div>
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-2"><h3 className="font-black text-slate-900">Penugasan Saya</h3><button type="button" onClick={load} className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700">Muat Ulang</button></div>
-      {loading ? <p className="mt-3 text-sm text-slate-500">Memeriksa penugasan...</p> : error ? <p role="alert" className="mt-3 text-sm text-red-700">{error}</p> : rows.length ? rows.map(row => <div key={row.event_id} className="mt-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Penugasan aktif</strong><p className="mt-1">ID Event: {row.event_id}</p><p className="text-xs">Ditugaskan: {row.assigned_at ? new Date(row.assigned_at).toLocaleString('id-ID') : '-'}</p></div>) : <p className="mt-3 text-sm text-slate-600">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</p>}
-    </div>
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><strong>Fitur operasional dalam pengembangan.</strong><p className="mt-2">Pengaturan jadwal, panggilan pertandingan, penempatan meja, rotasi Wasit, dan pemantauan Live Score belum diaktifkan. Referee tidak dapat mengubah skor, peserta, undian, atau hasil pertandingan dari dashboard ini.</p></div>
-  </div>;
+  return null;
 };
 
 const AuthenticatedContent = () => {
@@ -3976,6 +3973,100 @@ const handleUpdatePlayerSubmit = async (e) => {
     }
   };
 
+  const handleDownloadKnockoutPdf = () => {
+    if (!selectedKnockoutEvent) {
+      alert('Pilih event terlebih dahulu untuk mengunduh bagan Knockout.');
+      return;
+    }
+    try {
+      const eventId = selectedKnockoutEvent.id;
+      const bracket = buildKnockoutBracket(eventId);
+      const safeText = value => String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\x20-\x7E]/g, '?')
+        .replace(/[\\()]/g, '\\$&');
+      const rows = [];
+      (bracket.rounds || []).forEach((round, roundIndex) => {
+        const roundName = round.length === 1 ? 'FINAL' : round.length === 2 ? 'SEMIFINAL' : `${round.length * 2} BESAR`;
+        rows.push({ title: roundName });
+        round.forEach((match, matchIndex) => {
+          const result = knockoutResults[`${eventId}_${match.id}`] || matchResults[`${eventId}_${match.id}`];
+          const player1 = match.player1?.nama || 'Menunggu pemain';
+          const player2 = match.player2?.nama || 'Menunggu pemain';
+          const score = result ? `${result.player1Score ?? 0} - ${result.player2Score ?? 0}` : 'Belum dimainkan';
+          const winner = result?.winner === 'player1' ? player1 : result?.winner === 'player2' ? player2 : '';
+          rows.push({ text: `${match.id || `M${matchIndex + 1}`}  ${player1} vs ${player2}  |  ${score}${winner ? `  |  Pemenang: ${winner}` : ''}` });
+        });
+        if (roundIndex < bracket.rounds.length - 1) rows.push({ spacer: true });
+      });
+      const pageWidth = 842;
+      const pageHeight = 595;
+      const rowsPerPage = 35;
+      const chunks = [];
+      for (let index = 0; index < rows.length; index += rowsPerPage) chunks.push(rows.slice(index, index + rowsPerPage));
+      if (!chunks.length) chunks.push([{ text: 'Belum ada peserta Knockout.' }]);
+      const pages = chunks.map((chunk, pageIndex) => {
+        let content = '';
+        const addText = (text, x, y, size, color = '0.12 0.16 0.22') => {
+          content += `${color} rg BT /F1 ${size} Tf 1 0 0 1 ${x} ${y} Tm (${safeText(text)}) Tj ET\n`;
+        };
+        addText('BAGAN KNOCKOUT', 320, 550, 16, '0.04 0.22 0.42');
+        addText(String(selectedKnockoutEvent.nama || '').toUpperCase(), 28, 526, 11);
+        addText(`Tanggal: ${selectedKnockoutEvent.tanggal || '-'}    Halaman ${pageIndex + 1}`, 28, 509, 9, '0.35 0.39 0.44');
+        let y = 480;
+        chunk.forEach(row => {
+          if (row.spacer) {
+            y -= 8;
+          } else if (row.title) {
+            content += `0.93 0.95 0.97 rg 28 ${y - 5} 786 18 re f\n`;
+            addText(row.title, 36, y, 9, '0.08 0.12 0.18');
+            y -= 24;
+          } else {
+            addText(row.text, 36, y, 8);
+            y -= 14;
+          }
+        });
+        addText('SpinMatch', 28, 18, 8, '0.4 0.44 0.5');
+        return content;
+      });
+      const objects = [];
+      const pageIds = pages.map((_, index) => 3 + index * 2);
+      objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+      objects[2] = `<< /Type /Pages /Kids [${pageIds.map(id => `${id} 0 R`).join(' ')}] /Count ${pages.length} >>`;
+      pages.forEach((content, index) => {
+        const pageId = pageIds[index];
+        const streamId = pageId + 1;
+        objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${3 + pages.length * 2} 0 R >> >> /Contents ${streamId} 0 R >>`;
+        objects[streamId] = `<< /Length ${content.length} >>\nstream\n${content}endstream`;
+      });
+      objects[3 + pages.length * 2] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+      let pdf = '%PDF-1.4\n';
+      const offsets = [0];
+      for (let id = 1; id < objects.length; id += 1) {
+        offsets[id] = pdf.length;
+        pdf += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+      }
+      const xrefOffset = pdf.length;
+      pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+      for (let id = 1; id < objects.length; id += 1) pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \n`;
+      pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+      const blob = new Blob([pdf], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeName = safeText(selectedKnockoutEvent.nama || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'event';
+      link.href = url;
+      link.download = `knockout-${safeName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Gagal membuat PDF Knockout:', error);
+      alert(`PDF Knockout gagal dibuat: ${error?.message || 'Terjadi kesalahan.'}`);
+    }
+  };
+
   const handlePrint = () => {
     if (!selectedScheduleEvent) {
       alert('Pilih event terlebih dahulu untuk mencetak jadwal.');
@@ -5071,6 +5162,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
+                <div className={isPublic ? 'col-span-4 flex justify-center gap-2' : 'contents'}>
                 {isReferee && <span className="col-span-4 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
                 {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
                   <Shuffle className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Undian
@@ -5078,12 +5170,13 @@ const handleUpdatePlayerSubmit = async (e) => {
                 {selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <button type="button" onClick={() => setShowScheduleBreakEditor(value => !value)} aria-expanded={showScheduleBreakEditor} className={`w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 ${showScheduleBreakEditor ? 'bg-amber-300 hover:bg-amber-400' : 'bg-amber-400 hover:bg-amber-500'} text-amber-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
                   <Pause className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Jeda Main
                 </button>}
-                <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                <button onClick={() => setShowPrintModal(true)} className={`${isPublic ? 'w-auto' : 'w-full'} min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
                   <Printer className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Print
                 </button>
-                <button type="button" onClick={handleDownloadSchedulePdf} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                <button type="button" onClick={handleDownloadSchedulePdf} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className={`${isPublic ? 'w-auto' : 'w-full'} min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
                   <Download className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> PDF
                 </button>
+                </div>
 
               </div>
             </div>
@@ -5115,6 +5208,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </div>
                 <button onClick={()=>window.print()} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5">
                   <Printer className="w-3.5 h-3.5" /> Print Bagan
+                </button>
+                <button type="button" onClick={handleDownloadKnockoutPdf} disabled={!selectedKnockoutEvent} title="Unduh bagan Knockout sebagai PDF" className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Download PDF
                 </button>
               </div>
             </div>
