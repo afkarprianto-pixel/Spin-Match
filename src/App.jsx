@@ -740,7 +740,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       return ptm ? `${player.nama} dari PTM ${ptm.replace(/^ptm\.?\s*/i, '')}` : player.nama;
     };
     const divisionText = division ? `Divisi ${division}` : 'divisi belum tercatat';
-    const announcement = `Bertanding ${divisionText} di Meja ${table}, antara ${formatPlayer(player1)} melawan ${formatPlayer(player2)}.`;
+    const announcement = `Pertandingan ${divisionText} akan segera dimulai di Meja ${table}. ${formatPlayer(player1)} akan bertanding melawan ${formatPlayer(player2)}.`;
     return { pair, divisionText, table, announcement, player1, player2 };
   };
   const getTableNumber = value => {
@@ -749,7 +749,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   };
   const callMatch = row => {
     const { announcement, table } = getMatchCallDetails(row);
-    const callText = `${announcement} Silakan menuju meja ${table}.`;
+    const callText = `${announcement} Kepada kedua pemain, silakan menuju Meja ${table}.`;
     speakAnnouncement(callText);
     setCalledMatches(previous => ({ ...previous, [row.matchId]: true }));
   };
@@ -799,7 +799,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       return;
     }
     const { table } = getMatchCallDetails(row);
-    const callText = `Untuk Wasit Meja ${table}, Saudara ${wasitToCall.nama_wasit}, segera menuju Meja ${table} untuk memimpin pertandingan.`;
+    const callText = `Perhatian, Saudara ${wasitToCall.nama_wasit}. Mohon segera menuju Meja ${table} untuk memimpin pertandingan.`;
     speakAnnouncement(callText);
     setCalledWasits(previous => ({ ...previous, [row.matchId]: true }));
   };
