@@ -662,6 +662,20 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   const [calledMatches, setCalledMatches] = useState({});
   const [calledWasits, setCalledWasits] = useState({});
   const [speechError, setSpeechError] = useState('');
+  const loadEventWasits = async eventId => {
+    if (!eventId) return [];
+    const { data, error: queryError } = await supabase.rpc('spinmatch_get_event_wasits', {
+      p_event_id: Number(eventId),
+    });
+    if (queryError) {
+      setWasitError(`Gagal menyinkronkan daftar Wasit event: ${queryError.message}`);
+      return null;
+    }
+    const wasits = Array.isArray(data) ? data : [];
+    setEventWasits(wasits);
+    setWasitError('');
+    return wasits;
+  };
   const load = async () => {
     setLoading(true); setError('');
     const { data, error: queryError } = await supabase.from('spinmatch_referee_assignments')
@@ -674,19 +688,18 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   const assignedEvent = events.find(ev => String(ev.id) === String(assignedEventId));
   useEffect(() => {
     let cancelled = false;
-    const loadEventWasits = async () => {
+    const refreshEventWasits = async () => {
       setWasitError('');
       setEventWasits([]);
       if (!assignedEventId) return;
-      const { data, error: queryError } = await supabase.from('spinmatch_wasit_event')
-        .select('id, kode_wasit, nama_wasit, nomor_meja, status')
-        .eq('event_id', Number(assignedEventId))
-        .order('nomor_meja');
+      const { data, error: queryError } = await supabase.rpc('spinmatch_get_event_wasits', {
+        p_event_id: Number(assignedEventId),
+      });
       if (cancelled) return;
-      if (queryError) setWasitError(`Gagal memuat penugasan Wasit: ${queryError.message}`);
-      else setEventWasits(data || []);
+      if (queryError) setWasitError(`Gagal menyinkronkan daftar Wasit event: ${queryError.message}`);
+      else setEventWasits(Array.isArray(data) ? data : []);
     };
-    loadEventWasits();
+    refreshEventWasits();
     return () => { cancelled = true; };
   }, [assignedEventId]);
   const sections = {
@@ -768,14 +781,25 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       return false;
     }
   };
-  const callWasit = (row, wasit) => {
-    if (!wasit?.nama_wasit) {
+  const callWasit = async (row, wasit) => {
+    let wasitToCall = wasit;
+    if (!wasitToCall?.nama_wasit) {
+      const latestWasits = await loadEventWasits(assignedEventId);
+      if (!latestWasits) return;
+      const tableNumber = getTableNumber(getMatchCallDetails(row).table);
+      wasitToCall = latestWasits.find(item =>
+        getTableNumber(item.nomor_meja) === tableNumber &&
+        Boolean(item.nama_wasit) &&
+        !['NONAKTIF', 'NON-AKTIF', 'INAKTIF'].includes(String(item.status || '').trim().toUpperCase())
+      );
+    }
+    if (!wasitToCall?.nama_wasit) {
       setSpeechError('Belum ada Wasit dengan nama yang ditugaskan pada meja pertandingan ini.');
       alert('Nama Wasit untuk meja pertandingan ini belum ditemukan. Pastikan penugasan Wasit pada event sudah tersimpan.');
       return;
     }
     const { table } = getMatchCallDetails(row);
-    const callText = `Untuk Wasit Meja ${table}, Saudara ${wasit.nama_wasit}, segera menuju Meja ${table} untuk memimpin pertandingan.`;
+    const callText = `Untuk Wasit Meja ${table}, Saudara ${wasitToCall.nama_wasit}, segera menuju Meja ${table} untuk memimpin pertandingan.`;
     speakAnnouncement(callText);
     setCalledWasits(previous => ({ ...previous, [row.matchId]: true }));
   };
@@ -889,6 +913,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       : !assignedEvent ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Data event belum dapat dibaca. Periksa izin baca event di Supabase.</div>
       : activeView === 'REF_CALLS' ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4"><div><h3 className="font-black text-slate-900">Panggilan Pertandingan</h3><p className="mt-1 text-xs text-slate-500">Gunakan tombol panggil untuk membacakan peserta, match, dan meja.</p></div><input type="search" aria-label="Cari pertandingan yang akan dipanggil" value={scheduleSearch} onChange={event => setScheduleSearch(event.target.value)} placeholder="Cari pemain atau match..." className="w-full rounded-xl border px-3 py-2 text-sm sm:w-64" /></div>
+        {wasitError && <p role="alert" className="m-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{wasitError}. Terapkan migrasi Supabase `spinmatch_get_event_wasits` lalu muat ulang halaman.</p>}
         {speechError && <p role="alert" className="m-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{speechError}</p>}
         {filteredScheduledMatches.length ? <div className="divide-y divide-slate-100">{filteredScheduledMatches.map(row => {
           const { pair, divisionText, table } = getMatchCallDetails(row);
@@ -896,7 +921,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
           const assignedWasit = eventWasits.find(wasit =>
             getTableNumber(wasit.nomor_meja) === tableNumber &&
             Boolean(wasit.nama_wasit) &&
-            !['NONAKTIF', 'NON-AKTIF', 'INAKTIF'].includes(String(wasit.status || '').trim().toUpperCase())
+            ['AKTIF', 'ACTIVE'].includes(String(wasit.status || '').trim().toUpperCase())
           );
           const scheduledWasitName = getWasit(assignedEventId, row.meja);
           const resolvedWasit = assignedWasit || (
