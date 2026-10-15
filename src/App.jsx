@@ -661,6 +661,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   const [savingWasitId, setSavingWasitId] = useState(null);
   const [calledMatches, setCalledMatches] = useState({});
   const [calledWasits, setCalledWasits] = useState({});
+  const [speechError, setSpeechError] = useState('');
   const load = async () => {
     setLoading(true); setError('');
     const { data, error: queryError } = await supabase.from('spinmatch_referee_assignments')
@@ -736,21 +737,31 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     setCalledMatches(previous => ({ ...previous, [row.matchId]: true }));
   };
   const speakAnnouncement = text => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+    setSpeechError('');
+    if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) {
+      setSpeechError('Fitur suara tidak didukung browser ini. Periksa pengaturan suara perangkat.');
+      alert(text);
+      return false;
+    }
+    try {
+      const speech = window.speechSynthesis;
+      speech.cancel();
+      speech.resume();
+      const utterance = new window.SpeechSynthesisUtterance(text);
       utterance.lang = 'id-ID';
       utterance.rate = 0.9;
       utterance.pitch = 0.8;
-      const voices = window.speechSynthesis.getVoices();
-      const maleVoice = voices.find(voice =>
-        /^id(-|_)?/i.test(voice.lang) && /(male|pria|laki)/i.test(voice.name)
-      );
+      utterance.onstart = () => setSpeechError('');
+      utterance.onerror = event => setSpeechError(`Suara panggilan gagal diputar (${event.error || 'kesalahan audio'}). Coba tekan lagi dan pastikan volume perangkat tidak senyap.`);
+      const voices = speech.getVoices();
+      const maleVoice = voices.find(voice => /(male|pria|laki)/i.test(voice.name) && /^id(-|_)?/i.test(voice.lang));
       const indonesianVoice = voices.find(voice => /^id(-|_)?/i.test(voice.lang));
       if (maleVoice || indonesianVoice) utterance.voice = maleVoice || indonesianVoice;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      alert(text);
+      speech.speak(utterance);
+      return true;
+    } catch (error) {
+      setSpeechError(`Suara panggilan gagal diputar: ${error.message || 'kesalahan audio'}.`);
+      return false;
     }
   };
   const callWasit = (row, wasit) => {
@@ -869,6 +880,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       : !assignedEvent ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Data event belum dapat dibaca. Periksa izin baca event di Supabase.</div>
       : activeView === 'REF_CALLS' ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4"><div><h3 className="font-black text-slate-900">Panggilan Pertandingan</h3><p className="mt-1 text-xs text-slate-500">Gunakan tombol panggil untuk membacakan peserta, match, dan meja.</p></div><input type="search" aria-label="Cari pertandingan yang akan dipanggil" value={scheduleSearch} onChange={event => setScheduleSearch(event.target.value)} placeholder="Cari pemain atau match..." className="w-full rounded-xl border px-3 py-2 text-sm sm:w-64" /></div>
+        {speechError && <p role="alert" className="m-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{speechError}</p>}
         {filteredScheduledMatches.length ? <div className="divide-y divide-slate-100">{filteredScheduledMatches.map(row => {
           const { pair, divisionText, table } = getMatchCallDetails(row);
           const tableNumber = Number(String(table).match(/\d+/)?.[0]);
@@ -888,6 +900,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       : activeView === 'REF_WASIT' ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b p-4"><h3 className="font-black text-slate-900">Kelola Wasit & Penempatan Meja</h3><p className="mt-1 text-xs text-slate-500">Ubah nomor meja penugasan Wasit. Perubahan disimpan pada data event.</p></div>
         {wasitError && <p role="alert" className="m-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{wasitError}</p>}
+        {speechError && <p role="alert" className="m-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{speechError}</p>}
         {eventWasits.length ? <div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-500"><tr><th className="p-3">Kode Wasit</th><th className="p-3">Nama Wasit</th><th className="p-3">Meja Tugas</th><th className="p-3">Status</th><th className="p-3">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{eventWasits.map(wasit => <tr key={wasit.id}><td className="p-3 font-bold text-blue-800">{wasit.kode_wasit || '-'}</td><td className="p-3 font-semibold text-slate-900">{wasit.nama_wasit || 'Nama belum diisi'}</td><td className="p-3"><label className="flex items-center gap-2 text-xs font-bold text-slate-700"><span className="sr-only">Meja untuk {wasit.nama_wasit || wasit.kode_wasit || 'Wasit'}</span><select aria-label={`Meja untuk ${wasit.nama_wasit || wasit.kode_wasit || 'Wasit'}`} disabled={savingWasitId === wasit.id} value={wasit.nomor_meja || ''} onChange={event => updateWasitTable(wasit, event.target.value)} className="rounded-lg border px-3 py-2"><option value="">Pilih meja</option>{Array.from({ length: Math.max(1, Number(assignedEvent.jumlahMeja || 4)) }, (_, index) => <option key={index + 1} value={index + 1}>Meja {index + 1}</option>)}</select>{savingWasitId === wasit.id && <span role="status">Menyimpan...</span>}</label></td><td className="p-3"><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${String(wasit.status || '').toUpperCase() === 'AKTIF' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>{wasit.status || 'Tidak diketahui'}</span></td><td className="p-3"><button type="button" disabled={String(wasit.status || '').toUpperCase() !== 'AKTIF' || !Number(wasit.nomor_meja)} onClick={() => speakAnnouncement(`Untuk Wasit Meja ${wasit.nomor_meja}, Saudara ${wasit.nama_wasit}, segera menuju Meja ${wasit.nomor_meja} untuk memimpin pertandingan.`)} className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-bold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-slate-300">Panggil Wasit</button></td></tr>)}</tbody></table></div> : !wasitError && <p className="p-5 text-sm text-slate-500">Belum ada data Wasit untuk event ini.</p>}
       </div>
       : <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
