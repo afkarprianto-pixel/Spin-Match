@@ -463,8 +463,8 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-wave-bottom{bottom:-125px;height:260px;border-top:50px solid #0c69c8;box-shadow:0 -12px 0 #83cbff,0 -23px 0 #fff,0 -36px 0 #ff8737,0 -50px 0 #1763c1;}
         .sm-login .sm-space:after{content:'';position:absolute;bottom:-7%;left:-20%;width:140%;height:22%;background:linear-gradient(140deg,#032c77,#0963c5 55%,#03306f);border-radius:50% 50% 0 0;transform:rotate(7deg)}
         .sm-login .sm-net{top:19%;right:-5%;width:38%;height:15%;opacity:.65;transform:perspective(200px) rotateY(-24deg) skewY(-8deg);background:repeating-linear-gradient(90deg,#0a4c9a 0 2px,transparent 2px 12px),repeating-linear-gradient(0deg,#0a4c9a 0 2px,transparent 2px 12px)}
-        .sm-login .sm-login-title-row{display:flex;align-items:center;justify-content:center;gap:clamp(2px,1vw,10px);width:100%;margin-top:2px}
-        .sm-login .sm-login-title-player{display:block;flex:0 0 auto;width:clamp(42px,13vw,86px);height:auto;object-fit:contain;background:transparent}
+        .sm-login .sm-login-title-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%;margin-top:8px}
+        .sm-login .sm-login-title-player{display:block;flex:0 1 50%;width:50%;max-width:240px;height:auto;object-fit:contain;background:transparent}
         .sm-login .sm-login-title-player-left{transform:scaleX(-1)}
         .sm-login .sm-panel{background:linear-gradient(145deg,#fff 0%,#f8fcff 100%) !important;border:1px solid #d9edff !important;box-shadow:0 14px 32px #0a5aa433 !important;}
         .sm-login .sm-panel label,.sm-login .sm-panel h2{color:#082b63 !important;font-weight:750}
@@ -494,7 +494,7 @@ export const LoginPage = ({ onCancel }) => {
         @media(max-height:760px){.sm-login-home .sm-login-brand>div:first-child{width:60px;height:60px}.sm-login-home .sm-login-brand{margin-bottom:5px}.sm-login-home .sm-panel{padding:12px 16px !important}.sm-login-home .sm-panel .relative.mt-4{margin-top:9px}.sm-login-home .sm-panel .relative.mt-4.pt-3{padding-top:8px}.sm-login-home .sm-panel .relative.mt-3{margin-top:7px}.sm-login-home .sm-panel .relative.mt-2\.5{margin-top:6px}.sm-login-home .sm-login-footer{margin-top:3px}.sm-login-home .sm-login-brand h1{font-size:22px}}
         @media(max-height:620px){.sm-login-home .sm-login-brand>div:first-child{width:48px;height:48px}.sm-login-home .sm-login-brand p{display:none}.sm-login-home .sm-panel{padding:8px 14px !important}.sm-login-home .sm-panel form>div{margin-bottom:5px}.sm-login-home .sm-panel input{padding-top:7px;padding-bottom:7px}.sm-login-home .sm-login-footer p:last-child{display:none}}
         @media(min-width:641px){.sm-login-home .sm-login-content{width:min(100%,510px)}}
-        @media(max-width:480px){.sm-login .sm-login-title-row{gap:0}.sm-login-home .sm-login-title-row h1{font-size:clamp(17px,5.8vw,23px)}.sm-login .sm-login-title-player{width:clamp(36px,12vw,52px)}}
+        @media(max-width:480px){.sm-login-home .sm-login-title-row h1{font-size:clamp(17px,5.8vw,23px)}.sm-login .sm-login-title-player{flex-basis:50%;width:50%;max-width:150px}}
 
         /* FIX KONTRAS: tombol dan label di panel putih harus selalu terbaca */
         .sm-login .sm-panel button.bg-blue-500\/10,
@@ -562,13 +562,14 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-            <div className="sm-login-title-row">
-              <img className="sm-login-title-player sm-login-title-player-left" src={loginPlayerArtwork} alt="" aria-hidden="true" />
-              <h1 className="text-[25px] sm:text-[28px] font-black tracking-tight leading-tight">
-                <span className="text-[#154b85]">{recoveryMode ? 'Reset Password ' : mode === 'REGISTER' ? 'Daftar di ' : 'Masuk ke '}</span>
-                <span className="text-[#087b51]">SpinMatch</span>
-              </h1>
-              <img className="sm-login-title-player" src={loginPlayerArtwork} alt="" aria-hidden="true" />
+            <h1 className="text-[25px] sm:text-[28px] font-black tracking-tight leading-tight">
+              <span className="text-[#154b85]">{recoveryMode ? 'Reset Password ' : mode === 'REGISTER' ? 'Daftar di ' : 'Masuk ke '}</span>
+              <span className="text-[#087b51]">SpinMatch</span>
+            </h1>
+
+            <div className="sm-login-title-row" aria-hidden="true">
+              <img className="sm-login-title-player sm-login-title-player-left" src={loginPlayerArtwork} alt="" />
+              <img className="sm-login-title-player" src={loginPlayerArtwork} alt="" />
             </div>
 
 
