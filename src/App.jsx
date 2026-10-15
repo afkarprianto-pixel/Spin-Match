@@ -711,10 +711,26 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     ].filter(Boolean).join(' ').toLocaleLowerCase();
     return searchText.includes(scheduleSearch.trim().toLocaleLowerCase());
   });
-  const callMatch = row => {
+  const getMatchCallDetails = row => {
     const pair = getMatchPlayers(row, assignedEventId);
-    const playerNames = [pair?.player1?.nama, pair?.player2?.nama].filter(Boolean).join(' melawan ');
-    const callText = `Pertandingan ${row.matchLabel || row.matchRef || ''}, meja ${row.meja || 'belum ditentukan'}. ${playerNames || row.player?.nama || 'Peserta pertandingan'}, silakan menuju meja.`;
+    const player1 = pair?.player1 || row.player;
+    const player2 = pair?.player2;
+    const rawDivision = player1?.divisi || player2?.divisi || row.player?.divisi || '';
+    const division = String(rawDivision).trim().replace(/^divisi\s*/i, '');
+    const rawTable = String(row.meja || '').trim().replace(/^meja\s*/i, '');
+    const table = rawTable && rawTable !== '-' ? rawTable : 'belum ditentukan';
+    const formatPlayer = player => {
+      if (!player?.nama) return 'Peserta belum ditentukan';
+      const ptm = String(player.ptm || '').trim();
+      return ptm ? `${player.nama} dari PTM ${ptm.replace(/^ptm\.?\s*/i, '')}` : player.nama;
+    };
+    const divisionText = division ? `Divisi ${division}` : 'divisi belum tercatat';
+    const announcement = `Bertanding ${divisionText} di Meja ${table}, antara ${formatPlayer(player1)} melawan ${formatPlayer(player2)}.`;
+    return { pair, divisionText, table, announcement, player1, player2 };
+  };
+  const callMatch = row => {
+    const { announcement } = getMatchCallDetails(row);
+    const callText = `${announcement} Silakan menuju meja.`;
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(callText));
@@ -820,7 +836,12 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   </div>;
   if (section) return <div className="mx-auto max-w-5xl space-y-5">
     <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-5 text-white shadow-xl">
-      <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-black">{section.title}</h2><p className="mt-1 text-sm text-blue-100">{assignedEvent?.nama || (assignedEventId ? `Event ${assignedEventId}` : 'Belum ada event aktif')}</p></div><button type="button" onClick={() => setActiveView('DASHBOARD')} className="rounded-xl bg-white/15 px-3 py-2 text-xs font-bold">Dashboard</button></div>
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={() => setActiveView('DASHBOARD')} aria-label="Kembali ke Dashboard" title="Kembali ke Dashboard" className="shrink-0 rounded-xl border border-white/20 bg-white/10 p-2 text-blue-50 transition hover:bg-white/20">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div><h2 className="text-xl font-black">{section.title}</h2><p className="mt-1 text-sm text-blue-100">{assignedEvent?.nama || (assignedEventId ? `Event ${assignedEventId}` : 'Belum ada event aktif')}</p></div>
+      </div>
     </div>
     {loading ? <div className="rounded-2xl bg-white p-5">Memeriksa penugasan...</div>
       : error ? <div role="alert" className="rounded-2xl bg-red-50 p-5 text-red-700">{error}</div>
@@ -829,8 +850,8 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       : activeView === 'REF_CALLS' ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4"><div><h3 className="font-black text-slate-900">Panggilan Pertandingan</h3><p className="mt-1 text-xs text-slate-500">Gunakan tombol panggil untuk membacakan peserta, match, dan meja.</p></div><input type="search" aria-label="Cari pertandingan yang akan dipanggil" value={scheduleSearch} onChange={event => setScheduleSearch(event.target.value)} placeholder="Cari pemain atau match..." className="w-full rounded-xl border px-3 py-2 text-sm sm:w-64" /></div>
         {filteredScheduledMatches.length ? <div className="divide-y divide-slate-100">{filteredScheduledMatches.map(row => {
-          const pair = getMatchPlayers(row, assignedEventId);
-          return <div key={row.matchId} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="text-xs font-bold text-blue-700">{row.matchLabel || row.matchRef || 'Pertandingan'}</p><p className="mt-1 text-sm font-bold text-slate-900">{pair?.player1?.nama || row.player?.nama || 'Peserta'} vs {pair?.player2?.nama || 'Menunggu lawan'}</p><p className="mt-1 text-xs text-slate-500">Meja {row.meja || '-'} • {row.jam || '-'}</p></div><button type="button" onClick={() => callMatch(row)} className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-black text-white">{calledMatches[row.matchId] ? 'Panggil Lagi' : 'Panggil Pemain'}</button></div>;
+          const { pair, divisionText, table } = getMatchCallDetails(row);
+          return <div key={row.matchId} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="text-xs font-bold text-blue-700">{row.matchLabel || row.matchRef || 'Pertandingan'} · {divisionText}</p><p className="mt-1 text-sm font-bold text-slate-900">{pair?.player1?.nama || row.player?.nama || 'Peserta'} vs {pair?.player2?.nama || 'Menunggu lawan'}</p><p className="mt-1 text-xs text-slate-500">Meja {table} • {row.jam || '-'}</p></div><button type="button" onClick={() => callMatch(row)} className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-black text-white">{calledMatches[row.matchId] ? 'Panggil Lagi' : 'Panggil Pemain'}</button></div>;
         })}</div> : <p className="p-5 text-sm text-slate-500">Tidak ada pertandingan yang cocok.</p>}
       </div>
       : activeView === 'REF_TABLES' ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -5166,18 +5187,17 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                <div className={isPublic ? 'col-span-4 flex justify-center gap-2' : 'contents'}>
-                {isReferee && <span className="col-span-4 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
-                {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                <div className={isPublic || isReferee ? 'col-span-4 flex justify-center gap-2' : 'contents'}>
+                {!isPublic && !isReferee && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
                   <Shuffle className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Undian
                 </button>}
                 {selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <button type="button" onClick={() => setShowScheduleBreakEditor(value => !value)} aria-expanded={showScheduleBreakEditor} className={`w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 ${showScheduleBreakEditor ? 'bg-amber-300 hover:bg-amber-400' : 'bg-amber-400 hover:bg-amber-500'} text-amber-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
                   <Pause className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Jeda Main
                 </button>}
-                <button onClick={() => setShowPrintModal(true)} className={`${isPublic ? 'w-auto' : 'w-full'} min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
+                <button onClick={() => setShowPrintModal(true)} className={`${isPublic || isReferee ? 'w-auto' : 'w-full'} min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
                   <Printer className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Print
                 </button>
-                <button type="button" onClick={handleDownloadSchedulePdf} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className={`${isPublic ? 'w-auto' : 'w-full'} min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
+                <button type="button" onClick={handleDownloadSchedulePdf} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className={`${isPublic || isReferee ? 'w-auto' : 'w-full'} min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
                   <Download className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> PDF
                 </button>
                 </div>
