@@ -4787,15 +4787,15 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <p className="text-xs text-blue-100/70">Jadwal match berdasarkan hasil undian pool</p>
                 </div>
               </div>
-              <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2 w-full min-w-0 md:w-auto md:flex md:items-center md:justify-end md:flex-wrap">
-                <div className="col-span-3 w-full min-w-0 flex items-center gap-2 bg-white/10 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl border border-white/20">
+              <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2 w-full min-w-0 md:w-auto md:flex md:items-center md:justify-end md:flex-wrap">
+                <div className="col-span-4 w-full min-w-0 flex items-center gap-2 bg-white/10 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                {isReferee && <span className="col-span-3 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
+                {isReferee && <span className="col-span-4 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
                 {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
                   <Shuffle className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Undian
                 </button>}
@@ -4804,6 +4804,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                 </button>}
                 <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
                   <Printer className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Print
+                </button>
+                <button type="button" onClick={() => handlePrint(true)} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                  <Download className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> PDF
                 </button>
 
               </div>
@@ -7704,7 +7707,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-mobile-page-header span { font-size: 10px !important; }
           .sm-mobile-page-header > div:last-child > button { padding: 9px 12px !important; border-radius: 13px !important; font-size: 11px !important; white-space: nowrap !important; }
           /* Jadwal EO: tiga aksi tetap sejajar setelah baris pemilihan event. */
-          .sm-mobile-page-header.sm-schedule-header > div:last-child { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+          .sm-mobile-page-header.sm-schedule-header > div:last-child { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
           .sm-mobile-page-header.sm-schedule-header > div:last-child > div:first-child { grid-column: 1 / -1 !important; }
           .sm-mobile-page-header.sm-schedule-header > div:last-child > button { width: 100% !important; min-width: 0 !important; min-height: 34px !important; padding: 5px 2px !important; gap: 3px !important; border-radius: 9px !important; font-size: 9px !important; }
           .sm-mobile-page-header.sm-schedule-header > div:last-child > button svg { width: 12px !important; height: 12px !important; }
