@@ -29,9 +29,9 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
   const isRefereeRole = normalizedRole === 'REFEREE';
 
   const openView = (view) => {
-    if (isRefereeRole && !['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE'].includes(view)) return;
+    if (isRefereeRole && !['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING'].includes(view)) return;
     const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS', 'REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'];
-    if (isWasitRole && !['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(view)) {
+    if (isWasitRole && !['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING'].includes(view)) {
       alert('Akun Wasit hanya dapat mengelola skor meja tugasnya dan melihat informasi pertandingan.');
       return;
     }
@@ -74,7 +74,7 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
+        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
           <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
             <Icon className={`h-[18px] w-[18px] shrink-0 ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
@@ -839,6 +839,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     { view: 'REF_TABLES', label: 'Penempatan Meja', Icon: Target, color: 'from-[#08a878] to-[#19c995]', span: 'col-span-2' },
     { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users, color: 'from-[#6857d9] to-[#9581ef]', span: 'col-span-2' },
     { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity, color: 'from-[#e83c55] to-[#fa6b78]', span: 'col-span-2' },
+    { view: 'RANKING', label: 'Peringkat & Poin', Icon: Medal, color: 'from-[#13a86b] to-[#36cf8b]', span: 'col-span-2' },
   ];
   if (activeView === 'DASHBOARD') return <div className="mx-auto w-full max-w-4xl space-y-5">
     <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-5 text-white shadow-xl">
@@ -5369,7 +5370,7 @@ const handleUpdatePlayerSubmit = async (e) => {
     Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
   </div>
 )}
-{isReferee ? (
+{isReferee && activeView !== 'RANKING' ? (
   <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} />
 ) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
   <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">{wasitAssignmentLoading ? 'Memeriksa penugasan wasit...' : 'Belum ada penugasan wasit aktif. Hubungi EO.'}</div>
@@ -5491,16 +5492,18 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
             </div>
 
-            <div className="sm-dashboard-hero-actions mt-5 flex flex-wrap gap-2.5">
+            <div className="sm-dashboard-hero-actions mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:justify-start">
               <button
                 onClick={() => {
-                  if (!dashboardActiveEvent) return;
-                  setSelectedEventIdForSchedule(String(dashboardActiveEvent.id));
-                  setActiveView('SCHEDULE');
+                  const eventForRanking = dashboardActiveEvent || events[0];
+                  if (eventForRanking) setSelectedEventIdForRanking(String(eventForRanking.id));
+                  setSelectedDivisionForRanking('');
+                  setRankingMode('EVENT');
+                  setActiveView('RANKING');
                 }}
                 className="flex items-center gap-2 rounded-xl bg-[#8DFF63] px-4 py-2.5 text-xs font-black text-[#09243e] shadow-lg shadow-lime-950/20 transition hover:-translate-y-0.5 hover:bg-[#a2ff80]"
               >
-                <Calendar className="h-4 w-4" /> Lihat Jadwal
+                <Medal className="h-4 w-4" /> Peringkat &amp; Poin
               </button>
               <button
                 onClick={() => {
