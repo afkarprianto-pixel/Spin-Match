@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 
 
 import logoSpinMatch from '../assets/logo-spinmatch-bola.png';
+import loginPlayerArtwork from '../assets/SpinMatch.png';
 
 
 
@@ -433,8 +434,6 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-wave-top{top:-140px}
         .sm-login .sm-wave-bottom{bottom:-160px;transform:rotate(10deg);border-top:35px solid #0872d5;box-shadow:0 -13px 0 #5cb7ff,0 -23px 0 #fff,0 -31px 0 #ff7c35}
         .sm-login .sm-net{position:absolute;right:-8%;top:210px;width:45%;height:70px;transform:skewY(-10deg);opacity:.22;background:repeating-linear-gradient(90deg,#1476c6 0 2px,transparent 2px 11px),repeating-linear-gradient(0deg,#1476c6 0 2px,transparent 2px 11px)}
-        .sm-login .sm-player{position:absolute;top:175px;width:90px;height:130px;opacity:.12;filter:blur(1px);background:#167fda;clip-path:polygon(42% 0,60% 0,68% 12%,58% 21%,83% 33%,100% 49%,92% 57%,67% 44%,56% 71%,79% 100%,60% 100%,40% 75%,20% 100%,0 100%,31% 57%,20% 33%,35% 20%)}
-        .sm-login .sm-player-left{left:0}.sm-login .sm-player-right{right:2%;transform:scaleX(-1)}
         .sm-login .sm-panel{background:rgba(255,255,255,.94) !important;border:1px solid rgba(255,255,255,.9) !important;box-shadow:0 15px 45px rgba(38,111,185,.14) !important;backdrop-filter:blur(12px)}
         .sm-login .sm-panel label,.sm-login .sm-panel h2{color:#123866 !important}
         .sm-login .sm-panel input{background:#edf6fd !important;border:1px solid #d7e9f8 !important;color:#123866 !important;box-shadow:none !important}
@@ -453,8 +452,8 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-panel .text-\[9px\],.sm-login .sm-panel .text-\[10px\]{color:#7189a5}
         .sm-login .sm-panel .text-orange-400{color:#f47716 !important}
         .sm-login .sm-panel .bg-\[\#092d59\]{background:#f2f8ff !important}
-        @media(min-width:640px){.sm-login{padding-top:55px !important}.sm-login .sm-player{top:205px}}
-        @media(max-width:480px){.sm-login .sm-net{top:210px}.sm-login .sm-player{top:180px}.sm-login .sm-panel{padding:24px 20px !important}.sm-login .sm-wave-bottom{bottom:-160px}}
+        @media(min-width:640px){.sm-login{padding-top:55px !important}}
+        @media(max-width:480px){.sm-login .sm-net{top:210px}.sm-login .sm-panel{padding:24px 20px !important}.sm-login .sm-wave-bottom{bottom:-160px}}
 
         /* SpinMatch sporty v3: biru tegas, kontras tinggi, tepi kartu tipis. */
         .sm-login{background:radial-gradient(ellipse at 48% 22%,#e9f8ff 0%,#b5e1ff 31%,transparent 61%),linear-gradient(150deg,#147fe9 0%,#60baff 35%,#d8f2ff 59%,#0875d9 100%) !important;color:#092d65;}
@@ -464,8 +463,7 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-wave-bottom{bottom:-125px;height:260px;border-top:50px solid #0c69c8;box-shadow:0 -12px 0 #83cbff,0 -23px 0 #fff,0 -36px 0 #ff8737,0 -50px 0 #1763c1;}
         .sm-login .sm-space:after{content:'';position:absolute;bottom:-7%;left:-20%;width:140%;height:22%;background:linear-gradient(140deg,#032c77,#0963c5 55%,#03306f);border-radius:50% 50% 0 0;transform:rotate(7deg)}
         .sm-login .sm-net{top:19%;right:-5%;width:38%;height:15%;opacity:.65;transform:perspective(200px) rotateY(-24deg) skewY(-8deg);background:repeating-linear-gradient(90deg,#0a4c9a 0 2px,transparent 2px 12px),repeating-linear-gradient(0deg,#0a4c9a 0 2px,transparent 2px 12px)}
-        .sm-login .sm-player{top:15%;height:125px;width:92px;opacity:.3;filter:none;background:#0864bd}
-        .sm-login .sm-player-left{left:-13px}.sm-login .sm-player-right{right:-7px}
+        .sm-login .sm-login-art{position:absolute;z-index:1;top:18%;right:4%;width:clamp(140px,17vw,220px);height:auto;opacity:.96;filter:drop-shadow(0 8px 16px rgba(8,76,145,.2));}
         .sm-login .sm-panel{background:linear-gradient(145deg,#fff 0%,#f8fcff 100%) !important;border:1px solid #d9edff !important;box-shadow:0 14px 32px #0a5aa433 !important;}
         .sm-login .sm-panel label,.sm-login .sm-panel h2{color:#082b63 !important;font-weight:750}
         .sm-login .sm-panel input{background:#e8f2fd !important;border:1px solid #c7def6 !important;color:#0b3068 !important}
@@ -493,7 +491,8 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login-home .sm-login-footer{margin-top:clamp(4px,1.3vh,12px);padding:3px 0}
         @media(max-height:760px){.sm-login-home .sm-login-brand>div:first-child{width:60px;height:60px}.sm-login-home .sm-login-brand{margin-bottom:5px}.sm-login-home .sm-panel{padding:12px 16px !important}.sm-login-home .sm-panel .relative.mt-4{margin-top:9px}.sm-login-home .sm-panel .relative.mt-4.pt-3{padding-top:8px}.sm-login-home .sm-panel .relative.mt-3{margin-top:7px}.sm-login-home .sm-panel .relative.mt-2\.5{margin-top:6px}.sm-login-home .sm-login-footer{margin-top:3px}.sm-login-home .sm-login-brand h1{font-size:22px}}
         @media(max-height:620px){.sm-login-home .sm-login-brand>div:first-child{width:48px;height:48px}.sm-login-home .sm-login-brand p{display:none}.sm-login-home .sm-panel{padding:8px 14px !important}.sm-login-home .sm-panel form>div{margin-bottom:5px}.sm-login-home .sm-panel input{padding-top:7px;padding-bottom:7px}.sm-login-home .sm-login-footer p:last-child{display:none}}
-        @media(min-width:641px){.sm-login-home .sm-login-content{width:min(100%,510px)}.sm-login-home .sm-player{width:145px;height:185px}}
+        @media(min-width:641px){.sm-login-home .sm-login-content{width:min(100%,510px)}}
+        @media(max-width:640px){.sm-login .sm-login-art{top:2%;right:2%;width:92px;opacity:1}}
 
         /* FIX KONTRAS: tombol dan label di panel putih harus selalu terbaca */
         .sm-login .sm-panel button.bg-blue-500\/10,
@@ -519,7 +518,7 @@ export const LoginPage = ({ onCancel }) => {
 
       `}</style>
 
-      <div className="sm-space" aria-hidden="true"><div className="sm-wave sm-wave-top"/><div className="sm-wave sm-wave-bottom"/><div className="sm-net"/><div className="sm-player sm-player-left"/><div className="sm-player sm-player-right"/></div>
+      <div className="sm-space" aria-hidden="true"><div className="sm-wave sm-wave-top"/><div className="sm-wave sm-wave-bottom"/><div className="sm-net"/><img className="sm-login-art" src={loginPlayerArtwork} alt="" /></div>
 
       <div className="sm-login-content relative w-full max-w-[430px]">
 
