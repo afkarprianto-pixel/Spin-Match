@@ -12,7 +12,7 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
+  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
 } from 'lucide-react';
 
 
@@ -3683,8 +3683,16 @@ const handleUpdatePlayerSubmit = async (e) => {
     alert('Hasil pertandingan berhasil disimpan!');
   };
 
-  const handlePrint = () => {
+  const handlePrint = (openPrintDialog = false) => {
+    if (!selectedScheduleEvent) {
+      alert('Pilih event terlebih dahulu untuk mencetak jadwal.');
+      return;
+    }
     const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Jendela cetak diblokir browser. Izinkan pop-up untuk mengunduh jadwal sebagai PDF.');
+      return;
+    }
     const eventData = selectedScheduleEvent;
     const scheduleData = generateScheduleFromPools(selectedScheduleEvent.id);
     const rankings = poolRankings[selectedScheduleEvent.id] || {};
@@ -3758,7 +3766,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           @media print { button { display: none; } }
         </style>
       </head>
-      <body>
+      <body${openPrintDialog ? ' onload="window.print()"' : ''}>
         <button onclick="window.print()" style="margin-bottom: 15px; padding: 8px 16px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer;">🖨️ Print</button>
         <h2>JADWAL PERTANDINGAN</h2>
         <h3>${eventData?.nama?.toUpperCase()}</h3>
