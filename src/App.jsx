@@ -1030,6 +1030,26 @@ const AuthenticatedContent = () => {
   const [selectedEventIdForKnockout, setSelectedEventIdForKnockout] = useState('');
   const [dashboardEventBrowser, setDashboardEventBrowser] = useState(null); // null | 'MINE' | 'ALL'
   const [publicViewedEventId, setPublicViewedEventId] = useState(() => sessionStorage.getItem('spinmatch_public_view_event') || '');
+  const [selectedDashboardEventId, setSelectedDashboardEventId] = useState(() => isPublic ? (sessionStorage.getItem('spinmatch_public_view_event') || '') : '');
+  const selectDashboardEvent = (eventItem) => {
+    if (!eventItem?.id) return;
+    const eventId = String(eventItem.id);
+    setSelectedDashboardEventId(eventId);
+    setHeroEventIndex(0);
+    setSelectedEventIdForReg(eventId);
+    setSelectedEventIdForDraw(eventId);
+    setSelectedEventIdForSchedule(eventId);
+    setSelectedEventIdForLive(eventId);
+    setSelectedEventIdForKnockout(eventId);
+    setSelectedEventIdForRanking(eventId);
+    setSelectedEventIdForSettings(eventId);
+    setSelectedDivisionForRanking('');
+    setPublicLiveTable('ALL');
+    if (isPublic) {
+      setPublicViewedEventId(eventId);
+      sessionStorage.setItem('spinmatch_public_view_event', eventId);
+    }
+  };
 
   // Peringkat & Poin
   const [rankingMode, setRankingMode] = useState('EVENT');
@@ -1882,28 +1902,34 @@ const AuthenticatedContent = () => {
 
   useEffect(() => {
     if (!user) return;
+    const preferredEvent = events.find(eventItem =>
+      String(eventItem.id) === String(selectedDashboardEventId || publicViewedEventId)
+    ) || events.find(eventItem => String(eventItem.status || '').toLowerCase() === 'aktif') || events[0];
+    const defaultEventId = isWasit
+      ? String(wasitAssignment?.event_id || preferredEvent?.id || '')
+      : String(preferredEvent?.id || '');
     if (activeView === 'REGISTRATION' && !selectedEventIdForReg && events.length > 0) {
-      setSelectedEventIdForReg(String(events[0].id));
+      setSelectedEventIdForReg(defaultEventId);
     }
     if (activeView === 'DRAW' && !selectedEventIdForDraw && events.length > 0) {
-      setSelectedEventIdForDraw(String(isWasit ? (wasitAssignment?.event_id || events[0].id) : events[0].id));
+      setSelectedEventIdForDraw(defaultEventId);
     }
     if (activeView === 'SCHEDULE' && !selectedEventIdForSchedule && events.length > 0) {
-      setSelectedEventIdForSchedule(String(events[0].id));
+      setSelectedEventIdForSchedule(defaultEventId);
     }
     if (!isWasit && activeView === 'LIVE_SCORE' && !selectedEventIdForLive && events.length > 0) {
-      setSelectedEventIdForLive(String(events[0].id));
+      setSelectedEventIdForLive(defaultEventId);
     }
     if (activeView === 'KNOCKOUT' && !selectedEventIdForKnockout && events.length > 0) {
-      setSelectedEventIdForKnockout(String(isWasit ? (wasitAssignment?.event_id || events[0].id) : events[0].id));
+      setSelectedEventIdForKnockout(defaultEventId);
     }
     if (activeView === 'RANKING' && !selectedEventIdForRanking && events.length > 0) {
-      setSelectedEventIdForRanking(String(events[0].id));
+      setSelectedEventIdForRanking(defaultEventId);
     }
     if (activeView === 'SETTINGS' && !selectedEventIdForSettings && events.length > 0) {
-      setSelectedEventIdForSettings(String(events[0].id));
+      setSelectedEventIdForSettings(defaultEventId);
     }
-  }, [user, activeView, events, selectedEventIdForReg, selectedEventIdForDraw, selectedEventIdForSchedule, selectedEventIdForLive, selectedEventIdForKnockout]);
+  }, [user, activeView, events, isWasit, wasitAssignment?.event_id, selectedDashboardEventId, publicViewedEventId, selectedEventIdForReg, selectedEventIdForDraw, selectedEventIdForSchedule, selectedEventIdForLive, selectedEventIdForKnockout]);
 
   useEffect(() => {
     if (!selectedScheduleEvent?.id || !poolResults[selectedScheduleEvent.id]) return;
@@ -4312,9 +4338,14 @@ const handleUpdatePlayerSubmit = async (e) => {
       ? events.find(ev => String(ev.id) === String(publicViewedEventId))
       : null;
 
+    const selectedDashboardEvent = events.find(
+      eventItem => String(eventItem.id) === String(selectedDashboardEventId)
+    );
     const heroEvents = publicSelectedEvent
       ? [publicSelectedEvent]
-      : (activeHeroEvents.length > 0 ? activeHeroEvents : events.slice(0, 1));
+      : selectedDashboardEvent
+        ? [selectedDashboardEvent]
+        : (activeHeroEvents.length > 0 ? activeHeroEvents : events.slice(0, 1));
 
     const safeHeroIndex = heroEvents.length > 0
       ? Math.min(heroEventIndex, heroEvents.length - 1)
@@ -4425,10 +4456,12 @@ const handleUpdatePlayerSubmit = async (e) => {
     ).length;
 
     // Jumlah peserta KHUSUS event aktif
-    const totalPeserta = Object.values(participants || {})
-    .reduce((total, daftarPeserta) => {
-      return total + (Array.isArray(daftarPeserta) ? daftarPeserta.length : 0);
-    }, 0);
+    const totalPeserta = dashboardParticipants.length;
+    const dashboardMatchResultCount = dashboardActiveEventId === null
+      ? 0
+      : Object.keys(matchResults || {}).filter(matchId =>
+          String(matchId).startsWith(`${dashboardActiveEventId}_`)
+        ).length;
 
     // Total uang pendaftaran KHUSUS event aktif
     const dashboardTotalOmzet = dashboardParticipants.reduce(
@@ -5183,7 +5216,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Filter className="h-4 w-4 text-cyan-200" />
                   <select
                     value={selectedEventIdForSettings}
-                    onChange={(e) => { setSelectedEventIdForSettings(e.target.value); setSettingsSection('HOME'); }}
+                    onChange={(e) => { selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value)); setSettingsSection('HOME'); }}
                     className="max-w-[280px] bg-transparent text-xs font-black text-white outline-none [&>option]:text-slate-900"
                   >
                     {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama}</option>)}
@@ -5213,7 +5246,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
-                  <select value={selectedEventIdForReg} onChange={(e) => setSelectedEventIdForReg(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                  <select value={selectedEventIdForReg} onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -5246,7 +5279,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
-                  <select value={selectedEventIdForDraw} onChange={(e) => setSelectedEventIdForDraw(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                  <select value={selectedEventIdForDraw} onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -5276,7 +5309,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="col-span-4 w-full min-w-0 flex items-center gap-2 bg-white/10 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
-                  <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                  <select value={selectedEventIdForSchedule} onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -5319,7 +5352,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
-                  <select value={selectedEventIdForKnockout} onChange={(e)=>setSelectedEventIdForKnockout(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
+                  <select value={selectedEventIdForKnockout} onChange={(e)=>selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))} className="bg-transparent text-xs font-bold text-white focus:outline-none [&>option]:text-white">
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
                 </div>
@@ -5355,7 +5388,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
-                  <select value={selectedEventIdForLive} onChange={(e) => setSelectedEventIdForLive(e.target.value)} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                  <select value={selectedEventIdForLive} onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
@@ -5383,13 +5416,12 @@ const handleUpdatePlayerSubmit = async (e) => {
 
     <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
 
-      <div className="sm-dashboard-event-buttons hidden md:hidden">
+      {!isPublic && <div className="sm-dashboard-event-buttons hidden md:hidden">
         <button type="button" className="sm-btn-my-events" onClick={() => {
-          if (isPublic) { alert('Event Saya hanya berlaku untuk akun EO. Untuk akun Public, silakan pilih Semua Event.'); return; }
           setDashboardEventBrowser('MINE');
         }}><Trophy className="h-4 w-4" /> Event Saya</button>
         <button type="button" className="sm-btn-all-events" onClick={() => setDashboardEventBrowser('ALL')}><FileText className="h-4 w-4" /> Semua Event</button>
-      </div>
+      </div>}
 
       {dashboardEventBrowser && (
         <section className="sm-event-browser order-[1] overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm md:order-none">
@@ -5416,17 +5448,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </div>
                   </div>
                   <button type="button" onClick={() => {
-                    if (isPublic) {
-                      setPublicViewedEventId(String(ev.id));
-                      sessionStorage.setItem('spinmatch_public_view_event', String(ev.id));
-                    } else {
-                      const idx = heroEvents.findIndex(h => String(h.id) === String(ev.id));
-                      if (idx >= 0) setHeroEventIndex(idx);
-                    }
-                    setSelectedEventIdForSchedule(String(ev.id));
-                    setSelectedEventIdForLive(String(ev.id));
-                    setSelectedEventIdForKnockout(String(ev.id));
-                    setSelectedEventIdForRanking(String(ev.id));
+                    selectDashboardEvent(ev);
                     setDashboardEventBrowser(null);
                     setActiveView('DASHBOARD');
                   }} className="shrink-0 rounded-lg bg-[#0a3971] px-2.5 py-1.5 text-[9px] font-black text-white">Pilih</button>
@@ -5496,8 +5518,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               <button
                 onClick={() => {
                   const eventForRanking = dashboardActiveEvent || events[0];
-                  if (eventForRanking) setSelectedEventIdForRanking(String(eventForRanking.id));
-                  setSelectedDivisionForRanking('');
+                  if (eventForRanking) selectDashboardEvent(eventForRanking);
                   setRankingMode('EVENT');
                   setActiveView('RANKING');
                 }}
@@ -5505,16 +5526,26 @@ const handleUpdatePlayerSubmit = async (e) => {
               >
                 <Medal className="h-4 w-4" /> Peringkat &amp; Poin
               </button>
-              <button
-                onClick={() => {
-                  if (!dashboardActiveEvent) return;
-                  setSelectedEventIdForLive(String(dashboardActiveEvent.id));
-                  setActiveView('LIVE_SCORE');
-                }}
-                className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-black text-white backdrop-blur-md transition hover:bg-white/20"
-              >
-                <Radio className="h-4 w-4 text-red-300" /> Live Score
-              </button>
+              {isPublic ? (
+                <button
+                  type="button"
+                  onClick={() => setDashboardEventBrowser('ALL')}
+                  className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-black text-white backdrop-blur-md transition hover:bg-white/20"
+                >
+                  <FileText className="h-4 w-4 text-cyan-200" /> Semua Event
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (!dashboardActiveEvent) return;
+                    selectDashboardEvent(dashboardActiveEvent);
+                    setActiveView('LIVE_SCORE');
+                  }}
+                  className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-black text-white backdrop-blur-md transition hover:bg-white/20"
+                >
+                  <Radio className="h-4 w-4 text-red-300" /> Live Score
+                </button>
+              )}
             </div>
           </div>
 
@@ -5570,10 +5601,10 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
       {/* ===================== STATISTICS ===================== */}
-      <section className={`sm-dashboard-stats grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
+      <section className={`sm-dashboard-stats ${isPublic ? 'sm-dashboard-stats-public' : ''} grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
 
-        <div className="group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
-          <div className="flex items-start justify-between">
+        <div className={`group rounded-[22px] border border-blue-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl ${isPublic ? 'flex flex-col items-center text-center' : ''}`}>
+          <div className={`flex items-start ${isPublic ? 'hidden' : 'justify-between'}`}>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50">
               <Trophy className="h-5 w-5 text-blue-600" />
             </div>
@@ -5581,17 +5612,17 @@ const handleUpdatePlayerSubmit = async (e) => {
               Event
             </span>
           </div>
-          <div className="mt-4 text-3xl font-black tracking-tight text-slate-950">
+          <div className={`mt-4 text-3xl font-black tracking-tight text-slate-950 ${isPublic ? 'w-full text-center' : ''}`}>
             {totalEventAktif < 10 ? `0${totalEventAktif}` : totalEventAktif}
           </div>
-          <div className="mt-1 text-[11px] font-bold text-slate-500">
+          <div className={`mt-1 text-[11px] font-bold text-slate-500 ${isPublic ? 'w-full text-center' : ''}`}>
             Event Aktif
           </div>
         </div>
 
 
-        <div className="group rounded-[22px] border border-emerald-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
-          <div className="flex items-start justify-between">
+        <div className={`group rounded-[22px] border border-emerald-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl ${isPublic ? 'flex flex-col items-center text-center' : ''}`}>
+          <div className={`flex items-start ${isPublic ? 'hidden' : 'justify-between'}`}>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50">
               <Users className="h-5 w-5 text-emerald-600" />
             </div>
@@ -5599,17 +5630,17 @@ const handleUpdatePlayerSubmit = async (e) => {
               Peserta
             </span>
           </div>
-          <div className="mt-4 text-3xl font-black tracking-tight text-slate-950">
+          <div className={`mt-4 text-3xl font-black tracking-tight text-slate-950 ${isPublic ? 'w-full text-center' : ''}`}>
             {totalPeserta}
           </div>
-          <div className="mt-1 text-[11px] font-bold text-slate-500">
+          <div className={`mt-1 text-[11px] font-bold text-slate-500 ${isPublic ? 'w-full text-center' : ''}`}>
             Pemain Terdaftar
           </div>
         </div>
 
 
-        <div className="group rounded-[22px] border border-orange-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl">
-          <div className="flex items-start justify-between">
+        <div className={`group rounded-[22px] border border-orange-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:shadow-xl ${isPublic ? 'flex flex-col items-center text-center' : ''}`}>
+          <div className={`flex items-start ${isPublic ? 'hidden' : 'justify-between'}`}>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-50">
               <Activity className="h-5 w-5 text-orange-500" />
             </div>
@@ -5617,10 +5648,10 @@ const handleUpdatePlayerSubmit = async (e) => {
               Match
             </span>
           </div>
-          <div className="mt-4 text-3xl font-black tracking-tight text-slate-950">
-            {Object.keys(matchResults || {}).length}
+          <div className={`mt-4 text-3xl font-black tracking-tight text-slate-950 ${isPublic ? 'w-full text-center' : ''}`}>
+            {dashboardMatchResultCount}
           </div>
-          <div className="mt-1 text-[11px] font-bold text-slate-500">
+          <div className={`mt-1 text-[11px] font-bold text-slate-500 ${isPublic ? 'w-full text-center' : ''}`}>
             Hasil Pertandingan
           </div>
         </div>
@@ -5728,7 +5759,8 @@ const handleUpdatePlayerSubmit = async (e) => {
 
                 <div
                   key={item.id}
-                  className="group flex flex-wrap items-center gap-3 p-4 transition hover:bg-slate-50 sm:flex-nowrap sm:p-5"
+                  onClick={() => selectDashboardEvent(item)}
+                  className={`group flex cursor-pointer flex-wrap items-center gap-3 p-4 transition hover:bg-slate-50 sm:flex-nowrap sm:p-5 ${String(dashboardActiveEvent?.id) === String(item.id) ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-200' : ''}`}
                 >
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
@@ -5840,7 +5872,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
               <div className="rounded-2xl bg-white/10 p-3 text-center">
                 <div className="text-xl font-black">
-                  {Object.keys(matchResults || {}).length}
+                  {dashboardMatchResultCount}
                 </div>
                 <div className="mt-1 text-[9px] font-bold text-blue-200">
                   Match
@@ -5996,7 +6028,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   type="button"
                   onClick={() => {
                     if (!dashboardActiveEvent) return;
-                    setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                    selectDashboardEvent(dashboardActiveEvent);
                     setActiveView('LIVE_SCORE');
                   }}
                   className="shrink-0 rounded-lg border border-white/15 bg-white/10 px-2.5 py-1.5 text-[8px] font-black text-white transition hover:bg-white/20"
@@ -6024,54 +6056,50 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
 
         {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
-        <div className="mx-auto grid w-full grid-cols-3 gap-2 md:hidden">
-          <button
+        <div className={`mx-auto grid w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid-cols-2' : 'grid-cols-3'}`}>
+          {!isPublic && <button
             onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
           >
             <Settings className="h-5 w-5" /> Kelola Event
-          </button>
+          </button>}
 
-          <button
+          {!isPublic && <button
             onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForReg(String(ev.id));
+              if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('REGISTRATION');
             }}
             className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
           >
             <Users className="h-5 w-5 shrink-0" /> Kelola Pemain
-          </button>
+          </button>}
 
-          <button
+          {!isPublic && <button
             onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForDraw(String(ev.id));
+              if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('DRAW');
             }}
             className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
           >
             <Shuffle className="h-5 w-5 shrink-0" /> Undian Pool
-          </button>
+          </button>}
 
           <button
             onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForSchedule(String(ev.id));
+              if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('SCHEDULE');
             }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98]"
+            className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98] ${isPublic ? 'min-h-[72px] text-sm' : ''}`}
           >
             <Calendar className="h-5 w-5 shrink-0" /> Jadwal
           </button>
 
           <button
             onClick={() => {
-              const ev = events.find(e => e.status === 'Aktif') || events[0];
-              if (ev) setSelectedEventIdForKnockout(String(ev.id));
+              if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('KNOCKOUT');
             }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98]"
+            className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98] ${isPublic ? 'min-h-[72px] text-sm' : ''}`}
           >
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
@@ -6088,20 +6116,20 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
 
         {/* Tablet/Desktop: 6 menu termasuk Kelola Wasit untuk EO/Admin */}
-        <div className="hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6">
+        <div className={`hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6 ${isPublic ? 'mx-auto max-w-2xl md:grid-cols-2 xl:grid-cols-2' : ''}`}>
           {[
             { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
-            { label: 'Kelola Pemain', icon: Users, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForReg(String(ev.id)); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
-            { label: 'Undian Pool', icon: Shuffle, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForDraw(String(ev.id)); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
-            { label: 'Jadwal', icon: Calendar, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForSchedule(String(ev.id)); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
-            { label: 'Knockout', icon: Trophy, action: () => { const ev = events.find(e => e.status === 'Aktif') || events[0]; if (ev) setSelectedEventIdForKnockout(String(ev.id)); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
+            { label: 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
+            { label: 'Undian Pool', icon: Shuffle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
+            { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
+            { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
           ].filter(item => !isPublic || ['Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
-            <button key={label} onClick={action} className="group flex flex-col items-center gap-2">
-              <span className={`flex aspect-square w-full max-w-[84px] items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg`}>
+            <button key={label} onClick={action} className={`group flex items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
+              <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
               </span>
-              <span className="text-center text-xs font-black text-slate-700">{label}</span>
+              <span className={`text-center font-black text-slate-700 ${isPublic ? 'text-sm' : 'text-xs'}`}>{label}</span>
             </button>
           ))}
         </div>
@@ -6887,7 +6915,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                       <label className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">Pilih Event</label>
                       <select
                         value={selectedEventIdForRanking}
-                        onChange={(e) => { setSelectedEventIdForRanking(e.target.value); setSelectedDivisionForRanking(''); }}
+                        onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))}
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-500"
                       >
                         {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama} • {ev.tanggal}</option>)}
@@ -8284,6 +8312,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-hero-actions button { padding:6px 10px !important; border-radius:9px !important; font-size:9px !important; }
           .sm-dashboard-hero > div:last-child { padding-bottom:5px !important; }
           .sm-dashboard-stats { order:2 !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:5px !important; }
+          .sm-dashboard-stats-public { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
           .sm-dashboard-stats > div { min-width:0 !important; height:42px !important; padding:4px 3px !important; border-radius:13px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; text-align:center !important; }
           .sm-dashboard-stats > div > div:first-child { display:none !important; }
           .sm-dashboard-stats > div > div:nth-child(2) { margin-top:0 !important; font-size:12px !important; line-height:1 !important; overflow:hidden !important; text-overflow:ellipsis !important; }
@@ -8300,6 +8329,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-quick p { display:none !important; }
           .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
           .sm-dashboard-quick .mx-auto.grid button { min-height:42px !important; padding:8px 9px !important; border-radius:12px !important; }
+          .sm-dashboard-quick .sm-public-quick-grid button { min-height:60px !important; }
           .spinmatch-main-content { padding-bottom:8px !important; }
           /* SPINMATCH MOBILE DASHBOARD V3: kontras abu-abu & ruang lebih efisien */
           .spinmatch-app { background:#cbd2dc !important; }
@@ -8441,6 +8471,9 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-dashboard-screen .sm-dashboard-quick .mb-4 { margin-bottom:6px !important; }
           .sm-dashboard-screen .sm-dashboard-quick .mx-auto.grid { gap:6px !important; }
           .sm-dashboard-screen .sm-dashboard-quick .mx-auto.grid button { min-height:49px !important; }
+          .sm-dashboard-screen .sm-dashboard-stats-public { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+          .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; max-width:640px !important; }
+          .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid button { min-height:64px !important; flex-direction:row !important; font-size:12px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
