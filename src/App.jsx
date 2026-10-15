@@ -696,7 +696,11 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   };
   const section = sections[activeView];
   const scheduledMatches = assignedEventId && assignedEvent
-    ? getSchedule(assignedEventId).filter(row => row.type === 'player' && row.showMatch && row.matchId)
+    ? (getSchedule(assignedEventId) || []).filter(row =>
+      row?.matchId &&
+      row.showMatch !== false &&
+      (row.type === 'player' || row.player)
+    )
     : [];
   const filteredScheduledMatches = scheduledMatches.filter(row => {
     const pair = getMatchPlayers(row, assignedEventId);
@@ -764,7 +768,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       </div>
     </section>
   </div>;
-  if (section && activeView === 'SCHEDULE') return <div className="mx-auto max-w-6xl space-y-5">
+  if (activeView === 'SCHEDULE') return <div className="mx-auto max-w-6xl space-y-5">
     {loading ? <div className="rounded-2xl bg-white p-5">Memeriksa penugasan...</div>
       : error ? <div role="alert" className="rounded-2xl bg-red-50 p-5 text-red-700">{error}</div>
       : !assignedEventId ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</div>
