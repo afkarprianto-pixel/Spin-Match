@@ -7695,10 +7695,11 @@ const handleUpdatePlayerSubmit = async (e) => {
           .sm-mobile-page-header select { min-width: 0 !important; max-width: 100% !important; width: 100% !important; text-overflow: ellipsis !important; font-size: 10px !important; }
           .sm-mobile-page-header span { font-size: 10px !important; }
           .sm-mobile-page-header > div:last-child > button { padding: 9px 12px !important; border-radius: 13px !important; font-size: 11px !important; white-space: nowrap !important; }
-          /* Jadwal: override grid lama 1fr auto agar Undian dan Print benar-benar 50:50 */
-          .sm-mobile-page-header.sm-schedule-header > div:last-child { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+          /* Jadwal EO: tiga aksi tetap sejajar setelah baris pemilihan event. */
+          .sm-mobile-page-header.sm-schedule-header > div:last-child { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
           .sm-mobile-page-header.sm-schedule-header > div:last-child > div:first-child { grid-column: 1 / -1 !important; }
-          .sm-mobile-page-header.sm-schedule-header > div:last-child > button { width: 100% !important; min-width: 0 !important; }
+          .sm-mobile-page-header.sm-schedule-header > div:last-child > button { width: 100% !important; min-width: 0 !important; min-height: 34px !important; padding: 5px 2px !important; gap: 3px !important; border-radius: 9px !important; font-size: 9px !important; }
+          .sm-mobile-page-header.sm-schedule-header > div:last-child > button svg { width: 12px !important; height: 12px !important; }
 
           .sm-registration, .sm-draw, .sm-schedule, .sm-live, .sm-knockout { margin-top: 12px !important; gap: 12px !important; }
           .sm-registration > div, .sm-draw > div, .sm-schedule > div, .sm-live > div, .sm-knockout > div { border-radius: 22px !important; }
