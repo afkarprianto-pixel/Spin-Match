@@ -3757,7 +3757,6 @@ const handleUpdatePlayerSubmit = async (e) => {
   };
 
   const openLiveScore = (match) => {
-    if (isPublic) return;
     // Saat dibuka dari Jadwal, gunakan event jadwal (bukan pilihan Live Score yang
     // mungkin belum terisi). Tetap wajib cocok dengan event dan meja tugas wasit.
     const sourceEventId = activeView === 'SCHEDULE'
@@ -3776,7 +3775,7 @@ const handleUpdatePlayerSubmit = async (e) => {
     }
     activeVoiceSetRef.current = 0;
     setActiveVoiceSet(0);
-    setVoiceStatus('SET 1 aktif — klik mikrofon lalu sebut nama dan skor');
+    if (!isPublic) setVoiceStatus('SET 1 aktif — klik mikrofon lalu sebut nama dan skor');
     setLiveScoreMatch(match);
     const existingResult = matchResults[match.matchId];
     if (existingResult) {
@@ -4362,6 +4361,34 @@ const handleUpdatePlayerSubmit = async (e) => {
         )
       : [];
 
+    const getEventParticipantCount = (eventItem) => {
+      if (!eventItem) return 0;
+
+      const eventId = String(eventItem.id);
+      const registeredParticipants =
+        participants[eventId] ||
+        participants[eventItem.id] ||
+        [];
+      if (registeredParticipants.length > 0) return registeredParticipants.length;
+
+      const eventPoolData = poolResults[eventId] || poolResults[eventItem.id] || {};
+      const scheduledPlayers = Object.values(eventPoolData.pools || {})
+        .flat()
+        .filter(player => player && (player.id != null || player.nama));
+      const uniqueScheduledPlayers = new Set(
+        scheduledPlayers.map(player => {
+          if (player.id != null) return `id:${player.id}`;
+          if (player.customId) return `custom:${player.customId}`;
+          return `name:${String(player.nama || '').trim().toLowerCase()}|${String(player.ptm || '').trim().toLowerCase()}|${String(player.divisi || '').trim().toLowerCase()}`;
+        })
+      );
+
+      return uniqueScheduledPlayers.size ||
+        Math.max(0, Number(eventPoolData.config?.totalPlayers) || 0);
+    };
+
+    const totalPeserta = getEventParticipantCount(dashboardActiveEvent);
+
     const goHeroPrevious = () => {
       if (heroEvents.length <= 1) return;
       setHeroEventIndex(current =>
@@ -4455,8 +4482,6 @@ const handleUpdatePlayerSubmit = async (e) => {
       card => card.hasSchedule && !card.isLive && !card.isFinished
     ).length;
 
-    // Jumlah peserta KHUSUS event aktif
-    const totalPeserta = dashboardParticipants.length;
     const dashboardMatchResultCount = dashboardActiveEventId === null
       ? 0
       : Object.keys(matchResults || {}).filter(matchId =>
@@ -5506,7 +5531,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
               <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
                 <Users className="h-4 w-4 text-[#8BFF77]" />
-                <span>{dashboardParticipants.length} Peserta</span>
+                <span>{totalPeserta} Peserta</span>
               </div>
               <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
                 <Trophy className="h-4 w-4 text-yellow-300" />
@@ -5780,7 +5805,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
-                        {(participants[item.id] || []).length} Peserta
+                        {getEventParticipantCount(item)} Peserta
                       </span>
                     </div>
                   </div>
@@ -6873,7 +6898,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                             const statusLabel = hasResult ? '✓ Selesai' : '⏳ Belum';
                             const statusColor = hasResult ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
                             return (
-                              <tr key={index} className={`hover:bg-slate-50 transition ${isPublic ? 'cursor-default' : 'cursor-pointer'} ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => { if (!isPublic) openLiveScore(row); }}>
+                              <tr key={index} className={`cursor-pointer transition hover:bg-slate-50 ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => openLiveScore(row)}>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-900">{row.playerCode}</td>
                                 <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-900">
                                   {row.player.nama}
@@ -7338,7 +7363,75 @@ const handleUpdatePlayerSubmit = async (e) => {
       `}</style>
 
       {/* LIVE SCORE MODAL — di atas header sticky (z-[100]) */}
-      {liveScoreMatch && (
+      {liveScoreMatch && (isPublic ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-md">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Skor pertandingan, hanya baca"
+            className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+          >
+            <header className="flex items-start justify-between gap-3 bg-gradient-to-r from-blue-800 to-blue-600 px-4 py-3 text-white">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider">
+                  <Radio className="h-3.5 w-3.5" /> Skor Pertandingan • Baca Saja
+                </div>
+                <h3 className="mt-1 break-words text-sm font-black">
+                  {liveMatchPlayers.player1?.nama || liveScoreMatch.player?.nama || 'Pemain 1'}
+                  {' VS '}
+                  {liveMatchPlayers.player2?.nama || resolveOpponentName(liveScoreMatch, liveScoreRows) || 'Pemain 2'}
+                </h3>
+                <p className="mt-1 text-[10px] font-semibold text-white/80">
+                  {liveScoreMatch.pool} - {liveScoreMatch.matchRef}, {liveScoreMatch.jam}, {liveScoreMatch.meja}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLiveScoreMatch(null)}
+                className="shrink-0 rounded-full bg-white/15 p-2 text-white hover:bg-white/25"
+                aria-label="Tutup skor pertandingan"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <div className="overflow-y-auto p-4">
+              {liveGameHistory.some(game => game?.p1 !== '' && game?.p2 !== '' && game?.p1 != null && game?.p2 != null) ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-black uppercase text-slate-500">
+                    <span>Pemain</span><span className="text-center">Set</span><span className="text-center">Skor Set</span>
+                  </div>
+                  {[liveMatchPlayers.player1, liveMatchPlayers.player2].map((player, playerIndex) => (
+                    <div key={playerIndex} className={`grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border px-3 py-3 ${playerIndex === 0 ? 'border-emerald-100 bg-emerald-50/60' : 'border-sky-100 bg-sky-50/60'}`}>
+                      <div className="min-w-0">
+                        <div className="truncate text-xs font-black text-slate-900">{player?.nama || (playerIndex === 0 ? 'Pemain 1' : 'Pemain 2')}</div>
+                        <div className="truncate text-[10px] text-slate-500">{player?.ptm || '-'}</div>
+                      </div>
+                      <div className="text-center text-lg font-black text-slate-700">
+                        {playerIndex === 0 ? calculatedGameScore.player1 : calculatedGameScore.player2}
+                      </div>
+                      <div className="flex gap-1">
+                        {liveGameHistory.map((game, setIndex) => (
+                          <span key={setIndex} className="min-w-8 rounded-md bg-white px-1.5 py-1 text-center text-xs font-black text-slate-700 shadow-sm">
+                            {game?.[playerIndex === 0 ? 'p1' : 'p2'] ?? '-'}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
+                  <div className="text-sm font-black text-slate-600">Belum ada skor pertandingan</div>
+                  <p className="mt-1 text-xs text-slate-500">Skor akan tampil di sini setelah pertandingan dimainkan dan hasilnya disimpan.</p>
+                </div>
+              )}
+              <p className="mt-3 text-center text-[10px] font-semibold text-slate-400">
+                Tampilan publik hanya untuk melihat. Skor tidak dapat diubah dari halaman ini.
+              </p>
+            </div>
+          </section>
+        </div>
+      ) : (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/70 p-0 backdrop-blur-md sm:p-3">
           <div className="spinmatch-live-compact flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden rounded-none border border-slate-200 bg-white shadow-2xl sm:h-[min(96vh,720px)] sm:rounded-[28px]">
             <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-red-600 via-red-500 to-orange-500 px-2.5 py-1.5 text-white sm:px-5 sm:py-1.5">
@@ -7383,7 +7476,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                         <line x1="12" x2="12" y1="19" y2="22"/>
                       </svg>
-                    )}
+                    ))}
                   </button>
                   <div className="hidden rounded-2xl bg-black/30 backdrop-blur-sm border-2 border-white/40 px-2 py-1 min-[420px]:block">
                     <div className="text-center">
