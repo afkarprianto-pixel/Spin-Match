@@ -4781,7 +4781,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         row?.type === 'player' &&
         row?.showMatch &&
         row?.matchId &&
-        Number(row?.meja || row?.table || row?.tableNo || 0) === Number(tableNo)
+        normalizeMeja(row?.meja || row?.table || row?.tableNo) === Number(tableNo)
       );
 
     if (!schedule.length) {
@@ -4829,7 +4829,10 @@ const handleUpdatePlayerSubmit = async (e) => {
         hasScoreValue(result.player1Score) ||
         hasScoreValue(result.player2Score) ||
         hasScoreValue(result.score1) ||
-        hasScoreValue(result.score2)
+        hasScoreValue(result.score2) ||
+        (Array.isArray(result.gameHistory) && result.gameHistory.some(game =>
+          hasScoreValue(game?.p1) || hasScoreValue(game?.p2)
+        ))
       );
     });
 
