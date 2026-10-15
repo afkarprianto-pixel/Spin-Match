@@ -1169,6 +1169,7 @@ const AuthenticatedContent = () => {
     }
     return {};
   });
+  const [onlineLiveScores, setOnlineLiveScores] = useState({});
 
   const [poolRankings, setPoolRankings] = useState(() => {
     const saved = localStorage.getItem('spinmatch_pool_rankings');
@@ -1216,15 +1217,24 @@ const AuthenticatedContent = () => {
       if (error) { console.error('Gagal membaca data undian/skor online:', error); return; }
       const onlinePools = {};
       const onlineMatches = {};
+      const onlineLiveScores = {};
       (data || []).forEach(row => {
         if (row.pool_results && Object.keys(row.pool_results).length) {
           onlinePools[String(row.event_id)] = row.pool_results;
         }
-        Object.assign(onlineMatches, row.match_results || {});
+        Object.entries(row.match_results || {}).forEach(([matchId, result]) => {
+          if (result?.liveScore) onlineLiveScores[matchId] = result.liveScore;
+          if (result && Object.keys(result).some(key => key !== 'liveScore')) {
+            const savedResult = { ...result };
+            delete savedResult.liveScore;
+            onlineMatches[matchId] = savedResult;
+          }
+        });
       });
       // Data online didahulukan, cache lama tetap ada untuk migrasi pertama.
       setPoolResults(prev => ({ ...prev, ...onlinePools }));
       setMatchResults(prev => ({ ...prev, ...onlineMatches }));
+      setOnlineLiveScores(prev => ({ ...prev, ...onlineLiveScores }));
     };
     loadOnlineResults();
     return () => { cancelled = true; };
@@ -1247,7 +1257,15 @@ const AuthenticatedContent = () => {
     if (readError) throw readError;
     const nextMatches = { ...(existing?.match_results || {}) };
     if (result === null) delete nextMatches[matchId];
-    else nextMatches[matchId] = result;
+    else nextMatches[matchId] = {
+      ...result,
+      liveScore: {
+        gameHistory: result.gameHistory || [],
+        point1: Number(result.point1) || 0,
+        point2: Number(result.point2) || 0,
+        updatedAt: result.updatedAt || new Date().toISOString()
+      }
+    };
     const { error } = await supabase.from('spinmatch_event_data').upsert({
       event_id: Number(eventId), pool_results: existing?.pool_results || {},
       match_results: nextMatches, updated_at: new Date().toISOString()
@@ -1255,6 +1273,23 @@ const AuthenticatedContent = () => {
     if (error) throw error;
   };
 
+  const saveOnlineLiveScore = async (eventId, matchId, liveScore) => {
+    const { data: existing, error: readError } = await supabase.from('spinmatch_event_data')
+      .select('pool_results, match_results').eq('event_id', Number(eventId)).maybeSingle();
+    if (readError) throw readError;
+    const nextMatches = { ...(existing?.match_results || {}) };
+    nextMatches[matchId] = {
+      ...(nextMatches[matchId] || {}),
+      liveScore
+    };
+    const { error } = await supabase.from('spinmatch_event_data').upsert({
+      event_id: Number(eventId),
+      pool_results: existing?.pool_results || {},
+      match_results: nextMatches,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'event_id' });
+    if (error) throw error;
+  };
 
 
   // ============================================
@@ -1493,6 +1528,63 @@ const AuthenticatedContent = () => {
   const selectedScheduleEvent = events.find(e => String(e.id) === String(selectedEventIdForSchedule));
   const selectedLiveEvent = events.find(e => String(e.id) === String(selectedEventIdForLive) && (!isWasit || String(e.id) === String(wasitAssignment?.event_id)));
   const selectedKnockoutEvent = events.find(e => String(e.id) === String(selectedEventIdForKnockout));
+
+  useEffect(() => {
+    if (isPublic || !liveScoreMatch?.matchId || !selectedLiveEvent?.id) return undefined;
+
+    const timeout = window.setTimeout(() => {
+      const snapshot = {
+        gameHistory: liveGameHistory,
+        point1: Number(livePoint1) || 0,
+        point2: Number(livePoint2) || 0,
+        updatedAt: new Date().toISOString()
+      };
+      setOnlineLiveScores(previous => ({
+        ...previous,
+        [liveScoreMatch.matchId]: snapshot
+      }));
+      saveOnlineLiveScore(selectedLiveEvent.id, liveScoreMatch.matchId, snapshot)
+        .catch(error => console.error('Gagal menyinkronkan skor berjalan:', error));
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [isPublic, liveScoreMatch?.matchId, selectedLiveEvent?.id, liveGameHistory, livePoint1, livePoint2]);
+
+  useEffect(() => {
+    if (
+      !isPublic ||
+      !selectedLiveEvent?.id ||
+      (activeView !== 'LIVE_SCORE' && !liveScoreMatch)
+    ) return undefined;
+
+    let cancelled = false;
+    const refreshPublicLiveScores = async () => {
+      const { data, error } = await supabase
+        .from('spinmatch_event_data')
+        .select('match_results')
+        .eq('event_id', Number(selectedLiveEvent.id))
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error) {
+        console.error('Gagal memuat skor berjalan untuk Publik:', error);
+        return;
+      }
+
+      const refreshedScores = {};
+      Object.entries(data?.match_results || {}).forEach(([matchId, result]) => {
+        if (result?.liveScore) refreshedScores[matchId] = result.liveScore;
+      });
+      setOnlineLiveScores(previous => ({ ...previous, ...refreshedScores }));
+    };
+
+    refreshPublicLiveScores();
+    const interval = window.setInterval(refreshPublicLiveScores, 1500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [isPublic, selectedLiveEvent?.id, activeView, liveScoreMatch?.matchId]);
 
   // Update ref pemain live. Hook tetap dipanggil pada setiap render.
   useEffect(() => {
@@ -4519,6 +4611,24 @@ const handleUpdatePlayerSubmit = async (e) => {
   const visibleLiveScoreRows = isPublic && publicLiveTable !== 'ALL' ? liveScoreRows.filter(row => row.type === 'player' && normalizeMeja(row.meja) === Number(publicLiveTable)) : liveScoreRows;
   const liveScoreRankings = poolRankings[selectedLiveEvent?.id] || {};
 
+  const publicLiveScoreSnapshot = liveScoreMatch
+    ? onlineLiveScores[liveScoreMatch.matchId]
+    : null;
+  const publicLiveScoreGames = publicLiveScoreSnapshot?.gameHistory ||
+    (liveScoreMatch ? matchResults[liveScoreMatch.matchId]?.gameHistory : null) ||
+    [];
+  const publicLiveSetWins = publicLiveScoreGames.reduce(
+    (score, game) => {
+      const p1 = Number(game?.p1);
+      const p2 = Number(game?.p2);
+      if (game?.p1 === '' || game?.p2 === '' || !Number.isFinite(p1) || !Number.isFinite(p2) || p1 === p2) return score;
+      if (p1 > p2) score.player1 += 1;
+      else score.player2 += 1;
+      return score;
+    },
+    { player1: 0, player2: 0 }
+  );
+
   const calculatedGameScore = liveGameHistory.reduce(
     (score, game) => {
       const p1 = Number(game?.p1 || 0);
@@ -7395,10 +7505,10 @@ const handleUpdatePlayerSubmit = async (e) => {
               </button>
             </header>
             <div className="overflow-y-auto p-4">
-              {liveGameHistory.some(game => game?.p1 !== '' && game?.p2 !== '' && game?.p1 != null && game?.p2 != null) ? (
+              {publicLiveScoreGames.some(game => game?.p1 !== '' && game?.p2 !== '' && game?.p1 != null && game?.p2 != null) ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-black uppercase text-slate-500">
-                    <span>Pemain</span><span className="text-center">Set</span><span className="text-center">Skor Set</span>
+                    <span>Pemain</span><span className="text-center">Set Menang</span><span className="text-center">Skor Set</span>
                   </div>
                   {[liveMatchPlayers.player1, liveMatchPlayers.player2].map((player, playerIndex) => (
                     <div key={playerIndex} className={`grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border px-3 py-3 ${playerIndex === 0 ? 'border-emerald-100 bg-emerald-50/60' : 'border-sky-100 bg-sky-50/60'}`}>
@@ -7407,10 +7517,10 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <div className="truncate text-[10px] text-slate-500">{player?.ptm || '-'}</div>
                       </div>
                       <div className="text-center text-lg font-black text-slate-700">
-                        {playerIndex === 0 ? calculatedGameScore.player1 : calculatedGameScore.player2}
+                        {playerIndex === 0 ? publicLiveSetWins.player1 : publicLiveSetWins.player2}
                       </div>
                       <div className="flex gap-1">
-                        {liveGameHistory.map((game, setIndex) => (
+                        {publicLiveScoreGames.map((game, setIndex) => (
                           <span key={setIndex} className="min-w-8 rounded-md bg-white px-1.5 py-1 text-center text-xs font-black text-slate-700 shadow-sm">
                             {game?.[playerIndex === 0 ? 'p1' : 'p2'] ?? '-'}
                           </span>
@@ -7418,11 +7528,16 @@ const handleUpdatePlayerSubmit = async (e) => {
                       </div>
                     </div>
                   ))}
+                  {publicLiveScoreSnapshot?.updatedAt && (
+                    <p className="text-center text-[10px] text-slate-400">
+                      Skor diperbarui {new Date(publicLiveScoreSnapshot.updatedAt).toLocaleTimeString('id-ID')}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
-                  <div className="text-sm font-black text-slate-600">Belum ada skor pertandingan</div>
-                  <p className="mt-1 text-xs text-slate-500">Skor akan tampil di sini setelah pertandingan dimainkan dan hasilnya disimpan.</p>
+                  <div className="text-sm font-black text-slate-600">Menunggu skor pertandingan</div>
+                  <p className="mt-1 text-xs text-slate-500">Skor langsung akan tampil di sini saat wasit mulai menginput skor.</p>
                 </div>
               )}
               <p className="mt-3 text-center text-[10px] font-semibold text-slate-400">
