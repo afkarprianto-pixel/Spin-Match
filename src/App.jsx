@@ -595,15 +595,26 @@ const smApplyBreaks = (schedule, breaks) => {
   if (!active.length) return schedule;
   const times = new Map();
   return schedule.map(row => {
-    if (!row?.showMatch || !row.jam || row.result?.winner) return row;
-    const match = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/.exec(row.jam);
+    if (!row || row.type !== 'player' || !row.jam || row.result?.winner) return row;
+    
+    // Regex diperbarui agar mengenali pemisah jam baik di HP maupun Desktop (- / – / — / spasi)
+    const match = /^(\d{1,2}:\d{2})\s*[-–—\s]+\s*(\d{1,2}:\d{2})$/.exec(String(row.jam).trim());
     if (!match) return row;
-    const start = smClock(match[1]), end = smClock(match[2]);
+    
+    const startStr = match[1].padStart(5, '0');
+    const endStr = match[2].padStart(5, '0');
+    const start = smClock(startStr);
+    const end = smClock(endStr);
+    
     if (start === null || end === null || end <= start) return row;
+    const duration = end - start;
     const key = `${start}:${end}`;
-    if (!times.has(key)) times.set(key, smMovePastBreaks(start, end - start, active));
+    
+    if (!times.has(key)) {
+      times.set(key, smMovePastBreaks(start, duration, active));
+    }
     const shifted = times.get(key);
-    return { ...row, jam: `${smTime(shifted)} - ${smTime(shifted + end - start)}` };
+    return { ...row, jam: `${smTime(shifted)} - ${smTime(shifted + duration)}` };
   });
 };
 const SpinMatchBreakEditor = ({ eventId, breaks, onSaved, canEdit }) => {
