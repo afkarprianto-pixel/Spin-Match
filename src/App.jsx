@@ -729,8 +729,8 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     return { pair, divisionText, table, announcement, player1, player2 };
   };
   const callMatch = row => {
-    const { announcement } = getMatchCallDetails(row);
-    const callText = `${announcement} Silakan menuju meja.`;
+    const { announcement, table } = getMatchCallDetails(row);
+    const callText = `${announcement} Silakan menuju meja ${table}.`;
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(callText));
