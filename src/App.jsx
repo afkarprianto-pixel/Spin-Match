@@ -927,6 +927,8 @@ const AuthenticatedContent = () => {
   });
   const [knockoutZoom, setKnockoutZoom] = useState(1);
   const knockoutPinchRef = useRef(null);
+  const [knockoutAwardsZoom, setKnockoutAwardsZoom] = useState(1);
+  const knockoutAwardsPinchRef = useRef(null);
   const [showKnockoutTopEight, setShowKnockoutTopEight] = useState(false);
 
   useEffect(() => { localStorage.setItem('spinmatch_events', JSON.stringify(events)); }, [events]);
@@ -6033,6 +6035,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                   label: '8 Besar • Tentative',
                   players: [player],
                 }));
+                const displayedAwardRows = [...awardRows, ...(showKnockoutTopEight ? topEightRows : [])];
+                const awardTableWidth = 620;
+                const awardTableHeight = 38 + displayedAwardRows.length * 28;
 
                 return (
                   <>
@@ -6085,12 +6090,13 @@ const handleUpdatePlayerSubmit = async (e) => {
                         const rounds = ko.rounds || [];
                         if (!rounds.length) return <p className="p-8 text-center text-sm text-slate-500">Belum ada peserta Knockout.</p>;
                         const eventId = selectedKnockoutEvent.id;
-                        const W = 204, H = 86, GAP = 12, LEFT = 14, TOP = 62;
+                        const W = 204, H = 86, GAP = 12, COLUMN_GAP = 28, LEFT = 14, TOP = 62;
                         const stride = H + GAP;
-                        const totalW = LEFT + rounds.length * (W + 62) + 24;
+                        const columnStep = W + COLUMN_GAP;
+                        const totalW = LEFT + rounds.length * columnStep - COLUMN_GAP + 24;
                         const totalH = TOP + (ko.bracketSize / 2) * stride + 30;
                         const matchY = (r, i) => TOP + ((2 ** r) * (i + 0.5) - 0.5) * stride;
-                        const matchX = r => LEFT + r * (W + 62);
+                        const matchX = r => LEFT + r * columnStep;
                         const getName = p => p?.nama || 'Menunggu pemenang';
                         const canScore = isSuperAdmin || (isEO && canManageEvent(selectedKnockoutEvent));
                         return <div className="min-w-max" style={{width: totalW * knockoutZoom}}>
@@ -6173,32 +6179,59 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <h2 className="text-sm font-black uppercase text-slate-900">HASIL KEJUARAAN {selectedKnockoutEvent.nama}</h2>
                         <p className="mt-1 text-xs font-bold text-slate-600">Tgl {selectedKnockoutEvent.tanggal || '-'} • Thn {eventYear}</p>
                       </div>
-                      <div className="border-b border-slate-200 bg-blue-50 px-4 py-3 text-sm font-black text-blue-950">Kategori: {divisi}</div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-blue-50 px-3 py-2">
+                        <div className="text-xs font-black text-blue-950">Kategori: {divisi}</div>
+                        <div className="knockout-screen-only inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 text-[10px] font-bold">
+                          <button type="button" aria-label="Perkecil tabel hasil" title="Perkecil tabel hasil" disabled={knockoutAwardsZoom <= 0.5} onClick={() => setKnockoutAwardsZoom(value => Math.max(0.5, Number((value - 0.1).toFixed(1))))} className="rounded px-2 py-1 text-sm font-black disabled:opacity-40">−</button>
+                          <span className="min-w-10 text-center">{Math.round(knockoutAwardsZoom * 100)}%</span>
+                          <button type="button" aria-label="Perbesar tabel hasil" title="Perbesar tabel hasil" disabled={knockoutAwardsZoom >= 1.3} onClick={() => setKnockoutAwardsZoom(value => Math.min(1.3, Number((value + 0.1).toFixed(1))))} className="rounded px-2 py-1 text-sm font-black disabled:opacity-40">+</button>
+                        </div>
+                      </div>
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[620px] border-collapse text-left text-xs">
-                          <thead className="bg-slate-100 text-[10px] font-black uppercase text-slate-700">
+                        <div
+                          style={{width:awardTableWidth * knockoutAwardsZoom,height:awardTableHeight * knockoutAwardsZoom,touchAction:'pan-x'}}
+                          onTouchStart={event => {
+                            if (event.touches.length !== 2) return;
+                            const [first, second] = event.touches;
+                            const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+                            knockoutAwardsPinchRef.current = { distance, zoom: knockoutAwardsZoom };
+                          }}
+                          onTouchMove={event => {
+                            if (event.touches.length !== 2 || !knockoutAwardsPinchRef.current) return;
+                            const [first, second] = event.touches;
+                            const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+                            const nextZoom = knockoutAwardsPinchRef.current.zoom * distance / knockoutAwardsPinchRef.current.distance;
+                            setKnockoutAwardsZoom(Math.max(0.5, Math.min(1.3, Number(nextZoom.toFixed(2)))));
+                          }}
+                          onTouchEnd={event => {
+                            if (event.touches.length < 2) knockoutAwardsPinchRef.current = null;
+                          }}
+                        >
+                        <table className="w-full min-w-[620px] border-collapse text-left text-[10px]" style={{transform:`scale(${knockoutAwardsZoom})`,transformOrigin:'top left'}}>
+                          <thead className="bg-slate-100 text-[9px] font-black uppercase text-slate-700">
                             <tr>
-                              <th className="border border-slate-300 px-3 py-2">Hasil Juara</th>
-                              <th className="border border-slate-300 px-3 py-2">Nama Juara</th>
-                              <th className="border border-slate-300 px-3 py-2">PTM/Club</th>
-                              <th className="border border-slate-300 px-3 py-2">Hadiah</th>
+                              <th className="border border-slate-300 px-2 py-1.5">Hasil Juara</th>
+                              <th className="border border-slate-300 px-2 py-1.5">Nama Juara</th>
+                              <th className="border border-slate-300 px-2 py-1.5">PTM/Club</th>
+                              <th className="border border-slate-300 px-2 py-1.5">Hadiah</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {[...awardRows, ...(showKnockoutTopEight ? topEightRows : [])].map(row => {
+                            {displayedAwardRows.map(row => {
                               const players = row.players;
                               const rowKey = `${awardPrefix}_${row.place}`;
                               return <tr key={row.place} className="odd:bg-white even:bg-slate-50">
-                                <td className="border border-slate-300 px-3 py-2 font-black text-slate-800">{row.label}</td>
-                                <td className="border border-slate-300 px-3 py-2 font-bold text-slate-900">{players.length ? players.map(player => player.nama).join(' & ') : '-'}</td>
-                                <td className="border border-slate-300 px-3 py-2 text-slate-700">{players.length ? players.map(player => player.ptm || '-').join(' & ') : '-'}</td>
-                                <td className="border border-slate-300 px-3 py-2">
-                                  <input type="number" min="0" step="1" inputMode="numeric" aria-label={`Hadiah ${row.label}`} placeholder="Isi nominal" value={knockoutPrizes[rowKey] || ''} onChange={event => setPrize(row.place, event.target.value)} className="w-full min-w-28 rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs font-bold text-slate-900" />
+                                <td className="h-7 border border-slate-300 px-2 py-1 font-black leading-tight text-slate-800">{row.label}</td>
+                                <td className="h-7 border border-slate-300 px-2 py-1 font-bold leading-tight text-slate-900">{players.length ? players.map(player => player.nama).join(' & ') : '-'}</td>
+                                <td className="h-7 border border-slate-300 px-2 py-1 leading-tight text-slate-700">{players.length ? players.map(player => player.ptm || '-').join(' & ') : '-'}</td>
+                                <td className="h-7 border border-slate-300 px-2 py-0.5">
+                                  <input type="number" min="0" step="1" inputMode="numeric" aria-label={`Hadiah ${row.label}`} placeholder="Nominal" value={knockoutPrizes[rowKey] || ''} onChange={event => setPrize(row.place, event.target.value)} className="h-6 w-full min-w-24 rounded border border-slate-300 bg-white px-1 text-[10px] font-bold leading-none text-slate-900" />
                                 </td>
                               </tr>;
                             })}
                           </tbody>
                         </table>
+                        </div>
                       </div>
                       <button type="button" onClick={() => setShowKnockoutTopEight(value => !value)} className="flex w-full items-center justify-center gap-2 border-t border-slate-200 bg-white px-4 py-3 text-xs font-black text-blue-800 hover:bg-blue-50">
                         <span className="text-lg leading-none">{showKnockoutTopEight ? '−' : '+'}</span>
