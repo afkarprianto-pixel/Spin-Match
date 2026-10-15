@@ -463,7 +463,7 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-wave-bottom{bottom:-125px;height:260px;border-top:50px solid #0c69c8;box-shadow:0 -12px 0 #83cbff,0 -23px 0 #fff,0 -36px 0 #ff8737,0 -50px 0 #1763c1;}
         .sm-login .sm-space:after{content:'';position:absolute;bottom:-7%;left:-20%;width:140%;height:22%;background:linear-gradient(140deg,#032c77,#0963c5 55%,#03306f);border-radius:50% 50% 0 0;transform:rotate(7deg)}
         .sm-login .sm-net{top:19%;right:-5%;width:38%;height:15%;opacity:.65;transform:perspective(200px) rotateY(-24deg) skewY(-8deg);background:repeating-linear-gradient(90deg,#0a4c9a 0 2px,transparent 2px 12px),repeating-linear-gradient(0deg,#0a4c9a 0 2px,transparent 2px 12px)}
-        .sm-login .sm-login-title-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%;margin-top:8px}
+        .sm-login .sm-login-title-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%;margin-top:4px}
         .sm-login .sm-login-title-player{display:block;flex:0 1 50%;width:50%;max-width:240px;height:auto;object-fit:contain;background:transparent}
         .sm-login .sm-login-title-player-left{transform:scaleX(-1)}
         .sm-login .sm-panel{background:linear-gradient(145deg,#fff 0%,#f8fcff 100%) !important;border:1px solid #d9edff !important;box-shadow:0 14px 32px #0a5aa433 !important;}
@@ -481,7 +481,7 @@ export const LoginPage = ({ onCancel }) => {
         .sm-login .sm-login-content{z-index:2;width:min(100%,490px)}
         .sm-login-home{height:100dvh;min-height:100dvh;max-height:100dvh;overflow:hidden !important;display:flex;align-items:center;justify-content:center;padding:8px 10px !important}
         .sm-login-home .sm-login-content{max-height:100%;display:flex;flex-direction:column;justify-content:center}
-        .sm-login-home .sm-login-brand{margin-bottom:10px}
+        .sm-login-home .sm-login-brand{margin-bottom:0}
         .sm-login-home .sm-login-brand>div:first-child{width:clamp(66px,11.5vh,104px);height:clamp(66px,11.5vh,104px);margin-bottom:8px}
         .sm-login-home .sm-login-brand h1{font-size:clamp(22px,3.4vh,29px);white-space:nowrap;text-shadow:0 1px 2px #fff}
         .sm-login-home .sm-login-brand p{font-size:clamp(10px,1.6vh,12px);color:#234c80}
@@ -567,22 +567,14 @@ export const LoginPage = ({ onCancel }) => {
               <span className="text-[#087b51]">SpinMatch</span>
             </h1>
 
+            <p className="text-[10px] sm:text-[11px] text-[#68829f] mt-1.5">
+              Platform Manajemen Pertandingan Tenis Meja
+            </p>
+
             <div className="sm-login-title-row" aria-hidden="true">
               <img className="sm-login-title-player sm-login-title-player-left" src={loginPlayerArtwork} alt="" />
               <img className="sm-login-title-player" src={loginPlayerArtwork} alt="" />
             </div>
-
-
-
-            <p className="text-[10px] sm:text-[11px] text-[#68829f] mt-1.5">
-
-
-
-              Platform Manajemen Pertandingan Tenis Meja
-
-
-
-            </p>
 
 
 
