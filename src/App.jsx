@@ -12,7 +12,7 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
+  Printer, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
 } from 'lucide-react';
 
 
@@ -1188,6 +1188,7 @@ const AuthenticatedContent = () => {
 
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showScheduleBreakEditor, setShowScheduleBreakEditor] = useState(false);
+  const [showScheduleLegend, setShowScheduleLegend] = useState(false);
   const [printOrientation, setPrintOrientation] = useState('portrait');
   const [printPaperSize, setPrintPaperSize] = useState('A4');
 
@@ -4787,14 +4788,14 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </select>
                 </div>
                 {isReferee && <span className="col-span-3 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
-                {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
-                  <Shuffle className="w-3.5 h-3.5" /> Undian
+                {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                  <Shuffle className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Undian
                 </button>}
-                {selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <button type="button" onClick={() => setShowScheduleBreakEditor(value => !value)} aria-expanded={showScheduleBreakEditor} className={`w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 ${showScheduleBreakEditor ? 'bg-amber-300 hover:bg-amber-400' : 'bg-amber-400 hover:bg-amber-500'} text-amber-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5`}>
-                  <Pause className="w-3.5 h-3.5" /> Jeda Main
+                {selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <button type="button" onClick={() => setShowScheduleBreakEditor(value => !value)} aria-expanded={showScheduleBreakEditor} className={`w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 ${showScheduleBreakEditor ? 'bg-amber-300 hover:bg-amber-400' : 'bg-amber-400 hover:bg-amber-500'} text-amber-950 font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5`}>
+                  <Pause className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Jeda Main
                 </button>}
-                <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
-                  <Printer className="w-3.5 h-3.5" /> Print
+                <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                  <Printer className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Print
                 </button>
 
               </div>
@@ -5866,28 +5867,26 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="sm-schedule space-y-6">
               {eventBreaksReadError && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900">Jeda pertandingan belum dapat dibaca dari Supabase. Jam jadwal mungkin belum mengikuti jeda. Periksa izin SELECT tabel spinmatch_event_breaks. ({eventBreaksReadError})</div>}
               {showScheduleBreakEditor && selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <SpinMatchBreakEditor eventId={selectedScheduleEvent.id} breaks={eventBreaks[String(selectedScheduleEvent.id)] || []} onSaved={() => { setShowScheduleBreakEditor(false); loadEventBreaks(); }} canEdit={isEO || isSuperAdmin} />}
-              {selectedScheduleEvent && (
-                <div className="bg-white border border-slate-200 rounded-lg p-6 text-center">
-                  <h2 className="text-lg font-black text-slate-900 mb-1">JADWAL PERTANDINGAN</h2>
-                  <h3 className="text-base font-bold text-slate-800 mb-1">{selectedScheduleEvent.nama?.toUpperCase()}</h3>
-                  <p className="text-sm text-slate-600 font-semibold">{selectedScheduleEvent.tanggal}</p>
+              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
+                {selectedScheduleEvent && <div className="border-b border-slate-200 p-4 text-center">
+                  <h2 className="mb-1 text-lg font-black text-slate-900">JADWAL PERTANDINGAN</h2>
+                  <h3 className="mb-1 text-base font-bold text-slate-800">{selectedScheduleEvent.nama?.toUpperCase()}</h3>
+                  <p className="text-sm font-semibold text-slate-600">{selectedScheduleEvent.tanggal}</p>
+                </div>}
+                <div className="flex items-center gap-3 border-b border-slate-200 p-3 sm:p-4">
+                  <div className="min-w-0 flex-1">
+                    <label htmlFor="schedule-player-search" className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
+                      <Search className="h-4 w-4 shrink-0 text-slate-500" />
+                      Cari Pemain / Club:
+                    </label>
+                    <input id="schedule-player-search" type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Ketik nama pemain atau club..." className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none" />
+                  </div>
+                  <button type="button" onClick={() => setShowScheduleLegend(true)} aria-label="Buka keterangan jadwal" title="Keterangan Jadwal" className="mt-6 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-sm transition hover:bg-red-700">
+                    <Info className="h-5 w-5" />
+                  </button>
                 </div>
-              )}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-sky-100 bg-sky-50 px-4 py-2 text-xs text-slate-700">
-                <span className="font-black text-sky-800">Keterangan Jadwal:</span>
-                <span><strong>PM</strong> = Pemain Menang</span>
-                <span><strong>PK</strong> = Pemain Kalah</span>
-                <span className="text-slate-500">M1/M2/M3 = Nomor pertandingan</span>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-slate-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Search className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-bold text-slate-700">Cari Pemain / Club:</span>
-                </div>
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Ketik nama pemain atau club..." className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm" />
-              </div>
               {selectedScheduleEvent && schedulePoolData && filteredScheduleRows.length > 0 ? (
-                <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+                <div className="overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-max min-w-full whitespace-nowrap text-[12px] border-collapse [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap [&_th]:!px-1 [&_td]:!px-1 [&_th]:py-1.5 [&_td]:py-1.5 [&_th]:!text-[12px] [&_td]:!text-[12px]">
                       <thead>
@@ -5997,13 +5996,27 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
               ) : selectedScheduleEvent && !schedulePoolData ? (
-                <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
+                <div className="border-t-2 border-dashed border-slate-200 p-8 text-center">
                   <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Hasil Undian</h4>
                   <p className="text-xs text-slate-400 mb-4">Lakukan undian terlebih dahulu untuk membuat jadwal pertandingan.</p>
                   {!isPublic && <button onClick={() => setActiveView('DRAW')} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Buka Halaman Undian</button>}
                 </div>
               ) : null}
+              </div>
+              {showScheduleLegend && <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onClick={() => setShowScheduleLegend(false)}>
+                <div role="dialog" aria-modal="true" aria-labelledby="schedule-legend-title" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 id="schedule-legend-title" className="text-base font-black text-slate-900">Keterangan Jadwal</h3>
+                    <button type="button" onClick={() => setShowScheduleLegend(false)} aria-label="Tutup keterangan jadwal" className="rounded-lg p-1 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+                  </div>
+                  <ol className="space-y-3 text-sm text-slate-700">
+                    <li><strong>1. PM</strong> = Pemain Menang</li>
+                    <li><strong>2. PK</strong> = Pemain Kalah</li>
+                    <li><strong>3. M1/M2/M3</strong> = Nomor Pertandingan</li>
+                  </ol>
+                </div>
+              </div>}
             </div>
           ) : activeView === 'KNOCKOUT' ? (
             <div className="sm-knockout space-y-5">
