@@ -6028,7 +6028,8 @@ const handleUpdatePlayerSubmit = async (e) => {
                 const awardRows = [
                   { place: 'champion', label: 'Juara 1', players: ko.champion ? [ko.champion] : [] },
                   { place: 'runner-up', label: 'Juara 2', players: runnerUp ? [runnerUp] : [] },
-                  { place: 'bronze', label: 'Juara 3 Bersama', players: bronze },
+                  { place: 'bronze-1', label: 'Juara 3 Bersama 1', players: bronze[0] ? [bronze[0]] : [] },
+                  { place: 'bronze-2', label: 'Juara 3 Bersama 2', players: bronze[1] ? [bronze[1]] : [] },
                 ];
                 const topEightRows = topEight.map((player, index) => ({
                   place: `top-eight-${index}`,
@@ -6090,7 +6091,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                         const rounds = ko.rounds || [];
                         if (!rounds.length) return <p className="p-8 text-center text-sm text-slate-500">Belum ada peserta Knockout.</p>;
                         const eventId = selectedKnockoutEvent.id;
-                        const W = 204, H = 86, GAP = 12, COLUMN_GAP = 28, LEFT = 14, TOP = 62;
+                        const W = 160, H = 86, GAP = 12, COLUMN_GAP = 62, LEFT = 14, TOP = 62;
                         const stride = H + GAP;
                         const columnStep = W + COLUMN_GAP;
                         const totalW = LEFT + rounds.length * columnStep - COLUMN_GAP + 24;
