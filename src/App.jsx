@@ -3848,6 +3848,17 @@ const handleUpdatePlayerSubmit = async (e) => {
     return found ? Number(found[1]) : NaN;
   };
 
+  const openPublicLiveScore = (match, eventId) => {
+    if (!isPublic || !eventId || match?.type !== 'player' || !match.matchId) return;
+    const players = getLiveMatchPlayers(match, eventId);
+    setSelectedEventIdForLive(String(eventId));
+    setLiveScoreMatch({
+      ...match,
+      directPlayer1: players.player1 || match.player || null,
+      directPlayer2: players.player2 || match.opponent || null
+    });
+  };
+
   const openLiveScore = (match) => {
     // Saat dibuka dari Jadwal, gunakan event jadwal (bukan pilihan Live Score yang
     // mungkin belum terisi). Tetap wajib cocok dengan event dan meja tugas wasit.
@@ -6609,7 +6620,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                             const playerRanking = poolRanking.find(r => r.id === row.player.id);
                             const keterangan = hasResult && playerRanking ? playerRanking.keterangan : '';
                             return (
-                              <tr key={index} className={`hover:bg-slate-50 transition cursor-pointer ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => openLiveScore(row)}>
+                              <tr key={index} className={`hover:bg-slate-50 transition cursor-pointer ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => isPublic ? openPublicLiveScore(row, selectedScheduleEvent?.id) : openLiveScore(row)}>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-900">{row.playerCode}</td>
                                 <td className="px-1 py-1 border border-slate-300 font-semibold text-slate-900">
                                   {row.player.nama}
@@ -7008,7 +7019,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                             const statusLabel = hasResult ? '✓ Selesai' : '⏳ Belum';
                             const statusColor = hasResult ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
                             return (
-                              <tr key={index} className={`cursor-pointer transition hover:bg-slate-50 ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => openLiveScore(row)}>
+                              <tr key={index} className={`cursor-pointer transition hover:bg-slate-50 ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => isPublic ? openPublicLiveScore(row, selectedLiveEvent?.id) : openLiveScore(row)}>
                                 <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-900">{row.playerCode}</td>
                                 <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-900">
                                   {row.player.nama}
