@@ -5665,6 +5665,11 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <button key={card.tableNo} type="button" disabled={!card.row} onClick={() => {
                     if (!dashboardActiveEvent || !card.row) return;
                     setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                    if (isPublic) {
+                      setPublicLiveTable(String(card.tableNo));
+                      setActiveView('LIVE_SCORE');
+                      return;
+                    }
                     openLiveScore(card.row);
                   }} className={`flex min-w-0 flex-col items-center rounded-xl border p-2 text-center transition ${card.isLive ? 'border-emerald-400 bg-emerald-50' : card.isFinished ? 'border-blue-200 bg-blue-50' : card.hasSchedule ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'} ${card.row ? 'cursor-pointer active:scale-[.98]' : 'cursor-default'}`}>
                     <div className="flex w-full items-center justify-between gap-1"><span className="text-[11px] font-black text-slate-900">Meja {card.tableNo}</span><span className={`rounded-md px-1.5 py-0.5 text-[8px] font-black ${card.isLive ? 'bg-emerald-600 text-white' : card.isFinished ? 'bg-blue-600 text-white' : card.hasSchedule ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-600'}`}>{card.isLive ? 'LIVE' : card.isFinished ? 'SELESAI' : card.hasSchedule ? 'SIAP' : 'KOSONG'}</span></div>
@@ -5927,6 +5932,11 @@ const handleUpdatePlayerSubmit = async (e) => {
                       onClick={() => {
                         if (!card.row || !dashboardActiveEvent) return;
                         setSelectedEventIdForLive(String(dashboardActiveEvent.id));
+                        if (isPublic) {
+                          setPublicLiveTable(String(card.tableNo));
+                          setActiveView('LIVE_SCORE');
+                          return;
+                        }
                         openLiveScore(card.row);
                       }}
                       title={
