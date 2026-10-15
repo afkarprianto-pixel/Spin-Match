@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 import {
   Trophy, Users, Activity, DollarSign, Plus, X, Trash2, Edit3,
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
-  Settings, ChevronDown, Pencil, Wallet, Play, RotateCcw,
+  Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
   Printer, Search, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
 } from 'lucide-react';
@@ -1187,6 +1187,7 @@ const AuthenticatedContent = () => {
   const [selectedMatch, setSelectedMatch] = useState(null);
 
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showScheduleBreakEditor, setShowScheduleBreakEditor] = useState(false);
   const [printOrientation, setPrintOrientation] = useState('portrait');
   const [printPaperSize, setPrintPaperSize] = useState('A4');
 
@@ -4777,17 +4778,20 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <p className="text-xs text-blue-100/70">Jadwal match berdasarkan hasil undian pool</p>
                 </div>
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 w-full min-w-0 md:w-auto md:flex md:items-center md:justify-end md:flex-wrap">
-                <div className="col-span-2 w-full min-w-0 flex items-center gap-2 bg-white/10 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl border border-white/20">
+              <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2 w-full min-w-0 md:w-auto md:flex md:items-center md:justify-end md:flex-wrap">
+                <div className="col-span-3 w-full min-w-0 flex items-center gap-2 bg-white/10 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForSchedule} onChange={(e) => setSelectedEventIdForSchedule(e.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
                     {events.map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                {isReferee && <span className="col-span-2 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
+                {isReferee && <span className="col-span-3 md:col-span-1 md:mr-1 text-[11px] font-semibold text-blue-100 whitespace-nowrap">Mode Baca Saja</span>}
                 {!isPublic && <button onClick={() => { if (isWasit) setSelectedEventIdForDraw(String(wasitAssignment?.event_id || '')); setActiveView('DRAW'); }} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-[#bef264]  hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Shuffle className="w-3.5 h-3.5" /> Undian
+                </button>}
+                {selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <button type="button" onClick={() => setShowScheduleBreakEditor(value => !value)} aria-expanded={showScheduleBreakEditor} className={`w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 ${showScheduleBreakEditor ? 'bg-amber-300 hover:bg-amber-400' : 'bg-amber-400 hover:bg-amber-500'} text-amber-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5`}>
+                  <Pause className="w-3.5 h-3.5" /> Jeda Main
                 </button>}
                 <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center px-3 py-2 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                   <Printer className="w-3.5 h-3.5" /> Print
@@ -5861,7 +5865,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           ) : activeView === 'SCHEDULE' ? (
             <div className="sm-schedule space-y-6">
               {eventBreaksReadError && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900">Jeda pertandingan belum dapat dibaca dari Supabase. Jam jadwal mungkin belum mengikuti jeda. Periksa izin SELECT tabel spinmatch_event_breaks. ({eventBreaksReadError})</div>}
-              {selectedScheduleEvent && !isPublic && !isWasit && <SpinMatchBreakEditor eventId={selectedScheduleEvent.id} breaks={eventBreaks[String(selectedScheduleEvent.id)] || []} onSaved={loadEventBreaks} canEdit={isEO || isSuperAdmin} />}
+              {showScheduleBreakEditor && selectedScheduleEvent && canManageEvent(selectedScheduleEvent) && <SpinMatchBreakEditor eventId={selectedScheduleEvent.id} breaks={eventBreaks[String(selectedScheduleEvent.id)] || []} onSaved={() => { setShowScheduleBreakEditor(false); loadEventBreaks(); }} canEdit={isEO || isSuperAdmin} />}
               {selectedScheduleEvent && (
                 <div className="bg-white border border-slate-200 rounded-lg p-6 text-center">
                   <h2 className="text-lg font-black text-slate-900 mb-1">JADWAL PERTANDINGAN</h2>
