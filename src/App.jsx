@@ -771,6 +771,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   const callWasit = (row, wasit) => {
     if (!wasit?.nama_wasit) {
       setSpeechError('Belum ada Wasit dengan nama yang ditugaskan pada meja pertandingan ini.');
+      alert('Nama Wasit untuk meja pertandingan ini belum ditemukan. Pastikan penugasan Wasit pada event sudah tersimpan.');
       return;
     }
     const { table } = getMatchCallDetails(row);
@@ -897,7 +898,13 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
             Boolean(wasit.nama_wasit) &&
             !['NONAKTIF', 'NON-AKTIF', 'INAKTIF'].includes(String(wasit.status || '').trim().toUpperCase())
           );
-          return <div key={row.matchId} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="text-xs font-bold text-blue-700">{row.matchLabel || row.matchRef || 'Pertandingan'} · {divisionText}</p><p className="mt-1 text-sm font-bold text-slate-900">{pair?.player1?.nama || row.player?.nama || 'Peserta'} vs {pair?.player2?.nama || 'Menunggu lawan'}</p><p className="mt-1 text-xs text-slate-500">Meja {table} • {row.jam || '-'}</p>{assignedWasit && <p className="mt-1 text-xs font-semibold text-violet-700">Wasit Meja {table}: {assignedWasit.nama_wasit}</p>}</div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => callMatch(row)} className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-black text-white">{calledMatches[row.matchId] ? 'Panggil Lagi' : 'Panggil Pemain'}</button><button type="button" onClick={() => callWasit(row, assignedWasit)} disabled={!assignedWasit} title={assignedWasit ? `Panggil Wasit ${assignedWasit.nama_wasit}` : 'Belum ada Wasit aktif yang ditugaskan di meja ini'} className="rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-black text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-slate-300">{calledWasits[row.matchId] ? 'Panggil Wasit Lagi' : 'Panggil Wasit'}</button></div></div>;
+          const scheduledWasitName = getWasit(assignedEventId, row.meja);
+          const resolvedWasit = assignedWasit || (
+            scheduledWasitName && scheduledWasitName !== 'Belum ditugaskan'
+              ? { nama_wasit: scheduledWasitName }
+              : null
+          );
+          return <div key={row.matchId} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="text-xs font-bold text-blue-700">{row.matchLabel || row.matchRef || 'Pertandingan'} · {divisionText}</p><p className="mt-1 text-sm font-bold text-slate-900">{pair?.player1?.nama || row.player?.nama || 'Peserta'} vs {pair?.player2?.nama || 'Menunggu lawan'}</p><p className="mt-1 text-xs text-slate-500">Meja {table} • {row.jam || '-'}</p>{resolvedWasit && <p className="mt-1 text-xs font-semibold text-violet-700">Wasit Meja {table}: {resolvedWasit.nama_wasit}</p>}</div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => callMatch(row)} className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-black text-white">{calledMatches[row.matchId] ? 'Panggil Lagi' : 'Panggil Pemain'}</button><button type="button" onClick={() => callWasit(row, resolvedWasit)} title={resolvedWasit ? `Panggil Wasit ${resolvedWasit.nama_wasit}` : `Panggil Wasit untuk Meja ${table}`} className="rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-black text-white hover:bg-violet-800">{calledWasits[row.matchId] ? 'Panggil Wasit Lagi' : 'Panggil Wasit'}</button></div></div>;
         })}</div> : <p className="p-5 text-sm text-slate-500">Tidak ada pertandingan yang cocok.</p>}
       </div>
       : activeView === 'REF_TABLES' ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
