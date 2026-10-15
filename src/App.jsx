@@ -650,10 +650,12 @@ const SpinMatchBreakEditor = ({ eventId, breaks, onSaved, canEdit }) => {
   </div>;
 };
 
-const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, getMatchPlayers, eventBreaks, onBreaksSaved }) => {
+const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule, getWasit, getMatchPlayers, eventBreaks, onBreaksSaved }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [scheduleSearch, setScheduleSearch] = useState('');
+  const [showBreakEditor, setShowBreakEditor] = useState(false);
   const load = async () => {
     setLoading(true); setError('');
     const { data, error: queryError } = await supabase.from('spinmatch_referee_assignments')
@@ -675,20 +677,63 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
   const scheduledMatches = assignedEventId && assignedEvent && activeView === 'SCHEDULE'
     ? getSchedule(assignedEventId).filter(row => row.type === 'player' && row.showMatch && row.matchId)
     : [];
+  const filteredScheduledMatches = scheduledMatches.filter(row => {
+    const pair = getMatchPlayers(row, assignedEventId);
+    const searchText = [
+      row.player?.nama, row.player?.ptm, row.player?.club, row.pool, row.playerCode,
+      row.matchRef, row.matchLabel, row.meja, pair?.player1?.nama, pair?.player1?.ptm,
+      pair?.player2?.nama, pair?.player2?.ptm,
+    ].filter(Boolean).join(' ').toLocaleLowerCase();
+    return searchText.includes(scheduleSearch.trim().toLocaleLowerCase());
+  });
+  const quickLinks = [
+    { view: 'SCHEDULE', label: 'Jadwal Pertandingan', Icon: Calendar, color: 'from-[#ff8a16] to-[#ffad24]', span: 'col-span-3' },
+    { view: 'REF_CALLS', label: 'Panggilan Pertandingan', Icon: Radio, color: 'from-[#0874c9] to-[#26a7ff]', span: 'col-span-3' },
+    { view: 'REF_TABLES', label: 'Penempatan Meja', Icon: Target, color: 'from-[#08a878] to-[#19c995]', span: 'col-span-2' },
+    { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users, color: 'from-[#6857d9] to-[#9581ef]', span: 'col-span-2' },
+    { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity, color: 'from-[#e83c55] to-[#fa6b78]', span: 'col-span-2' },
+  ];
+  if (activeView === 'DASHBOARD') return <div className="mx-auto w-full max-w-4xl space-y-5">
+    <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-5 text-white shadow-xl">
+      <div className="flex items-center gap-3"><ShieldCheck className="h-9 w-9 text-cyan-200" /><div><h2 className="text-xl font-black">Dashboard Referee</h2><p className="text-xs text-blue-100">Pengawas pertandingan • Akses operasional</p></div></div>
+      <p className="mt-3 text-sm text-blue-50">Selamat datang. Akun Referee hanya ditugaskan pada satu event aktif.</p>
+    </div>
+    <section className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-4"><h2 className="text-base font-black text-slate-950">Menu Cepat</h2><p className="mt-1 text-xs text-slate-500">Akses operasional pertandingan</p></div>
+      <div className="grid grid-cols-6 gap-2 sm:gap-3">
+        {quickLinks.map(({ view, label, Icon, color, span }) => <button key={view} type="button" onClick={() => setActiveView(view)} className={`${span} flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r ${color} px-2 py-2.5 text-center text-[10px] font-black leading-tight text-white shadow-sm active:scale-[.98] sm:min-h-[72px] sm:flex-row sm:gap-2 sm:text-xs`}>
+          <Icon className="h-5 w-5 shrink-0" /><span>{label}</span>
+        </button>)}
+      </div>
+    </section>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-2"><h3 className="font-black text-slate-900">Penugasan Saya</h3><button type="button" onClick={load} className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700">Muat Ulang</button></div>
+      {loading ? <p className="mt-3 text-sm text-slate-500">Memeriksa penugasan...</p> : error ? <p role="alert" className="mt-3 text-sm text-red-700">{error}</p> : rows.length ? rows.map(row => <div key={row.event_id} className="mt-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Penugasan aktif</strong><p className="mt-1">{assignedEvent?.nama || `ID Event: ${row.event_id}`}</p><p className="text-xs">Ditugaskan: {row.assigned_at ? new Date(row.assigned_at).toLocaleString('id-ID') : '-'}</p></div>) : <p className="mt-3 text-sm text-slate-600">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</p>}
+    </div>
+  </div>;
   if (section && activeView === 'SCHEDULE') return <div className="mx-auto max-w-6xl space-y-5">
-    {assignedEventId && <SpinMatchBreakEditor eventId={assignedEventId} breaks={eventBreaks[String(assignedEventId)] || []} onSaved={onBreaksSaved} canEdit={true} />}
     {loading ? <div className="rounded-2xl bg-white p-5">Memeriksa penugasan...</div>
       : error ? <div role="alert" className="rounded-2xl bg-red-50 p-5 text-red-700">{error}</div>
       : !assignedEventId ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada penugasan aktif. Hubungi EO atau Super Admin.</div>
       : !assignedEvent ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Data event belum dapat dibaca. Periksa izin baca event di Supabase.</div>
-      : scheduledMatches.length === 0 ? <div className="rounded-2xl bg-amber-50 p-5 text-amber-900">Belum ada jadwal pool yang bisa ditampilkan untuk event ini. Pastikan undian pool sudah tersimpan di Supabase dan akun Referee memiliki izin baca.</div>
-      : <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm" >
+      : <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0"><h2 className="text-base font-black text-slate-900">Jadwal Pertandingan</h2><p className="mt-1 truncate text-xs text-slate-500">{assignedEvent.nama} • {assignedEvent.tanggal || ''}</p></div>
+          <button type="button" onClick={() => setShowBreakEditor(true)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-xs font-black text-amber-950 shadow-sm hover:bg-amber-500"><Pause className="h-4 w-4" />Jeda Main</button>
+        </div>
+        <div className="border-b border-slate-200 p-4">
+          <label htmlFor="referee-schedule-search" className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-700"><Search className="h-4 w-4 text-slate-500" />Cari Pemain / Club</label>
+          <input id="referee-schedule-search" type="search" value={scheduleSearch} onChange={event => setScheduleSearch(event.target.value)} placeholder="Ketik nama pemain, PTM/club, pool, atau match..." className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" />
+        </div>
+        {scheduledMatches.length === 0 ? <div className="bg-amber-50 p-5 text-sm text-amber-900">Belum ada jadwal pool yang bisa ditampilkan untuk event ini. Pastikan undian pool sudah tersimpan di Supabase dan akun Referee memiliki izin baca.</div>
+          : filteredScheduledMatches.length === 0 ? <div className="p-5 text-center text-sm text-slate-500">Tidak ada jadwal yang cocok dengan pencarian.</div>
+          : <div className="w-full max-w-full overflow-x-auto">
         <table className="w-max min-w-[1150px] table-auto whitespace-nowrap text-left text-[12px] leading-relaxed">
 
           <thead className="bg-slate-100 text-slate-700"><tr>
             {['Pool', 'Nama Pemain', 'Club/PTM', 'Match', 'Urutan Pertandingan (EO)', 'Jam', 'Meja', 'Wasit', 'Status'].map(label => <th key={label} className="px-1.5 py-2 font-bold break-words">{label}</th>)}
           </tr></thead>
-          <tbody>{scheduledMatches.map((row, i) => {
+          <tbody>{filteredScheduledMatches.map((row, i) => {
             const pair = getMatchPlayers(row, assignedEventId);
             const matchNames = [pair?.player1?.nama, pair?.player2?.nama].filter(Boolean).join(' vs ');
             return <tr key={`${row.matchId}-${i}`} className="border-t border-slate-100 hover:bg-slate-50">
@@ -705,7 +750,16 @@ const RefereeWorkspace = ({ user, activeView, events, getSchedule, getWasit, get
           })}</tbody>
         </table>
       </div>}
-    <p className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">Urutan dan pasangan mengikuti label jadwal EO (misalnya A2 VS A3, PK M1 VS A1, PM M1 VS A1); PK berarti pihak kalah dan PM pihak menang pada match sebelumnya. Nama peserta untuk pertandingan lanjutan belum diresolusikan otomatis pada tampilan ini. Referee hanya dapat melihat; tidak tersedia tombol mengubah undian, skor, atau hasil. Pengamanan akses data tetap harus diterapkan melalui RLS Supabase.</p>
+      </div>}
+    {showBreakEditor && <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onClick={() => setShowBreakEditor(false)}>
+      <div role="dialog" aria-modal="true" aria-labelledby="referee-break-title" className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-2xl sm:p-5" onClick={event => event.stopPropagation()}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3 id="referee-break-title" className="text-base font-black text-slate-900">Jeda Main</h3>
+          <button type="button" onClick={() => setShowBreakEditor(false)} aria-label="Tutup pengaturan jeda" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+        </div>
+        <SpinMatchBreakEditor eventId={assignedEventId} breaks={eventBreaks[String(assignedEventId)] || []} onSaved={() => { setShowBreakEditor(false); onBreaksSaved?.(); }} canEdit={true} />
+      </div>
+    </div>}
   </div>;
   if (section) return <div className="mx-auto max-w-4xl space-y-5">
     <div className="rounded-3xl bg-gradient-to-r from-[#07335d] to-[#0879c9] p-6 text-white shadow-xl"><h2 className="text-xl font-black">{section.title}</h2><p className="mt-2 text-sm text-blue-100">Dashboard operasional Referee • {rows.length ? `Event ID ${rows[0].event_id}` : 'Belum ada event aktif'}</p></div>
@@ -4524,24 +4578,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   className="fixed inset-0 z-40 cursor-default bg-transparent"
                 />
                 <div className="sm-mobile-more-panel absolute right-0 top-11 z-50 w-[min(310px,calc(100vw-24px))] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_rgba(15,23,42,.24)]">
-                  {isReferee && <>
-                    <div className="px-3 pb-2 pt-1 text-[11px] font-black uppercase tracking-wide text-blue-900">Menu Operasional Referee</div>
-                    {[
-                      { view: 'DASHBOARD', label: 'Dashboard', Icon: Activity },
-                      { view: 'SCHEDULE', label: 'Jadwal Pertandingan', Icon: Calendar },
-                      { view: 'REF_CALLS', label: 'Panggilan Pertandingan', Icon: Radio },
-                      { view: 'REF_TABLES', label: 'Penempatan Meja', Icon: Target },
-                      { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users },
-                      { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity },
-                    ].map(({ view, label, Icon }) => (
-                      <button key={view} type="button"
-                        onClick={() => { setActiveView(view); setShowMobileMoreMenu(false); }}
-                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold ${activeView === view ? 'bg-blue-700 text-white' : 'text-slate-700 hover:bg-blue-50'}`}>
-                        <Icon className="h-4 w-4 shrink-0" />{label}
-                      </button>
-                    ))}
-                    <div className="my-1 border-t border-slate-100" />
-                  </>}
+                  {isReferee && <button type="button" onClick={() => { setActiveView('DASHBOARD'); setShowMobileMoreMenu(false); }} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold ${activeView === 'DASHBOARD' ? 'bg-blue-700 text-white' : 'text-slate-700 hover:bg-blue-50'}`}><Activity className="h-4 w-4 shrink-0" />Dashboard</button>}
                   {isSuperAdmin && <>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PRICING'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-orange-700 hover:bg-orange-50"><Wallet className="h-4 w-4"/>Tarif & Pembayaran</button>
                     <button type="button" onClick={() => { setShowMobileMoreMenu(false); setSettingsSection('PAYMENT_REVIEW'); setActiveView('SETTINGS'); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"><CheckCircle2 className="h-4 w-4"/>Verifikasi Pembayaran EO</button>
@@ -4882,7 +4919,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   </div>
 )}
 {isReferee ? (
-  <RefereeWorkspace user={user} activeView={activeView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} />
+  <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} />
 ) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
   <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">{wasitAssignmentLoading ? 'Memeriksa penugasan wasit...' : 'Belum ada penugasan wasit aktif. Hubungi EO.'}</div>
 ) : activeView === 'DASHBOARD' ? (
