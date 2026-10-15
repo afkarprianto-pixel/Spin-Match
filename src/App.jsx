@@ -3737,7 +3737,168 @@ const handleUpdatePlayerSubmit = async (e) => {
     alert('Hasil pertandingan berhasil disimpan!');
   };
 
-  const handlePrint = (openPrintDialog = false) => {
+  const handleDownloadSchedulePdf = () => {
+    if (!selectedScheduleEvent) {
+      alert('Pilih event terlebih dahulu untuk mengunduh jadwal.');
+      return;
+    }
+
+    try {
+      const eventId = selectedScheduleEvent.id;
+      const pageWidth = 842;
+      const pageHeight = 595;
+      const margin = 28;
+      const tableTop = 92;
+      const tableWidth = pageWidth - margin * 2;
+      const columnWidths = [42, 116, 95, 48, 82, 42, 68, 54, 58, 110, 71];
+      const headers = ['Pool', 'Nama Pemain', 'Club/PTM', 'Match', 'Jam Main', 'Meja', 'Tgl Main', 'Hari', 'Point', 'Pemenang', 'Keterangan'];
+      const rows = [];
+      const rankings = poolRankings[eventId] || {};
+
+      generateScheduleFromPools(eventId).forEach(row => {
+        if (row.type === 'pool_header') {
+          rows.push({ type: 'pool', cells: [row.pool] });
+        } else if (row.type === 'empty_row') {
+          rows.push({ type: 'space' });
+        } else if (row.type === 'player' || row.type === 'single_player') {
+          const poolRanking = rankings[row.pool] || [];
+          const playerRanking = poolRanking.find(ranking => ranking.id === row.player.id);
+          const result = row.type === 'player' ? row.result : null;
+          const { player1, player2 } = result ? getLiveMatchPlayers(row, eventId) : {};
+          const winner = result?.winner === 'player1' ? player1?.nama : result?.winner === 'player2' ? player2?.nama : '';
+          rows.push({
+            type: 'data',
+            cells: [
+              row.playerCode || row.pool || '-',
+              row.player?.nama || '-',
+              row.player?.ptm || row.player?.club || '-',
+              row.type === 'player' ? row.matchLabel || '-' : '-',
+              row.type === 'player' ? row.jam || '-' : '-',
+              row.type === 'player' ? row.meja || '-' : '-',
+              row.type === 'player' ? row.tanggal || '-' : '-',
+              row.type === 'player' ? (getDayName(row.tanggal) !== '-' ? getDayName(row.tanggal) : row.hari || '-') : '-',
+              result ? `${result.player1Score} - ${result.player2Score}` : '',
+              winner || '',
+              playerRanking?.keterangan || '',
+            ],
+          });
+        }
+      });
+
+      const pdfSafeText = value => String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[–—]/g, '-')
+        .replace(/[“”]/g, '"')
+        .replace(/[’‘]/g, "'")
+        .replace(/[^\x20-\x7E]/g, '?');
+      const escapePdfText = value => pdfSafeText(value).replace(/[\\()]/g, '\\$&');
+      const truncateText = (value, width, fontSize) => {
+        const text = pdfSafeText(value);
+        const maxChars = Math.max(1, Math.floor((width - 8) / (fontSize * 0.52)));
+        return text.length > maxChars ? `${text.slice(0, Math.max(1, maxChars - 3))}...` : text;
+      };
+      const pdfPages = [];
+      let commands = '';
+      let cursorY = tableTop;
+      let pageNumber = 0;
+
+      const addText = (value, x, top, fontSize, color = '0.12 0.16 0.22') => {
+        commands += `${color} rg BT /F1 ${fontSize} Tf 1 0 0 1 ${x} ${pageHeight - top - fontSize} Tm (${escapePdfText(value)}) Tj ET\n`;
+      };
+      const addRect = (x, top, width, height, fillColor, strokeColor = '0.78 0.82 0.87') => {
+        commands += `${fillColor} rg ${strokeColor} RG 0.5 w ${x} ${pageHeight - top - height} ${width} ${height} re B\n`;
+      };
+      const startPage = () => {
+        pageNumber += 1;
+        commands = '';
+        cursorY = tableTop;
+        const title = 'JADWAL PERTANDINGAN';
+        const eventName = pdfSafeText(selectedScheduleEvent.nama || '').toUpperCase();
+        addText(title, (pageWidth - title.length * 9) / 2, 24, 16, '0.04 0.22 0.42');
+        addText(eventName, Math.max(margin, (pageWidth - eventName.length * 6) / 2), 47, 11);
+        addText(`${selectedScheduleEvent.tanggal || '-'}    |    Halaman ${pageNumber}`, margin, 67, 9, '0.35 0.39 0.44');
+        headers.forEach((header, index) => {
+          const x = margin + columnWidths.slice(0, index).reduce((sum, width) => sum + width, 0);
+          addRect(x, cursorY, columnWidths[index], 24, '0.91 0.94 0.97');
+          addText(truncateText(header, columnWidths[index], 7), x + 4, cursorY + 7, 7, '0.08 0.12 0.18');
+        });
+        cursorY += 24;
+      };
+      const finishPage = () => {
+        addText('Dicetak dari SpinMatch', margin, pageHeight - 24, 8, '0.4 0.44 0.5');
+        pdfPages.push(commands);
+      };
+
+      startPage();
+      rows.forEach(row => {
+        if (row.type === 'space') {
+          cursorY += 8;
+          return;
+        }
+        const rowHeight = row.type === 'pool' ? 20 : 22;
+        if (cursorY + rowHeight > pageHeight - 38) {
+          finishPage();
+          startPage();
+        }
+        if (row.type === 'pool') {
+          addRect(margin, cursorY, tableWidth, rowHeight, '0.96 0.97 0.98');
+          addText(row.cells[0], margin + 5, cursorY + 5, 8, '0.12 0.16 0.22');
+        } else {
+          let x = margin;
+          row.cells.forEach((cell, index) => {
+            addRect(x, cursorY, columnWidths[index], rowHeight, '1 1 1');
+            addText(truncateText(cell, columnWidths[index], 6.5), x + 4, cursorY + 7, 6.5);
+            x += columnWidths[index];
+          });
+        }
+        cursorY += rowHeight;
+      });
+      finishPage();
+
+      const objects = [];
+      const pageObjectIds = pdfPages.map((_, index) => 3 + index * 2);
+      objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+      objects[2] = `<< /Type /Pages /Kids [${pageObjectIds.map(id => `${id} 0 R`).join(' ')}] /Count ${pdfPages.length} >>`;
+      pdfPages.forEach((content, index) => {
+        const pageId = pageObjectIds[index];
+        const streamId = pageId + 1;
+        objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${3 + pdfPages.length * 2} 0 R >> >> /Contents ${streamId} 0 R >>`;
+        objects[streamId] = `<< /Length ${content.length} >>\nstream\n${content}endstream`;
+      });
+      const fontId = 3 + pdfPages.length * 2;
+      objects[fontId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+
+      let pdf = '%PDF-1.4\n';
+      const offsets = [0];
+      for (let id = 1; id < objects.length; id += 1) {
+        offsets[id] = pdf.length;
+        pdf += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+      }
+      const xrefOffset = pdf.length;
+      pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+      for (let id = 1; id < objects.length; id += 1) {
+        pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \n`;
+      }
+      pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+      const blob = new Blob([pdf], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeEventName = pdfSafeText(selectedScheduleEvent.nama || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'event';
+      link.href = url;
+      link.download = `jadwal-${safeEventName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Gagal membuat PDF jadwal:', error);
+      alert(`PDF jadwal gagal dibuat: ${error?.message || 'Terjadi kesalahan.'}`);
+    }
+  };
+
+  const handlePrint = () => {
     if (!selectedScheduleEvent) {
       alert('Pilih event terlebih dahulu untuk mencetak jadwal.');
       return;
@@ -3820,7 +3981,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           @media print { button { display: none; } }
         </style>
       </head>
-      <body${openPrintDialog ? ' onload="window.print()"' : ''}>
+      <body>
         <button onclick="window.print()" style="margin-bottom: 15px; padding: 8px 16px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer;">🖨️ Print</button>
         <h2>JADWAL PERTANDINGAN</h2>
         <h3>${eventData?.nama?.toUpperCase()}</h3>
@@ -4842,7 +5003,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <button onClick={() => setShowPrintModal(true)} className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
                   <Printer className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> Print
                 </button>
-                <button type="button" onClick={() => handlePrint(true)} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
+                <button type="button" onClick={handleDownloadSchedulePdf} disabled={!selectedScheduleEvent || !schedulePoolData} title="Unduh jadwal sebagai PDF" className="w-full min-w-0 md:w-auto justify-center whitespace-nowrap px-1.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-lg md:rounded-xl text-[10px] md:text-xs transition cursor-pointer shadow-sm flex items-center gap-1 md:gap-1.5">
                   <Download className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" /> PDF
                 </button>
 
