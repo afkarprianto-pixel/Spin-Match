@@ -4528,17 +4528,20 @@ const handleUpdatePlayerSubmit = async (e) => {
                     <div className="my-1 border-t border-slate-100"/>
                   </>}
 
+                  {(isEO || isSuperAdmin) && (
                     <button
-                    type="button"
-                    onClick={() => {
-                      setShowMobileMoreMenu(false);
-                      onManageReferees?.();
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"
-                  >
-                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                    Kelola Referee
-                  </button>
+                      type="button"
+                      onClick={() => {
+                        setShowMobileMoreMenu(false);
+                        setSettingsSection('SUPERVISOR');
+                        setActiveView('SETTINGS');
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-slate-700 hover:bg-slate-100"
+                    >
+                      <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                      Kelola Referee
+                    </button>
+                  )}
 
                   <button
                     type="button"
