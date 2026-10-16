@@ -1528,11 +1528,17 @@ const AuthenticatedContent = () => {
   const [showRegModal, setShowRegModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [showSeedStatusList, setShowSeedStatusList] = useState(false);
+  const [showPoolSimulation, setShowPoolSimulation] = useState(false);
+  const [showDrawControls, setShowDrawControls] = useState(false);
   const [tempSeedData, setTempSeedData] = useState({ seed1: '', seed2: '', seed3: '', seed4: '' });
   const [showDrawAnimation, setShowDrawAnimation] = useState(false);
   const [drawPhase, setDrawPhase] = useState('idle');
   const [spinningNames, setSpinningNames] = useState(['', '', '', '']);
   const spinIntervalRef = useRef(null);
+  useEffect(() => {
+    setShowPoolSimulation(false);
+    setShowDrawControls(false);
+  }, [activeView, selectedEventIdForDraw]);
 
   const [formNama, setFormNama] = useState('');
   const [isMultiDate, setIsMultiDate] = useState(false);
@@ -4701,6 +4707,7 @@ const handleUpdatePlayerSubmit = async (e) => {
   const drawSeedKeys = Array.from({ length: drawProjection.numPools }, (_, i) => `seed${i + 1}`);
   const drawSeedPoolIndexes = getSeedPoolIndexes(drawProjection.numPools, drawProjection.numPools);
   const currentPoolData = poolResults[selectedDrawEvent?.id] || null;
+  const showDrawWorkspace = !((isEO || isSuperAdmin) && selectedDrawEvent && canManageEvent(selectedDrawEvent)) || showDrawControls;
   const schedulePoolData = poolResults[selectedScheduleEvent?.id] || null;
   const scheduleRows = selectedScheduleEvent ? generateScheduleFromPools(selectedScheduleEvent.id) : [];
   const currentRankings = poolRankings[selectedScheduleEvent?.id] || {};
@@ -6465,16 +6472,16 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="sm-draw space-y-6">
               {selectedDrawEvent && (
                 <div className="bg-gradient-to-r from-emerald-50 to-lime-50 border border-emerald-200 rounded-3xl p-6">
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="w-full text-center">
+                      <div className="mb-1 flex items-center justify-center gap-2">
                         <Trophy className="w-5 h-5 text-emerald-600" />
                         <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Event Terpilih</span>
                       </div>
                       <h2 className="text-xl font-black text-slate-900">{selectedDrawEvent.nama}</h2>
                       <p className="text-xs text-slate-600 mt-1">{selectedDrawEvent.tanggal}</p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center justify-center gap-4">
                       <div className="text-center px-4 py-2 bg-white rounded-2xl border border-emerald-200 shadow-sm">
                         <div className="text-xs font-bold text-slate-500">Total Peserta</div>
                         <div className="text-2xl font-black text-emerald-700">{drawEventParticipants.length}</div>
@@ -6484,10 +6491,23 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <div className="text-lg font-black text-slate-900">{selectedDrawEvent.divisiList?.[0]?.nama || '-'}</div>
                       </div>
                     </div>
+                    {!isWasit && !isPublic && selectedDrawEvent && canManageEvent(selectedDrawEvent) && (
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <button type="button" onClick={handleOpenSeedModal} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-amber-600">
+                          <Settings className="h-4 w-4" /> Atur Seed
+                        </button>
+                        <button type="button" onClick={() => setShowDrawControls(value => !value)} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-emerald-800">
+                          <Dices className="h-4 w-4" /> {showDrawControls ? 'Tutup Undian' : 'Undian'}
+                        </button>
+                        <button type="button" onClick={() => setShowPoolSimulation(value => !value)} className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-xs font-black text-amber-800 shadow-sm transition hover:bg-amber-50">
+                          <Play className="h-4 w-4" /> {showPoolSimulation ? 'Tutup Simulasi' : 'Simulasi'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-              {(isEO || isSuperAdmin) && selectedDrawEvent && canManageEvent(selectedDrawEvent) && (
+              {showPoolSimulation && (isEO || isSuperAdmin) && selectedDrawEvent && canManageEvent(selectedDrawEvent) && (
                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
                   <div className="font-black text-sm text-amber-950">Mode Pengujian Hasil Pool</div>
                   <p className="my-2 text-xs text-amber-900">Isi skor simulasi otomatis untuk pertandingan Pool A–F yang belum selesai. Hasil yang sudah ada tidak ditimpa. Hanya untuk event uji, bukan pertandingan resmi.</p>
@@ -6497,7 +6517,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </button>
                 </div>
               )}
-              {!isWasit && !isPublic && <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
+              {showDrawWorkspace && !isWasit && !isPublic && <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Settings className="w-5 h-5 text-slate-700" />
                   <h3 className="text-base font-bold text-slate-900">Panel Kontrol Undian</h3>
@@ -6585,7 +6605,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
               </div>}
-              {currentPoolData && (
+              {showDrawWorkspace && currentPoolData && (
                 <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
                   <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                     <div className="flex items-center gap-2">
@@ -6646,7 +6666,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
               )}
-              {!currentPoolData && (
+              {showDrawWorkspace && !currentPoolData && (
                 <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center">
                   <Dices className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Hasil Undian</h4>
