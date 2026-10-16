@@ -727,12 +727,6 @@ export const LoginPage = ({ onCancel }) => {
 
 
                   </div>
-                  <p className="mt-1.5 text-[10px] leading-relaxed text-blue-100/70">
-                    Login Wasit: gunakan <strong className="text-orange-200">ID Login dari EO</strong>, bukan kode Wasit (WST) atau nama.
-                  </p>
-
-
-
                 </div>
 
 

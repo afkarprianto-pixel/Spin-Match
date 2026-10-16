@@ -5471,15 +5471,18 @@ const handleUpdatePlayerSubmit = async (e) => {
                     <p className="text-xs text-blue-100/75">Pertandingan, wasit, keuangan, dan tarif platform</p>
                   </div>
                 </div>
-                {settingsSection !== 'PRICING' && <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2">
+                {settingsSection !== 'PRICING' && <div className="flex w-full items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 md:w-[360px]">
                   <Filter className="h-4 w-4 text-cyan-200" />
-                  <select
-                    value={selectedEventIdForSettings}
-                    onChange={(e) => { selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value)); setSettingsSection('HOME'); }}
-                    className="max-w-[280px] bg-transparent text-xs font-black text-white outline-none [&>option]:text-slate-900"
-                  >
-                    {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama}</option>)}
-                  </select>
+                  <div className="relative min-w-0 flex-1">
+                    <select
+                      value={selectedEventIdForSettings}
+                      onChange={(e) => { selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value)); setSettingsSection('HOME'); }}
+                      className="w-full appearance-none bg-transparent px-6 text-center text-xs font-black text-white outline-none [&>option]:text-slate-900"
+                    >
+                      {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama}</option>)}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-100" />
+                  </div>
                 </div>}
               </div>
             </div>
@@ -5607,7 +5610,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <p className="text-xs text-blue-100/70">Bagan gugur • klik Match untuk Live Score</p>
                 </div>
               </div>
-              <div className="relative z-10 flex items-center gap-2 flex-wrap">
+              <div className="relative z-10 flex w-full flex-col items-center gap-2 md:flex-1">
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
@@ -5615,12 +5618,14 @@ const handleUpdatePlayerSubmit = async (e) => {
                     {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map(ev=><option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>)}
                   </select>
                 </div>
-                <button onClick={()=>window.print()} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5">
-                  <Printer className="w-3.5 h-3.5" /> Print Bagan
-                </button>
-                <button type="button" onClick={handleDownloadKnockoutPdf} disabled={!selectedKnockoutEvent} title="Unduh bagan Knockout sebagai PDF" className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> Download PDF
-                </button>
+                <div className="flex w-full items-center justify-center gap-2">
+                  <button onClick={() => requestAnimationFrame(() => window.print())} className="flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-700">
+                    <Printer className="h-3.5 w-3.5" /> Print Bagan
+                  </button>
+                  <button type="button" onClick={handleDownloadKnockoutPdf} disabled={!selectedKnockoutEvent} title="Unduh bagan Knockout sebagai PDF" className="flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
+                    <Download className="h-3.5 w-3.5" /> Download PDF
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -6873,7 +6878,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <>
                     <style>{`
                       @media print {
-                        @page { size: A4 landscape; margin: 7mm; }
+                        @page spinmatch-knockout { size: A4 landscape; margin: 7mm; }
                         body * { visibility: hidden !important; }
                         #spinmatch-knockout-print-area,
                         #spinmatch-knockout-print-area * {
@@ -6881,12 +6886,14 @@ const handleUpdatePlayerSubmit = async (e) => {
                         }
                         #spinmatch-knockout-print-area {
                           position: absolute !important;
-                          left: 0 !important;
-                          top: 0 !important;
+                          page: spinmatch-knockout !important;
+                          inset: 0 auto auto 0 !important;
                           width: 100% !important;
+                          max-width: none !important;
                           margin: 0 !important;
                           padding: 0 !important;
                           background: #fff !important;
+                          overflow: visible !important;
                         }
                         #spinmatch-knockout-print-area #spinmatch-knockout-print {
                           overflow: visible !important;
@@ -6897,12 +6904,26 @@ const handleUpdatePlayerSubmit = async (e) => {
                         #spinmatch-knockout-print-area .knockout-screen-only {
                           display: none !important;
                         }
-                        #spinmatch-knockout-print-area .min-w-max {
+                        #spinmatch-knockout-print-area #spinmatch-knockout-print > .min-w-max {
+                          display: flex !important;
+                          width: 100% !important;
                           min-width: 0 !important;
+                          justify-content: center !important;
+                          overflow: visible !important;
                         }
-                        #spinmatch-knockout-print-area .relative[style*="900px"] {
-                          transform: scale(0.92);
-                          transform-origin: top left;
+                        #spinmatch-knockout-print-area #spinmatch-knockout-print > .min-w-max > .relative {
+                          height: var(--knockout-print-height) !important;
+                          transform: scale(var(--knockout-print-scale)) !important;
+                          transform-origin: top center !important;
+                          margin-inline: auto !important;
+                        }
+                        #spinmatch-knockout-print-area #spinmatch-knockout-print button {
+                          color: #000 !important;
+                          border-color: #172554 !important;
+                        }
+                        #spinmatch-knockout-print-area #spinmatch-knockout-print svg path {
+                          stroke: #1e3a8a !important;
+                          stroke-width: 2.5 !important;
                         }
                       }
                     `}</style>
@@ -6925,6 +6946,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                         const columnStep = W + COLUMN_GAP;
                         const totalW = LEFT + rounds.length * columnStep - COLUMN_GAP + 24;
                         const totalH = TOP + (ko.bracketSize / 2) * stride + 30;
+                        const printScale = Math.min(1.4, 1020 / totalW, 650 / totalH);
                         const matchY = (r, i) => TOP + ((2 ** r) * (i + 0.5) - 0.5) * stride;
                         const matchX = r => LEFT + r * columnStep;
                         const getName = p => p?.nama || 'Menunggu pemenang';
@@ -6942,7 +6964,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                           </div>
                           <div
                             className="relative"
-                            style={{width:totalW,height:totalH * knockoutZoom,transform:`scale(${knockoutZoom})`,transformOrigin:'top left',touchAction:'pan-x pan-y'}}
+                            style={{width:totalW,height:totalH * knockoutZoom,transform:`scale(${knockoutZoom})`,transformOrigin:'top left',touchAction:'pan-x pan-y','--knockout-print-scale':printScale,'--knockout-print-height':`${totalH * printScale}px`}}
                             onTouchStart={event => {
                               if (event.touches.length !== 2) return;
                               const [first, second] = event.touches;
@@ -6961,7 +6983,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                             }}
                           >
                             <svg className="pointer-events-none absolute inset-0" width={totalW} height={totalH} aria-hidden="true">
-                              <g fill="none" stroke="#64748b" strokeWidth="2" strokeLinejoin="round">
+                              <g fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinejoin="round">
                                 {rounds.slice(0,-1).flatMap((round,r) => round.map((m,i) => {
                                   const x1=matchX(r)+W, x2=matchX(r+1), y1=matchY(r,i)+H/2;
                                   const y2=matchY(r+1,Math.floor(i/2))+H/2;
@@ -6971,7 +6993,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                               </g>
                             </svg>
                             {rounds.map((round,r) => <React.Fragment key={r}>
-                              <div className="absolute text-center text-[11px] font-black text-slate-600" style={{left:matchX(r),top:9,width:W}}>
+                              <div className="absolute text-center text-[11px] font-black text-slate-950" style={{left:matchX(r),top:9,width:W}}>
                                 {round.length===1?'FINAL':round.length===2?'SEMIFINAL':`${round.length*2} BESAR`}
                               </div>
                               {round.map((m,i) => {
@@ -6983,16 +7005,16 @@ const handleUpdatePlayerSubmit = async (e) => {
                                 return <button type="button" key={m.id} disabled={!ready || !canScore}
                                   onClick={()=>ready && canScore && openKnockoutLiveScore({...m,...meta,matchRef:m.id})}
                                   title={ready ? (canScore?'Klik untuk Live Score':'Hanya EO yang dapat memasukkan skor Knockout'):'Menunggu pemain'}
-                                  className={`absolute overflow-hidden rounded-xl border bg-white text-left shadow-sm ${ready&&canScore?'cursor-pointer border-blue-300 hover:border-lime-500 hover:shadow-md':'cursor-default border-slate-200'}`}
+                                  className={`absolute overflow-hidden rounded-xl border-2 bg-white text-left shadow-sm ${ready&&canScore?'cursor-pointer border-blue-700 hover:border-lime-600 hover:shadow-md':'cursor-default border-slate-500'}`}
                                   style={{left:matchX(r),top:matchY(r,i),width:W,height:H}}>
-                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[9px] font-bold ${result?.winner==='player1'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
-                                    <span className="min-w-0 truncate"><span className="block truncate">{getName(p1)}</span><span className="block truncate text-[7px] font-semibold text-slate-500">{p1?.ptm || 'PTM/Club belum diisi'}</span></span><span className="ml-1">{result?.player1Score ?? ''}</span>
+                                  <div className={`flex h-[24px] items-center justify-between border-b border-slate-500 px-2 text-[9px] font-black ${result?.winner==='player1'?'bg-emerald-100 text-emerald-950':'text-slate-950'}`}>
+                                    <span className="min-w-0 truncate"><span className="block truncate">{getName(p1)}</span><span className="block truncate text-[7px] font-bold text-slate-700">{p1?.ptm || 'PTM/Club belum diisi'}</span></span><span className="ml-1">{result?.player1Score ?? ''}</span>
                                   </div>
-                                  <div className={`flex h-[24px] items-center justify-between border-b px-2 text-[9px] font-bold ${result?.winner==='player2'?'bg-emerald-50 text-emerald-800':'text-slate-800'}`}>
-                                    <span className="min-w-0 truncate"><span className="block truncate">{byeRound&&!p2?'BYE':getName(p2)}</span><span className="block truncate text-[7px] font-semibold text-slate-500">{p2?.ptm || (byeRound&&!p2 ? '' : 'PTM/Club belum diisi')}</span></span><span className="ml-1">{result?.player2Score ?? ''}</span>
+                                  <div className={`flex h-[24px] items-center justify-between border-b border-slate-500 px-2 text-[9px] font-black ${result?.winner==='player2'?'bg-emerald-100 text-emerald-950':'text-slate-950'}`}>
+                                    <span className="min-w-0 truncate"><span className="block truncate">{byeRound&&!p2?'BYE':getName(p2)}</span><span className="block truncate text-[7px] font-bold text-slate-700">{p2?.ptm || (byeRound&&!p2 ? '' : 'PTM/Club belum diisi')}</span></span><span className="ml-1">{result?.player2Score ?? ''}</span>
                                   </div>
-                                  <div className="truncate px-2 py-0 text-[7px] font-semibold text-sky-700">{meta.jam} · {meta.meja}</div>
-                                  <div className="truncate border-t border-slate-100 px-2 py-0 text-[7px] font-semibold text-indigo-700" title={`Wasit: ${getScheduledReferee(eventId, meta.meja)}`}>
+                                  <div className="truncate px-2 py-0 text-[7px] font-black text-blue-900">{meta.jam} · {meta.meja}</div>
+                                  <div className="truncate border-t border-slate-300 px-2 py-0 text-[7px] font-black text-violet-900" title={`Wasit: ${getScheduledReferee(eventId, meta.meja)}`}>
                                     Wasit: {getScheduledReferee(eventId, meta.meja)}
                                   </div>
                                 </button>;
@@ -7330,7 +7352,7 @@ const handleUpdatePlayerSubmit = async (e) => {
               ) : settingsSection === 'HOME' ? (
                 <>
                   {isSuperAdmin && <button type="button" onClick={() => setSettingsSection('PRICING')} className="flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 p-5 text-left font-black text-white shadow-lg"><span>Tarif & Pembayaran — Super Admin</span><span>ATUR →</span></button>}
-                  {selectedSettingsEvent && <div className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,.05)]">
+                  {selectedSettingsEvent && <div className="rounded-[24px] border border-slate-100 bg-white p-5 text-center shadow-[0_10px_30px_rgba(15,23,42,.05)]">
                     <div className="text-[10px] font-black uppercase tracking-wide text-slate-400">Event yang diatur</div>
                     <div className="mt-1 text-lg font-black text-slate-950">{selectedSettingsEvent.nama}</div>
                     <div className="mt-1 text-xs font-semibold text-slate-400">{selectedSettingsEvent.tanggal}</div>
@@ -7366,9 +7388,9 @@ const handleUpdatePlayerSubmit = async (e) => {
               ) : settingsSection === 'SUPERVISOR' && (isEO || isSuperAdmin) ? (
                 <div className="space-y-4">
                   <div className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <button type="button" onClick={() => setSettingsSection('HOME')} className="rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
-                      <ShieldCheck className="h-7 w-7 text-blue-700" />
+                  <div className="relative flex items-center justify-center gap-3 text-center">
+                    <button type="button" onClick={() => setSettingsSection('HOME')} className="absolute left-0 rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
+                    <ShieldCheck className="h-7 w-7 shrink-0 text-blue-700" />
                       <div><h3 className="text-lg font-black text-slate-900">Kelola Referee</h3><p className="text-xs text-slate-500">Pengawas pertandingan — berbeda dari Wasit meja</p></div>
                     </div>
                     <div className="mt-5 rounded-xl bg-blue-50 p-4">
@@ -7387,15 +7409,15 @@ const handleUpdatePlayerSubmit = async (e) => {
                   {canManageEvent(selectedSettingsEvent) && <RefereeOnlineAccounts eventItem={selectedSettingsEvent} tableCount={settingsTableCount} onAccountsChanged={setOnlineReferees} />}
 
                   <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
-                    <div className="flex flex-col gap-3 border-b border-slate-100 p-5 md:flex-row md:items-center md:justify-between">
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setSettingsSection('HOME')} className="rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
+                    <div className="flex flex-col items-center gap-3 border-b border-slate-100 p-5 text-center">
+                      <div className="relative flex w-full items-center justify-center">
+                        <button onClick={() => setSettingsSection('HOME')} className="absolute left-0 rounded-xl bg-slate-100 p-2 text-slate-700"><ArrowLeft className="h-4 w-4" /></button>
                         <div>
                           <h3 className="text-sm font-black text-slate-900">Pengaturan Wasit</h3>
                           <p className="text-[10px] text-slate-400">{selectedSettingsEvent.nama} • {settingsTableCount} meja</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap justify-center gap-2">
                         <button onClick={() => setRefereeModalOpen(true)} className="rounded-xl bg-[#071b3b] px-4 py-2.5 text-[10px] font-black text-white hover:bg-[#0a3971]">+ Tambah Wasit</button>
                         <button onClick={saveRefereeAssignments} className="rounded-xl bg-[#8DFF63] px-4 py-2.5 text-[10px] font-black text-[#09243e]">Simpan Penugasan</button>
                       </div>
