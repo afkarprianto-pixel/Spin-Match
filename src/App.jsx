@@ -12,7 +12,7 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck
+  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck, Eye, EyeOff
 } from 'lucide-react';
 
 
@@ -111,8 +111,14 @@ const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => 
   const [nama, setNama] = useState('');
   const [meja, setMeja] = useState('1');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [editingWasit, setEditingWasit] = useState(null);
+  const [editPassword, setEditPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
   const [created, setCreated] = useState(null);
   const [errorText, setErrorText] = useState('');
+  const [noticeText, setNoticeText] = useState('');
 
   const refresh = async () => {
     if (!eventItem?.id) return;
@@ -161,6 +167,52 @@ const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => 
     finally { setSaving(false); }
   };
 
+  const updateWasitPassword = async (e) => {
+    e.preventDefault();
+    if (updatingPassword || !editingWasit || !eventItem?.id) return;
+    setErrorText('');
+    setNoticeText('');
+    if (editPassword.length < 8 || editPassword.length > 128) {
+      setErrorText('Password baru harus terdiri dari 8–128 karakter.');
+      return;
+    }
+    setUpdatingPassword(true);
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Sesi EO tidak ditemukan. Silakan login ulang.');
+      const { data, error } = await supabase.functions.invoke('spinmatch-reset-wasit-password', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          event_id: Number(eventItem.id),
+          wasit_id: editingWasit.id,
+          password: editPassword
+        }
+      });
+      if (error || !data?.success) {
+        let message = data?.error || error?.message || 'Gagal memperbarui password Wasit.';
+        if (error?.context?.json) {
+          try {
+            const detail = await error.context.json();
+            message = detail?.error || message;
+          } catch (parseError) {
+            console.warn('Gagal membaca detail error reset password Wasit:', parseError);
+          }
+        }
+        throw new Error(message);
+      }
+      setNoticeText(`Password ${editingWasit.nama_wasit || 'Wasit'} berhasil diperbarui. Berikan password baru langsung kepada Wasit.`);
+      setEditingWasit(null);
+      setEditPassword('');
+      setShowEditPassword(false);
+    } catch (err) {
+      setErrorText(err?.message || 'Gagal memperbarui password Wasit.');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   return (
     <div className="overflow-hidden rounded-[24px] border border-violet-100 bg-white shadow-sm">
       <div className="border-b border-violet-100 bg-violet-50 p-5">
@@ -177,11 +229,17 @@ const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => 
           </select>
         </label>
         <label className="text-xs font-bold text-slate-700">Password dari EO
-          <input required minLength={8} maxLength={128} type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimal 8 karakter" className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm" />
+          <span className="relative mt-1 block">
+            <input required minLength={8} maxLength={128} type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimal 8 karakter" className="w-full rounded-xl border border-slate-200 p-3 pr-11 text-sm" />
+            <button type="button" aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'} onClick={() => setShowPassword(visible => !visible)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-violet-700">
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </span>
         </label>
         <button type="submit" disabled={saving} className="self-end rounded-xl bg-violet-700 p-3 text-sm font-black text-white disabled:opacity-50">{saving ? 'Membuat...' : '+ Buat Akun Login'}</button>
       </form>
       {errorText && <p role="alert" className="mx-5 mb-4 rounded-lg bg-red-50 p-3 text-xs font-bold text-red-700">{errorText}</p>}
+      {noticeText && <p role="status" className="mx-5 mb-4 rounded-lg bg-emerald-50 p-3 text-xs font-bold text-emerald-800">{noticeText}</p>}
       {created && <div className="mx-5 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
         <div className="font-black">Akun berhasil dibuat — berikan data login ini kepada wasit</div>
         <div className="mt-2 break-all rounded-lg border border-emerald-200 bg-white p-3">
@@ -196,7 +254,20 @@ const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => 
       <div className="border-t border-slate-100 p-5">
         <div className="mb-2 flex items-center justify-between"><h5 className="text-xs font-black">Daftar Akun Online</h5><button type="button" onClick={refresh} className="text-xs font-bold text-violet-700">Muat ulang</button></div>
         {loading ? <p className="text-xs text-slate-500">Memuat...</p> : rows.length === 0 ? <p className="text-xs text-slate-500">Belum ada akun login wasit untuk event ini.</p> :
-          <div className="overflow-x-auto"><table className="w-full min-w-[460px] text-left text-xs"><thead><tr className="border-b"><th className="py-2">Kode</th><th>Nama</th><th>Meja</th><th>Status</th></tr></thead><tbody>{rows.map(r => <tr key={r.id} className="border-b"><td className="py-2 font-bold">{r.kode_wasit}</td><td>{r.nama_wasit}</td><td>{r.nomor_meja}</td><td>{r.status}</td></tr>)}</tbody></table></div>}
+          <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs"><thead><tr className="border-b"><th className="py-2">Kode</th><th>Nama</th><th>Meja</th><th>Status</th><th>Aksi</th></tr></thead><tbody>{rows.map(r => <React.Fragment key={r.id}>
+            <tr className="border-b"><td className="py-2 font-bold">{r.kode_wasit}</td><td>{r.nama_wasit}</td><td>{r.nomor_meja}</td><td>{r.status}</td><td><button type="button" onClick={() => { setEditingWasit(current => current?.id === r.id ? null : r); setEditPassword(''); setShowEditPassword(false); setErrorText(''); setNoticeText(''); }} className="rounded-lg border border-violet-200 px-2.5 py-1.5 font-bold text-violet-700 hover:bg-violet-50">{editingWasit?.id === r.id ? 'Batal' : 'Edit Password'}</button></td></tr>
+            {editingWasit?.id === r.id && <tr className="border-b bg-violet-50/60"><td colSpan={5} className="p-3"><form onSubmit={updateWasitPassword} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <label className="flex-1 text-xs font-bold text-slate-700">Password baru untuk {r.nama_wasit}
+                <span className="relative mt-1 block">
+                  <input required minLength={8} maxLength={128} type={showEditPassword ? 'text' : 'password'} autoComplete="new-password" value={editPassword} onChange={event => setEditPassword(event.target.value)} placeholder="Minimal 8 karakter" className="w-full rounded-lg border border-slate-200 bg-white p-2.5 pr-10 text-sm" />
+                  <button type="button" aria-label={showEditPassword ? 'Sembunyikan password baru' : 'Tampilkan password baru'} onClick={() => setShowEditPassword(visible => !visible)} className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+                    {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </span>
+              </label>
+              <button type="submit" disabled={updatingPassword} className="rounded-lg bg-violet-700 px-4 py-2.5 text-xs font-black text-white disabled:opacity-50">{updatingPassword ? 'Menyimpan...' : 'Simpan Password Baru'}</button>
+            </form></td></tr>}
+          </React.Fragment>)}</tbody></table></div>}
         <p className="mt-3 text-[10px] text-slate-500">Untuk login, wasit memakai ID Login yang ditampilkan saat akun dibuat dan password dari EO. Kode Wasit pada daftar ini hanya sebagai identitas.</p>
       </div>
     </div>
@@ -429,7 +500,7 @@ const SignaturePad = ({ value, onChange, label }) => {
           onPointerMove={draw}
           onPointerUp={stopDrawing}
           onPointerCancel={stopDrawing}
-          className="block h-[58px] w-full touch-none cursor-crosshair"
+          className="block h-[46px] w-full touch-none cursor-crosshair sm:h-[54px]"
         />
       </div>
       <button
@@ -1524,7 +1595,6 @@ const AuthenticatedContent = () => {
   // Ref dipakai agar perubahan langsung tersedia tanpa menunggu render React.
   const activeVoiceSetRef = useRef(0);
   const [activeVoiceSet, setActiveVoiceSet] = useState(0);
-  const [showLiveSignatures, setShowLiveSignatures] = useState(false);
 
   // Event terpilih harus didefinisikan sebelum dipakai oleh dependency useEffect.
   const selectedEventItem = events.find(e => String(e.id) === String(selectedEventIdForReg));
@@ -7572,7 +7642,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           </section>
         </div>
       ) : (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/70 p-0 backdrop-blur-md sm:p-3">
+        <div className="spinmatch-live-overlay fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/70 p-0 backdrop-blur-md sm:p-3">
           <div className="spinmatch-live-compact flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden rounded-none border border-slate-200 bg-white shadow-2xl sm:h-[min(96vh,720px)] sm:rounded-[28px]">
             <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-red-600 via-red-500 to-orange-500 px-2.5 py-1.5 text-white sm:px-5 sm:py-1.5">
               <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full border-[16px] border-white/10" />
@@ -7677,7 +7747,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
   /* Android / HP: Live Score muat lebar layar tanpa merusak layout desktop */
   @media (max-width: 639px) {
-    .spinmatch-live-compact {
+    .spinmatch-live-overlay .spinmatch-live-compact {
       width: 100vw !important;
       height: 100dvh !important;
       max-height: 100dvh !important;
@@ -7731,15 +7801,71 @@ const handleUpdatePlayerSubmit = async (e) => {
       padding: 6px 8px !important;
       font-size: 8px !important;
     }
-    .spinmatch-signature-popup {
-      align-items: flex-start !important;
-      overflow-y: auto !important;
-      padding: 8px !important;
+  }
+
+  @media print {
+    @page { size: A4 portrait; margin: 8mm; }
+    html,
+    body,
+    #root { width: 100% !important; height: auto !important; overflow: visible !important; }
+    body .spinmatch-app {
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
     }
-    .spinmatch-signature-popup-card {
-      margin: auto 0 !important;
-      padding: 10px !important;
+    body * { visibility: hidden !important; }
+    .spinmatch-live-overlay {
+      position: absolute !important;
+      inset: 0 auto auto 0 !important;
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      background: #fff !important;
     }
+    .spinmatch-live-compact,
+    .spinmatch-live-compact * { visibility: visible !important; }
+    .spinmatch-live-compact {
+      position: relative !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      max-width: none !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: #fff !important;
+      color: #000 !important;
+      box-shadow: none !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .spinmatch-live-compact *,
+    .spinmatch-live-compact *::before,
+    .spinmatch-live-compact *::after {
+      color: #000 !important;
+      border-color: #000 !important;
+      background-color: #fff !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    .spinmatch-live-overlay .spinmatch-live-compact > div:last-child {
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+    }
+    .spinmatch-live-footer,
+    .spinmatch-live-compact button,
+    .spinmatch-live-compact input[type="button"] {
+      display: none !important;
+    }
+    .spinmatch-live-compact canvas { border: 1px solid #000 !important; }
+    .spinmatch-live-signatures { break-inside: avoid; }
   }
 `}</style>
                     <Activity className="h-4 w-4 text-red-500" /> Input Skor Set (Kotak yang sama: Tap 1x +1 • Tap 2x -1 • Ketik Manual • Suara)
@@ -7847,7 +7973,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="text-[10px] font-medium text-slate-500">{liveScoreMatch.pool} - {liveScoreMatch.matchRef}</div>
               </div>
               <div className="mb-2">
-                                            <div className="mb-1 grid grid-cols-2 gap-1.5">
+                <div className="mb-1 grid grid-cols-2 gap-1.5">
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-center">
                   <div className="text-[8px] font-black uppercase text-emerald-600">Pemenang</div>
                   <div className="text-[10px] font-black text-emerald-800">{automaticWinnerPlayer?.nama || '-'}</div>
@@ -7859,46 +7985,30 @@ const handleUpdatePlayerSubmit = async (e) => {
               </div>
               </div>
 
-              {showLiveSignatures && (
-                <div className="spinmatch-signature-popup fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
-                     onMouseDown={(e) => { if (e.target === e.currentTarget) setShowLiveSignatures(false); }}>
-                  <div className="spinmatch-signature-popup-card w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
-                       onMouseDown={(e) => e.stopPropagation()}>
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-black text-slate-900">Tanda Tangan Pertandingan</div>
-                        <div className="text-[10px] font-medium text-slate-500">Pemenang, pemain kalah, dan wasit.</div>
-                      </div>
-                      <button type="button" onClick={() => setShowLiveSignatures(false)}
-                        className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600 hover:bg-slate-200">✕</button>
+              <section className="spinmatch-live-signatures mb-2 rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+                <div className="mb-2 text-center">
+                  <h4 className="text-[10px] font-black uppercase tracking-wide text-slate-800 sm:text-xs">Tanda Tangan</h4>
+                  <p className="text-[8px] text-slate-500 sm:text-[10px]">Tanda tangan pemain dan wasit di kotak masing-masing</p>
+                </div>
+                <div className="mx-auto grid max-w-3xl grid-cols-3 gap-1.5 sm:gap-3">
+                  <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-1 sm:p-2">
+                    <div className="mb-1 min-h-7 text-center text-[8px] font-black leading-tight text-slate-700 sm:min-h-0 sm:text-[10px]">
+                      Pemenang<br className="sm:hidden" />: {automaticWinnerPlayer?.nama || '-'}
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div>
-                        <div className="mb-1 text-center text-[10px] font-black text-emerald-700">
-                          Pemenang: {automaticWinnerPlayer?.nama || '-'}
-                        </div>
-                        <SignaturePad label="Pemenang" value={signatureWinner} onChange={setSignatureWinner} />
-                      </div>
-                      <div>
-                        <div className="mb-1 text-center text-[10px] font-black text-slate-700">
-                          Pemain Kalah: {automaticLoserPlayer?.nama || '-'}
-                        </div>
-                        <SignaturePad label="Pemain Kalah" value={signatureLoser} onChange={setSignatureLoser} />
-                      </div>
-                      <div>
-                        <div className="mb-1 text-center text-[10px] font-black text-blue-700">Wasit</div>
-                        <SignaturePad label="Wasit" value={signatureReferee} onChange={setSignatureReferee} />
-                      </div>
+                    <SignaturePad label="Tanda tangan" value={signatureWinner} onChange={setSignatureWinner} />
+                  </div>
+                  <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-1 sm:p-2">
+                    <div className="mb-1 min-h-7 text-center text-[8px] font-black leading-tight text-slate-700 sm:min-h-0 sm:text-[10px]">
+                      Pemain kalah<br className="sm:hidden" />: {automaticLoserPlayer?.nama || '-'}
                     </div>
-                    <div className="mt-3 flex justify-end">
-                      <button type="button" onClick={() => setShowLiveSignatures(false)}
-                        className="rounded-lg bg-blue-600 px-5 py-2 text-[10px] font-black text-white hover:bg-blue-700">
-                        Selesai
-                      </button>
-                    </div>
+                    <SignaturePad label="Tanda tangan" value={signatureLoser} onChange={setSignatureLoser} />
+                  </div>
+                  <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-1 sm:p-2">
+                    <div className="mb-1 min-h-7 text-center text-[8px] font-black leading-tight text-slate-700 sm:min-h-0 sm:text-[10px]">Wasit</div>
+                    <SignaturePad label="Tanda tangan" value={signatureReferee} onChange={setSignatureReferee} />
                   </div>
                 </div>
-              )}
+              </section>
 
               <div className="spinmatch-live-footer sticky bottom-0 z-10 flex justify-center border-t border-slate-200 bg-white py-1.5">
                 <div className="flex flex-wrap items-center justify-center gap-2">
@@ -7907,9 +8017,6 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </button>
                   <button type="button" onClick={handleDeleteMatch} className="flex items-center justify-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-red-600">
                     <Trash2 className="h-3.5 w-3.5" /> Hapus Match
-                  </button>
-                  <button type="button" onClick={() => setShowLiveSignatures(true)} className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-blue-700">
-                    ✍ Tanda Tangan
                   </button>
                   <button type="button" onClick={handleLiveScoreSubmit} className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-blue-700">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Simpan & Tutup
