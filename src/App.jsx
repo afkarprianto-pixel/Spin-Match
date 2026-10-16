@@ -5429,19 +5429,21 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="relative mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#071b3b] via-[#0a3971] to-[#0874c9] p-5 text-white shadow-[0_12px_30px_rgba(7,27,59,.18)]">
               <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
               <div className="pointer-events-none absolute right-8 top-1/2 h-[2px] w-44 -rotate-[18deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
-              <div className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setActiveView('DASHBOARD')} className="rounded-xl border border-white/15 bg-white/10 p-2 hover:bg-white/20">
+              <div className="relative z-10 flex flex-col items-center gap-4">
+                <div className="relative flex w-full items-center justify-center">
+                  <button onClick={() => setActiveView('DASHBOARD')} className="absolute left-0 rounded-xl border border-white/15 bg-white/10 p-2 hover:bg-white/20">
                     <ArrowLeft className="h-5 w-5" />
                   </button>
-                  <div>
+                  <div className="px-10 text-center">
                     <h2 className="text-lg font-black">Peringkat & Poin</h2>
                     <p className="text-xs text-blue-100/75">Peringkat Event dan peringkat keseluruhan SpinMatch per divisi</p>
                   </div>
                 </div>
-                <div className="flex rounded-xl border border-white/15 bg-white/10 p-1">
-                  <button onClick={() => setRankingMode('EVENT')} className={`rounded-lg px-3 py-2 text-[10px] font-black ${rankingMode === 'EVENT' ? 'bg-[#8DFF63] text-[#09243e]' : 'text-white/80'}`}>Peringkat Event</button>
-                  <button onClick={() => setRankingMode('GLOBAL')} className={`rounded-lg px-3 py-2 text-[10px] font-black ${rankingMode === 'GLOBAL' ? 'bg-[#8DFF63] text-[#09243e]' : 'text-white/80'}`}>Peringkat SpinMatch</button>
+                <div className="flex w-full justify-center">
+                  <div className="flex max-w-full rounded-xl border border-white/15 bg-white/10 p-1">
+                    <button onClick={() => setRankingMode('EVENT')} className={`whitespace-nowrap rounded-lg px-3 py-2 text-[10px] font-black ${rankingMode === 'EVENT' ? 'bg-[#8DFF63] text-[#09243e]' : 'text-white/80'}`}>Peringkat Event</button>
+                    <button onClick={() => setRankingMode('GLOBAL')} className={`whitespace-nowrap rounded-lg px-3 py-2 text-[10px] font-black ${rankingMode === 'GLOBAL' ? 'bg-[#8DFF63] text-[#09243e]' : 'text-white/80'}`}>Peringkat SpinMatch</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5771,15 +5773,15 @@ const handleUpdatePlayerSubmit = async (e) => {
                   setRankingMode('EVENT');
                   setActiveView('RANKING');
                 }}
-                className="flex items-center gap-2 rounded-xl bg-[#8DFF63] px-4 py-2.5 text-xs font-black text-[#09243e] shadow-lg shadow-lime-950/20 transition hover:-translate-y-0.5 hover:bg-[#a2ff80]"
+                className="flex h-9 w-[145px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#8DFF63] px-2 text-[10px] font-black text-[#09243e] shadow-lg shadow-lime-950/20 transition hover:-translate-y-0.5 hover:bg-[#a2ff80]"
               >
-                <Medal className="h-4 w-4" /> Peringkat &amp; Poin
+                <Medal className="h-4 w-4 shrink-0" /> Peringkat &amp; Poin
               </button>
               {isPublic ? (
                 <button
                   type="button"
                   onClick={() => setDashboardEventBrowser('ALL')}
-                  className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-black text-white backdrop-blur-md transition hover:bg-white/20"
+                  className="flex h-9 w-[145px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-white/25 bg-white/10 px-2 text-[10px] font-black text-white backdrop-blur-md transition hover:bg-white/20"
                 >
                   <FileText className="h-4 w-4 text-cyan-200" /> Semua Event
                 </button>
@@ -5790,9 +5792,9 @@ const handleUpdatePlayerSubmit = async (e) => {
                     selectDashboardEvent(dashboardActiveEvent);
                     setActiveView('LIVE_SCORE');
                   }}
-                  className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-black text-white backdrop-blur-md transition hover:bg-white/20"
+                  className="flex h-9 w-[145px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-gradient-to-r from-[#6857d9] to-[#9581ef] px-2 text-[10px] font-black text-white shadow-md backdrop-blur-md transition hover:brightness-110"
                 >
-                  <Radio className="h-4 w-4 text-red-300" /> Live Score
+                  <Radio className="h-4 w-4 shrink-0 text-white" /> Live Score
                 </button>
               )}
             </div>
@@ -5803,7 +5805,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             <img
               src={heroPingpong}
               alt="SpinMatch Table Tennis"
-              className="relative z-10 w-[300px] max-w-full object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.24)] lg:w-[330px] xl:w-[350px]"
+              className="relative z-10 w-[300px] max-w-full -translate-y-2 object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.24)] md:-translate-y-4 lg:w-[330px] xl:w-[350px]"
             />
           </div>
         </div>
@@ -7156,28 +7158,28 @@ const handleUpdatePlayerSubmit = async (e) => {
               ) : null}
             </div>
           ) : activeView === 'RANKING' ? (
-            <div className="mx-auto w-full max-w-[1500px] space-y-4">
-              <div className="rounded-[24px] border border-slate-100 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,.05)]">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <div className="sm-ranking-print-area mx-auto w-full max-w-[1500px] space-y-3">
+              <div className="rounded-[24px] border border-slate-100 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,.05)] sm:p-4">
+                <div className="flex flex-wrap items-end gap-2">
                   {rankingMode === 'EVENT' && (
-                    <div className="min-w-0 flex-1">
-                      <label className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">Pilih Event</label>
+                    <div className="min-w-[180px] flex-1">
+                      <label className="mb-1 block text-[9px] font-black uppercase tracking-wide text-slate-400">Pilih Event</label>
                       <select
                         value={selectedEventIdForRanking}
                         onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-500"
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-bold outline-none focus:border-blue-500"
                       >
                         {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nama} • {ev.tanggal}</option>)}
                       </select>
                     </div>
                   )}
 
-                  <div className="min-w-0 flex-1">
-                    <label className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">Pilih Divisi</label>
+                  <div className="min-w-[140px] flex-1">
+                    <label className="mb-1 block text-[9px] font-black uppercase tracking-wide text-slate-400">Pilih Divisi</label>
                     <select
                       value={effectiveRankingDivision}
                       onChange={(e) => setSelectedDivisionForRanking(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-500"
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-bold outline-none focus:border-blue-500"
                     >
                       {rankingDivisionOptions.length === 0
                         ? <option value="">Belum ada divisi</option>
@@ -7185,70 +7187,77 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </select>
                   </div>
 
-                  <div className="rounded-xl bg-blue-50 px-4 py-2.5">
-                    <div className="text-[9px] font-black uppercase text-blue-500">Mode</div>
-                    <div className="text-xs font-black text-[#0a3971]">
+                  <div className="rounded-lg bg-blue-50 px-3 py-1.5">
+                    <div className="text-[8px] font-black uppercase text-blue-500">Mode</div>
+                    <div className="whitespace-nowrap text-[10px] font-black text-[#0a3971]">
                       {rankingMode === 'EVENT' ? 'Event Tertentu' : 'Seluruh Event SpinMatch'}
                     </div>
+                  </div>
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <button type="button" onClick={() => document.getElementById('sm-ranking-table')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="inline-flex h-8 items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 text-[10px] font-black text-blue-800 hover:bg-blue-100">
+                      <Eye className="h-3.5 w-3.5" /> Preview
+                    </button>
+                    <button type="button" onClick={() => window.print()} className="inline-flex h-8 items-center gap-1 rounded-lg bg-[#6857d9] px-2.5 text-[10px] font-black text-white hover:bg-[#5746c5]">
+                      <Printer className="h-3.5 w-3.5" /> Print
+                    </button>
                   </div>
                 </div>
               </div>
 
               <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,.05)]">
-                <div className="flex items-center justify-between border-b border-slate-100 p-5">
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">{effectiveRankingDivision || 'Pilih Divisi'}</h3>
-                    <p className="mt-1 text-[10px] text-slate-400">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 sm:px-4">
+                  <div className="min-w-0">
+                    <h3 className="whitespace-nowrap text-xs font-black text-slate-900">
                       {rankingMode === 'EVENT'
-                        ? selectedRankingEvent?.nama || '-'
-                        : 'Akumulasi seluruh event yang menggunakan SpinMatch'}
-                    </p>
+                        ? effectiveRankingDivision || 'Pilih Divisi'
+                        : `Akumulasi Seluruh Event yang menggunakan SpinMatch. (Total ${rankingRows.length} Pemain)`}
+                    </h3>
+                    {rankingMode === 'EVENT' && <p className="mt-0.5 whitespace-nowrap text-[9px] text-slate-400">{selectedRankingEvent?.nama || '-'}</p>}
+                    {rankingMode === 'GLOBAL' && <p className="mt-0.5 text-[9px] font-semibold text-slate-500">Divisi: {effectiveRankingDivision || 'Semua'}</p>}
                   </div>
-                  <div className="rounded-full bg-[#071b3b] px-3 py-1.5 text-[9px] font-black text-white">
-                    {rankingRows.length} Pemain
-                  </div>
+                  {rankingMode === 'EVENT' && <div className="rounded-full bg-[#071b3b] px-2.5 py-1 text-[9px] font-black text-white">{rankingRows.length} Pemain</div>}
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px]">
-                    <thead className="bg-slate-50 text-[9px] uppercase tracking-wide text-slate-400">
+                <div id="sm-ranking-table" className="max-h-[60vh] min-h-[240px] overflow-auto">
+                  <table className="w-full min-w-[760px] whitespace-nowrap">
+                    <thead className="text-[9px] uppercase tracking-wide text-slate-400">
                       <tr>
-                        <th className="px-5 py-3 text-left">Rank</th>
-                        <th className="px-4 py-3 text-left">Pemain</th>
-                        <th className="px-4 py-3 text-left">PTM / Club</th>
-                        {rankingMode === 'GLOBAL' && <th className="px-4 py-3 text-center">Event</th>}
-                        <th className="px-4 py-3 text-center">Main</th>
-                        <th className="px-4 py-3 text-center">Menang</th>
-                        <th className="px-4 py-3 text-center">Kalah</th>
-                        <th className="px-4 py-3 text-center">Set +/-</th>
-                        <th className="px-4 py-3 text-center">Rasio Set</th>
-                        <th className="px-4 py-3 text-center">Rasio Bola</th>
-                        <th className="px-5 py-3 text-right">Poin</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left">Rank</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left">Pemain</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left">PTM / Club</th>
+                        {rankingMode === 'GLOBAL' && <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Event</th>}
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Main</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Menang</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Kalah</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Set +/-</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Rasio Set</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-center">Rasio Bola</th>
+                        <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-right">Poin</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {rankingRows.length === 0 ? (
-                        <tr><td colSpan="11" className="px-5 py-14 text-center text-xs font-bold text-slate-400">Belum ada hasil pertandingan untuk divisi ini.</td></tr>
+                        <tr><td colSpan={rankingMode === 'GLOBAL' ? 12 : 11} className="px-5 py-8 text-center text-xs font-bold text-slate-400">Belum ada hasil pertandingan untuk divisi ini.</td></tr>
                       ) : rankingRows.map(row => (
                         <tr key={`${row.id || row.nama}-${row.rank}`} className="hover:bg-slate-50">
-                          <td className="px-5 py-3">
-                            <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black ${
+                          <td className="px-3 py-1.5">
+                            <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-black ${
                               row.rank === 1 ? 'bg-amber-100 text-amber-700' :
                               row.rank === 2 ? 'bg-slate-200 text-slate-700' :
                               row.rank === 3 ? 'bg-orange-100 text-orange-700' :
                               'bg-blue-50 text-blue-700'
                             }`}>{row.rank}</span>
                           </td>
-                          <td className="px-4 py-3 text-xs font-black text-slate-900">{row.nama}</td>
-                          <td className="px-4 py-3 text-[10px] font-semibold text-slate-500">{row.ptm}</td>
-                          {rankingMode === 'GLOBAL' && <td className="px-4 py-3 text-center text-xs font-bold">{row.eventCount}</td>}
-                          <td className="px-4 py-3 text-center text-xs font-bold">{row.main}</td>
-                          <td className="px-4 py-3 text-center text-xs font-black text-emerald-600">{row.menang}</td>
-                          <td className="px-4 py-3 text-center text-xs font-black text-rose-500">{row.kalah}</td>
-                          <td className="px-4 py-3 text-center text-xs font-bold">{row.setMenang}–{row.setKalah}</td>
-                          <td className="px-4 py-3 text-center text-xs font-bold">{row.setKalah ? (row.setMenang / row.setKalah).toFixed(3) : row.setMenang ? '∞' : '-'}</td>
-                          <td className="px-4 py-3 text-center text-xs font-bold">{row.bolaKalah ? (row.bolaMenang / row.bolaKalah).toFixed(3) : row.bolaMenang ? '∞' : '-'}</td>
-                          <td className="px-5 py-3 text-right text-sm font-black text-[#0a3971]">{row.poin}</td>
+                          <td className="px-3 py-1.5 text-[11px] font-black text-slate-900">{row.nama}</td>
+                          <td className="px-3 py-1.5 text-[10px] font-semibold text-slate-500">{row.ptm}</td>
+                          {rankingMode === 'GLOBAL' && <td className="px-3 py-1.5 text-center text-[10px] font-bold">{row.eventCount}</td>}
+                          <td className="px-3 py-1.5 text-center text-[10px] font-bold">{row.main}</td>
+                          <td className="px-3 py-1.5 text-center text-[10px] font-black text-emerald-600">{row.menang}</td>
+                          <td className="px-3 py-1.5 text-center text-[10px] font-black text-rose-500">{row.kalah}</td>
+                          <td className="px-3 py-1.5 text-center text-[10px] font-bold">{row.setMenang}–{row.setKalah}</td>
+                          <td className="px-3 py-1.5 text-center text-[10px] font-bold">{row.setKalah ? (row.setMenang / row.setKalah).toFixed(3) : row.setMenang ? '∞' : '-'}</td>
+                          <td className="px-3 py-1.5 text-center text-[10px] font-bold">{row.bolaKalah ? (row.bolaMenang / row.bolaKalah).toFixed(3) : row.bolaMenang ? '∞' : '-'}</td>
+                          <td className="px-3 py-1.5 text-right text-xs font-black text-[#0a3971]">{row.poin}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -7259,6 +7268,34 @@ const handleUpdatePlayerSubmit = async (e) => {
                   Rasio = total set menang ÷ set kalah; rasio bola = total poin bola menang ÷ poin bola kalah. Poin ranking SpinMatch sementara: menang 3, kalah 0 (bukan Match Point klasemen ITTF).
                 </div>
               </div>
+              <style>{`
+                @media print {
+                  @page { size: landscape; margin: 8mm; }
+                  body * { visibility: hidden !important; }
+                  .sm-ranking-print-area,
+                  .sm-ranking-print-area * { visibility: visible !important; }
+                  .sm-ranking-print-area {
+                    position: absolute !important;
+                    inset: 0 auto auto 0 !important;
+                    width: 100% !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    overflow: visible !important;
+                    background: #fff !important;
+                    color: #000 !important;
+                  }
+                  .sm-ranking-print-area button { display: none !important; }
+                  .sm-ranking-print-area,
+                  .sm-ranking-print-area > div,
+                  .sm-ranking-print-area #sm-ranking-table {
+                    max-height: none !important;
+                    min-height: 0 !important;
+                    overflow: visible !important;
+                    box-shadow: none !important;
+                  }
+                  .sm-ranking-print-area thead th { position: static !important; }
+                }
+              `}</style>
             </div>
 
           ) : activeView === 'SETTINGS' ? (
