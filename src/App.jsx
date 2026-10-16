@@ -5476,7 +5476,7 @@ const handleUpdatePlayerSubmit = async (e) => {
           )}
 
           {activeView === 'REGISTRATION' && (
-            <div className="sm-mobile-page-header p-5 rounded-3xl border border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white">
+            <div className={`sm-mobile-page-header p-5 rounded-3xl border border-white/10 shadow-xs flex gap-4 mt-4 relative overflow-hidden bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] text-white ${isPublic ? 'flex-col items-center justify-center text-center' : 'flex-col items-start justify-between md:flex-row md:items-center'}`}>
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/15 blur-3xl" />
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
@@ -5622,18 +5622,18 @@ const handleUpdatePlayerSubmit = async (e) => {
                 <div className="absolute right-[12%] top-1/2 h-[2px] w-52 -rotate-[14deg] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                 <div className="absolute left-[34%] -top-10 h-24 w-52 rotate-[8deg] rounded-full bg-cyan-200/10 blur-3xl" />
               </div>
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <button onClick={() => setActiveView('DASHBOARD')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer text-blue-50" title="Kembali ke Dashboard">
+              <div className={`relative flex items-center gap-3 w-full ${isPublic ? 'justify-center' : 'md:w-auto'}`}>
+                <button onClick={() => setActiveView('DASHBOARD')} className={`p-2 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer text-blue-50 ${isPublic ? 'absolute left-0' : ''}`} title="Kembali ke Dashboard">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div>
+                <div className={isPublic ? 'px-10' : ''}>
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Radio className="w-5 h-5 text-red-600" /> Live Skor Pertandingan
                   </h2>
                   <p className="text-xs text-blue-100/70">{isPublic ? 'Pantau skor pertandingan — hanya lihat' : 'Input skor real-time untuk dilihat publik'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+              <div className={`flex items-center gap-3 w-full flex-wrap ${isPublic ? 'justify-center' : 'justify-end md:w-auto'}`}>
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl border border-white/20">
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
@@ -7060,16 +7060,16 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="sm-live space-y-6">
               {selectedLiveEvent && (
                 <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-3xl p-6">
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
+                  <div className={`flex flex-wrap gap-4 ${isPublic ? 'flex-col items-center justify-center text-center' : 'items-center justify-between'}`}>
+                    <div className={isPublic ? 'text-center' : ''}>
+                      <div className={`flex items-center gap-2 mb-1 ${isPublic ? 'justify-center' : ''}`}>
                         <Radio className="w-5 h-5 text-red-600" />
                         <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Live Skor</span>
                       </div>
                       <h2 className="text-xl font-black text-slate-900">{selectedLiveEvent.nama}</h2>
                       <p className="text-xs text-slate-600 mt-1">{selectedLiveEvent.tanggal}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className={`flex items-center gap-3 ${isPublic ? 'justify-center' : ''}`}>
                       <div className="text-center px-4 py-2 bg-white rounded-2xl border border-red-200 shadow-sm">
                         <div className="text-xs font-bold text-slate-500">Total Match</div>
                         <div className="text-2xl font-black text-red-700">{liveScoreRows.filter(r => r.type === 'player' && r.showMatch).length}</div>
@@ -7084,23 +7084,23 @@ const handleUpdatePlayerSubmit = async (e) => {
               )}
               {selectedLiveEvent && liveScorePoolData && liveScoreRows.length > 0 ? (
                 <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-                  <div className="p-4 bg-slate-50 border-b border-slate-200">
-                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <div className={`p-4 bg-slate-50 border-b border-slate-200 ${isPublic ? 'text-center' : ''}`}>
+                    <h3 className={`text-sm font-bold text-slate-700 flex items-center gap-2 ${isPublic ? 'justify-center' : ''}`}>
                       <Radio className="w-4 h-4 text-red-500" /> {isPublic ? 'Pantau Skor Pertandingan' : 'Pilih Match untuk Input Skor'}
                     </h3>
-                    {isPublic ? <div className="mt-3 flex flex-wrap items-center gap-2"><label htmlFor="public-live-table" className="text-xs font-bold text-slate-700">Pilih meja:</label><select id="public-live-table" value={publicLiveTable} onChange={e => setPublicLiveTable(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800"><option value="ALL">Semua Meja</option>{Array.from({ length: Math.max(1, Number(selectedLiveEvent?.jumlahMeja || 4)) }, (_, i) => <option key={i+1} value={String(i+1)}>Meja {i+1}</option>)}</select><span className="text-xs text-slate-500">Hanya melihat, tidak dapat mengubah skor.</span></div> : <p className="text-xs text-slate-500 mt-1">Klik pada baris match untuk membuka form Live Skor</p>}
+                    {isPublic ? <div className="mt-3 flex flex-wrap items-center justify-center gap-2"><label htmlFor="public-live-table" className="text-xs font-bold text-slate-700">Pilih meja:</label><select id="public-live-table" value={publicLiveTable} onChange={e => setPublicLiveTable(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800"><option value="ALL">Semua Meja</option>{Array.from({ length: Math.max(1, Number(selectedLiveEvent?.jumlahMeja || 4)) }, (_, i) => <option key={i+1} value={String(i+1)}>Meja {i+1}</option>)}</select><span className="text-xs text-slate-500">Hanya melihat, tidak dapat mengubah skor.</span></div> : <p className="text-xs text-slate-500 mt-1">Klik pada baris match untuk membuka form Live Skor</p>}
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs border-collapse">
+                    <table className={`w-full text-xs border-collapse ${isPublic ? 'min-w-max whitespace-nowrap' : ''}`}>
                       <thead>
                         <tr className="bg-slate-100 border-2 border-slate-300">
-                          <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Pool</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Nama Pemain</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Club/PTM</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Match</th>
-                          <th className="py-2 px-3 text-center font-bold text-slate-700 border border-slate-300">Jam Main</th>
-                          <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Meja</th>
-                          <th className="py-2 px-2 text-center font-bold text-slate-700 border border-slate-300">Status</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-2'} text-center font-bold text-slate-700 border border-slate-300`}>Pool</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} text-center font-bold text-slate-700 border border-slate-300`}>Nama Pemain</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} text-center font-bold text-slate-700 border border-slate-300`}>Club/PTM</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} text-center font-bold text-slate-700 border border-slate-300`}>Match</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} text-center font-bold text-slate-700 border border-slate-300`}>Jam Main</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-2'} text-center font-bold text-slate-700 border border-slate-300`}>Meja</th>
+                          <th className={`${isPublic ? 'py-1 px-2' : 'py-2 px-2'} text-center font-bold text-slate-700 border border-slate-300`}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -7108,12 +7108,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                           if (row.type === 'pool_header') {
                             return (
                               <tr key={index} className="bg-slate-50">
-                                <td colSpan="7" className="py-2 px-2 font-bold text-slate-900 border border-slate-300 text-left">{row.pool}</td>
+                                <td colSpan="7" className={`${isPublic ? 'py-1 px-2 whitespace-nowrap' : 'py-2 px-2'} font-bold text-slate-900 border border-slate-300 text-left`}>{row.pool}</td>
                               </tr>
                             );
                           } else if (row.type === 'empty_row') {
                             return (
-                              <tr key={index} className="h-4">
+                              <tr key={index} className={isPublic ? 'h-2' : 'h-4'}>
                                 <td colSpan="7" className="border-0"></td>
                               </tr>
                             );
@@ -7123,19 +7123,19 @@ const handleUpdatePlayerSubmit = async (e) => {
                             const statusColor = hasResult ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
                             return (
                               <tr key={index} className={`cursor-pointer transition hover:bg-slate-50 ${hasResult ? 'bg-emerald-50/30' : ''}`} onClick={() => isPublic ? openPublicLiveScore(row, selectedLiveEvent?.id) : openLiveScore(row)}>
-                                <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-900">{row.playerCode}</td>
-                                <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-900">
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-2'} border border-slate-300 text-center font-bold text-slate-900`}>{row.playerCode}</td>
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} border border-slate-300 font-semibold text-slate-900`}>
                                   {row.player.nama}
                                   {(row.player.isSeed || row.player.seedRank) && (
                                     <span className="ml-1 text-amber-500" title={`Seed ${row.player.seedRank || row.player.isSeed}`}>★</span>
                                   )}
                                 </td>
-                                <td className="py-2 px-3 border border-slate-300 font-semibold text-slate-600">{row.player.ptm}</td>
-                                <td className="py-2 px-3 border border-slate-300 text-center font-bold text-emerald-700">{row.matchLabel}</td>
-                                <td className="py-2 px-3 border border-slate-300 text-center font-mono font-bold text-slate-700">{row.jam}</td>
-                                <td className="py-2 px-2 border border-slate-300 text-center font-bold text-slate-700">{row.meja}</td>
-                                <td className="py-2 px-2 border border-slate-300 text-center">
-                                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>{isPublic && hasResult && <div className="mt-1 font-black text-emerald-700">{row.result.player1Score} - {row.result.player2Score}</div>}{isPublic && hasResult && Array.isArray(row.result.gameHistory) && row.result.gameHistory.length > 0 && <div className="mt-1 text-[10px] text-slate-600">{row.result.gameHistory.filter(g => g && g.p1 !== '' && g.p2 !== '').map((g,i) => `S${i+1}: ${g.p1}-${g.p2}`).join(' | ')}</div>}
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} border border-slate-300 font-semibold text-slate-600`}>{row.player.ptm}</td>
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} border border-slate-300 text-center font-bold text-emerald-700`}>{row.matchLabel}</td>
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-3'} border border-slate-300 text-center font-mono font-bold text-slate-700`}>{row.jam}</td>
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-2'} border border-slate-300 text-center font-bold text-slate-700`}>{row.meja}</td>
+                                <td className={`${isPublic ? 'py-1 px-2' : 'py-2 px-2'} border border-slate-300 text-center`}>
+                                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>{isPublic && hasResult && <span className="ml-1 font-black text-emerald-700">{row.result.player1Score} - {row.result.player2Score}</span>}{isPublic && hasResult && Array.isArray(row.result.gameHistory) && row.result.gameHistory.length > 0 && <span className="ml-1 text-[10px] text-slate-600">{row.result.gameHistory.filter(g => g && g.p1 !== '' && g.p2 !== '').map((g,i) => `S${i+1}: ${g.p1}-${g.p2}`).join(' | ')}</span>}
                                 </td>
                               </tr>
                             );
