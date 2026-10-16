@@ -7655,7 +7655,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                   <div className="min-w-0">
                     <div className="mb-0.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider">
-                      <Radio className="h-3.5 w-3.5 animate-pulse" /> Live Skor
+                      <Radio className="h-3.5 w-3.5 animate-pulse text-[#39ff14] drop-shadow-[0_0_8px_rgba(57,255,20,0.95)]" /> Live Skor
                     </div>
                     <h3 className="break-words text-[13px] font-black leading-tight sm:text-lg">
                       {liveMatchPlayers.player1?.nama || liveScoreMatch.player?.nama || 'Pemain 1'}
@@ -7672,22 +7672,6 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={toggleVoiceRecognition}
-                    className={`rounded-full p-2 transition shadow-lg sm:p-2.5 ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-black/30 backdrop-blur-sm border-2 border-white/40 text-white hover:bg-black/50'}`}
-                    title={isListening ? "Mendengarkan... Klik untuk stop" : "Aktifkan Input Suara"}
-                  >
-                    {isListening ? (
-                      <span className="text-[10px] font-black px-1">ON</span>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                        <line x1="12" x2="12" y1="19" y2="22"/>
-                      </svg>
-                    )}
-                  </button>
                   <div className="hidden rounded-2xl bg-black/30 backdrop-blur-sm border-2 border-white/40 px-2 py-1 min-[420px]:block">
                     <div className="text-center">
                       <div className="text-[10px] font-bold text-white/70 uppercase">Match</div>
@@ -7801,7 +7785,14 @@ const handleUpdatePlayerSubmit = async (e) => {
       padding: 6px 8px !important;
       font-size: 8px !important;
     }
-  }
+      .spinmatch-live-footer .spinmatch-live-mic-button {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        padding: 0 !important;
+        border-radius: 9999px !important;
+      }
+    }
 
   @media print {
     @page { size: A4 portrait; margin: 8mm; }
@@ -8017,6 +8008,23 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </button>
                   <button type="button" onClick={handleDeleteMatch} className="flex items-center justify-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-red-600">
                     <Trash2 className="h-3.5 w-3.5" /> Hapus Match
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleVoiceRecognition}
+                    className={`spinmatch-live-mic-button flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 transition focus:outline-none focus:ring-4 focus:ring-emerald-300 ${
+                      isListening
+                        ? 'border-emerald-300 bg-emerald-500 text-white shadow-[0_0_18px_rgba(16,185,129,.7)] animate-pulse'
+                        : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-md hover:bg-emerald-100'
+                    }`}
+                    title={isListening ? 'Mikrofon aktif — tekan untuk berhenti' : 'Aktifkan input suara'}
+                    aria-label={isListening ? 'Hentikan input suara' : 'Aktifkan input suara'}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                      <line x1="12" x2="12" y1="19" y2="22"/>
+                    </svg>
                   </button>
                   <button type="button" onClick={handleLiveScoreSubmit} className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-blue-700">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Simpan & Tutup
