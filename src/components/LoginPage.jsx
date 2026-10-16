@@ -682,7 +682,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Username</label>
+                  <label className="block text-xs font-semibold text-blue-50 mb-1.5">Username / ID Login</label>
 
 
 
@@ -710,7 +710,7 @@ export const LoginPage = ({ onCancel }) => {
 
 
 
-                      placeholder="Masukkan username"
+                      placeholder="Masukkan ID Login dari EO"
 
 
 
@@ -727,6 +727,9 @@ export const LoginPage = ({ onCancel }) => {
 
 
                   </div>
+                  <p className="mt-1.5 text-[10px] leading-relaxed text-blue-100/70">
+                    Login Wasit: gunakan <strong className="text-orange-200">ID Login dari EO</strong>, bukan kode Wasit (WST) atau nama.
+                  </p>
 
 
 
@@ -913,7 +916,7 @@ export const LoginPage = ({ onCancel }) => {
 
                   <button type="button" title="Login Referee" onClick={() => document.querySelector('input[name="username"], input[autocomplete="username"], .sm-panel form input')?.focus()} className="rounded-xl border-2 border-blue-300 bg-blue-50 py-1.5 cursor-pointer hover:ring-2 hover:ring-blue-300">
                     <ShieldCheck className="w-3.5 h-3.5 mx-auto text-blue-600 mb-1" />
-                    <p className="text-[11px] font-extrabold text-[#173d70]">Referee</p>
+                    <p className="text-[11px] font-extrabold text-[#173d70]">Login Wasit</p>
                   </button>
 
                   <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] py-1.5">

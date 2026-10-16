@@ -183,17 +183,21 @@ const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => 
       </form>
       {errorText && <p role="alert" className="mx-5 mb-4 rounded-lg bg-red-50 p-3 text-xs font-bold text-red-700">{errorText}</p>}
       {created && <div className="mx-5 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-        <div className="font-black">Akun berhasil dibuat — simpan ID login sekarang</div>
-        <div className="mt-2">{created.nama} • {created.kode} • Meja {created.meja}</div>
-        <div className="mt-1 break-all font-mono font-bold">ID Login: {created.loginId}</div>
-        <p className="mt-2 text-xs">Berikan ID Login dan password yang tadi diisi kepada wasit. Password tidak dapat dilihat kembali dari halaman ini.</p>
+        <div className="font-black">Akun berhasil dibuat — berikan data login ini kepada wasit</div>
+        <div className="mt-2 break-all rounded-lg border border-emerald-200 bg-white p-3">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-800">ID Login (masukkan di kolom Username saat login)</div>
+          <div className="mt-1 font-mono text-base font-black">{created.loginId}</div>
+        </div>
+        <div className="mt-2 text-xs">{created.nama} • Kode Wasit: {created.kode} • Meja {created.meja}</div>
+        <p className="mt-2 text-xs font-bold">Gunakan ID Login di atas dan password yang dibuat EO. Kode Wasit (WST) hanya kode identitas, bukan untuk login.</p>
+        <p className="mt-1 text-xs">Password tidak dapat dilihat kembali dari halaman ini.</p>
         <button type="button" onClick={() => navigator.clipboard?.writeText(created.loginId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white">Salin ID Login</button>
       </div>}
       <div className="border-t border-slate-100 p-5">
         <div className="mb-2 flex items-center justify-between"><h5 className="text-xs font-black">Daftar Akun Online</h5><button type="button" onClick={refresh} className="text-xs font-bold text-violet-700">Muat ulang</button></div>
         {loading ? <p className="text-xs text-slate-500">Memuat...</p> : rows.length === 0 ? <p className="text-xs text-slate-500">Belum ada akun login wasit untuk event ini.</p> :
           <div className="overflow-x-auto"><table className="w-full min-w-[460px] text-left text-xs"><thead><tr className="border-b"><th className="py-2">Kode</th><th>Nama</th><th>Meja</th><th>Status</th></tr></thead><tbody>{rows.map(r => <tr key={r.id} className="border-b"><td className="py-2 font-bold">{r.kode_wasit}</td><td>{r.nama_wasit}</td><td>{r.nomor_meja}</td><td>{r.status}</td></tr>)}</tbody></table></div>}
-        <p className="mt-3 text-[10px] text-amber-700">Tahap awal: akun online belum otomatis tersambung ke Live Score lokal. Jangan gunakan untuk pertandingan resmi sebelum akses skor dan login wasit diuji.</p>
+        <p className="mt-3 text-[10px] text-slate-500">Untuk login, wasit memakai ID Login yang ditampilkan saat akun dibuat dan password dari EO. Kode Wasit pada daftar ini hanya sebagai identitas.</p>
       </div>
     </div>
   );

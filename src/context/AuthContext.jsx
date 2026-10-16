@@ -75,7 +75,10 @@ export const AuthProvider = ({ children }) => {
         body: { username: identifier, password },
       });
       if (error || !data?.success || !data?.access_token || !data?.refresh_token) {
-        return { success: false, message: data?.error || 'Username atau password tidak cocok. Jika fungsi belum dapat diakses, hubungi administrator.' };
+        return {
+          success: false,
+          message: data?.error || 'ID Login/username atau password tidak cocok. Untuk Wasit, gunakan ID Login dari EO (bukan kode WST). Jika akun baru dibuat, pastikan EO memberikan ID Login dan password yang benar.',
+        };
       }
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
