@@ -1053,7 +1053,17 @@ const AuthenticatedContent = () => {
   const isReferee = userRole === 'REFEREE';
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState(null);
+  const saveFeedbackTimeoutRef = useRef(null);
   const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : userRole === 'WASIT' ? 'Wasit' : isReferee ? 'Referee' : 'Pengguna';
+
+  const showSaveFeedback = (saved) => {
+    setSaveFeedback(saved);
+    window.clearTimeout(saveFeedbackTimeoutRef.current);
+    saveFeedbackTimeoutRef.current = window.setTimeout(() => setSaveFeedback(null), 2400);
+  };
+
+  useEffect(() => () => window.clearTimeout(saveFeedbackTimeoutRef.current), []);
 
   const handleMobileRestart = () => {
     setShowMobileMoreMenu(false);
@@ -3980,7 +3990,7 @@ const handleUpdatePlayerSubmit = async (e) => {
     setCurrentGameP2(0);
   };
 
-  const saveLiveScoreResult = (closeAfterSave = true) => {
+  const saveLiveScoreResult = async (closeAfterSave = true) => {
     if (isWasit && (!wasitAssignment || String(selectedLiveEvent?.id) !== String(wasitAssignment.event_id) || normalizeMeja(liveScoreMatch?.meja) !== normalizeMeja(wasitAssignment.nomor_meja))) { alert('Akses skor ditolak: bukan meja tugas Anda.'); return; }
     if (!liveScoreMatch) return;
     const calculatedScore = liveGameHistory.reduce(
@@ -4021,8 +4031,13 @@ const handleUpdatePlayerSubmit = async (e) => {
       ...prev,
       [liveScoreMatch.matchId]: result
     }));
-    saveOnlineMatch(selectedLiveEvent?.id, liveScoreMatch.matchId, result)
-      .catch(error => alert('Skor tersimpan di browser, tetapi gagal sinkron ke Supabase: ' + error.message));
+    try {
+      await saveOnlineMatch(selectedLiveEvent?.id, liveScoreMatch.matchId, result);
+    } catch (error) {
+      console.error('Gagal menyimpan hasil pertandingan:', error);
+      showSaveFeedback(false);
+      return;
+    }
     if (liveScoreMatch.isKnockout) {
       setKnockoutResults(prev => ({
         ...prev,
@@ -4035,9 +4050,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         calculatePoolRankings(eventId);
       }, 100);
     }
-    alert(liveScoreMatch.isKnockout
-      ? 'Hasil Knockout berhasil disimpan. Pemenang otomatis maju ke babak berikutnya!'
-      : 'Hasil pertandingan berhasil disimpan dan otomatis tersinkron ke Jadwal!');
+    showSaveFeedback(true);
     const wasKnockout = Boolean(liveScoreMatch.isKnockout);
     if (closeAfterSave) {
       setLiveScoreMatch(null);
@@ -4050,8 +4063,7 @@ const handleUpdatePlayerSubmit = async (e) => {
     }
   };
 
-  // Tombol SIMPAN dan SIMPAN & TUTUP sama-sama:
-  // simpan -> alert -> setelah OK/ENTER form Live Score langsung keluar.
+  // Tombol simpan menunggu sinkronisasi online sebelum menutup form.
   const handleLiveScoreSave = () => saveLiveScoreResult(true);
   const handleLiveScoreSubmit = () => saveLiveScoreResult(true);
 
@@ -4090,20 +4102,27 @@ const handleUpdatePlayerSubmit = async (e) => {
 
 
 
-  const handleSaveMatchResult = (matchId, result) => {
+  const handleSaveMatchResult = async (matchId, result) => {
     setMatchResults({
       ...matchResults,
       [matchId]: result
     });
     if (selectedScheduleEvent?.id) {
-      saveOnlineMatch(selectedScheduleEvent.id, matchId, result)
-        .catch(error => alert('Gagal sinkron hasil pertandingan: ' + error.message));
+      try {
+        await saveOnlineMatch(selectedScheduleEvent.id, matchId, result);
+      } catch (error) {
+        console.error('Gagal menyimpan hasil pertandingan:', error);
+        showSaveFeedback(false);
+        return false;
+      }
     }
     if (selectedScheduleEvent) {
       setTimeout(() => {
         calculatePoolRankings(selectedScheduleEvent.id);
       }, 100);
     }
+    showSaveFeedback(true);
+    return true;
   };
 
   const handleOpenMatchResult = (match) => {
@@ -4112,7 +4131,7 @@ const handleUpdatePlayerSubmit = async (e) => {
     setShowMatchResultModal(true);
   };
 
-  const handleSaveResult = (e) => {
+  const handleSaveResult = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const result = {
@@ -4123,10 +4142,10 @@ const handleUpdatePlayerSubmit = async (e) => {
       point2: formData.get('point2') ? parseInt(formData.get('point2')) : 0
     };
     if (selectedMatch) {
-      handleSaveMatchResult(selectedMatch.matchId, result);
+      const saved = await handleSaveMatchResult(selectedMatch.matchId, result);
+      if (!saved) return;
     }
     setShowMatchResultModal(false);
-    alert('Hasil pertandingan berhasil disimpan!');
   };
 
   const handleDownloadSchedulePdf = () => {
@@ -8826,6 +8845,20 @@ const handleUpdatePlayerSubmit = async (e) => {
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
       `}</style>
+      {saveFeedback !== null && (
+        <div
+          role={saveFeedback ? 'status' : 'alert'}
+          aria-live={saveFeedback ? 'polite' : 'assertive'}
+          className={`fixed bottom-5 left-1/2 z-[300] w-[min(92vw,360px)] -translate-x-1/2 rounded-2xl border px-4 py-3 text-center shadow-2xl ${
+            saveFeedback
+              ? 'border-emerald-300 bg-emerald-950 text-white'
+              : 'border-red-300 bg-red-950 text-white'
+          }`}
+        >
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">SpinMatch</div>
+          <div className="mt-0.5 text-sm font-black">{saveFeedback ? 'Data telah disimpan' : 'Data Gagal disimpan'}</div>
+        </div>
+      )}
     </div>
   );
 };
