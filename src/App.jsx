@@ -5724,7 +5724,7 @@ const handleUpdatePlayerSubmit = async (e) => {
         </div>
 
         <div className="sm-dashboard-hero-inner relative z-10 grid min-h-[220px] grid-cols-1 items-center gap-4 px-6 py-6 sm:px-7 md:grid-cols-[1.28fr_.72fr] md:px-9 md:py-7 lg:px-10 lg:py-7">
-          <div className="sm-dashboard-hero-copy flex min-w-0 flex-col justify-center">
+          <div className="sm-dashboard-hero-copy flex min-w-0 flex-col justify-center md:-translate-y-4">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] backdrop-blur-md sm:text-xs">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-[#7CFF6B]" />
@@ -5800,7 +5800,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             </div>
           </div>
 
-          <div className="relative hidden min-h-[185px] items-center justify-center overflow-visible md:flex">
+          <div className="relative hidden min-h-[185px] items-center justify-center overflow-visible md:flex md:-translate-y-4">
             <div className="absolute left-1/2 top-1/2 h-[180px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/15 blur-[58px]" />
             <img
               src={heroPingpong}
