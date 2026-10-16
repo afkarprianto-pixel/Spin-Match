@@ -4622,12 +4622,22 @@ const handleUpdatePlayerSubmit = async (e) => {
   const visibleLiveScoreRows = isPublic && publicLiveTable !== 'ALL' ? liveScoreRows.filter(row => row.type === 'player' && normalizeMeja(row.meja) === Number(publicLiveTable)) : liveScoreRows;
   const liveScoreRankings = poolRankings[selectedLiveEvent?.id] || {};
 
-  const publicLiveScoreSnapshot = liveScoreMatch
-    ? onlineLiveScores[liveScoreMatch.matchId]
+  const publicLiveScoreResult = liveScoreMatch
+    ? matchResults[liveScoreMatch.matchId]
     : null;
-  const publicLiveScoreGames = publicLiveScoreSnapshot?.gameHistory ||
-    (liveScoreMatch ? matchResults[liveScoreMatch.matchId]?.gameHistory : null) ||
-    [];
+  const publicLiveScoreSnapshot = liveScoreMatch
+    ? onlineLiveScores[liveScoreMatch.matchId] || publicLiveScoreResult?.liveScore || null
+    : null;
+  const publicLiveScoreGames = [
+    publicLiveScoreSnapshot?.gameHistory,
+    publicLiveScoreResult?.gameHistory
+  ].find(games =>
+    Array.isArray(games) &&
+    games.some(game =>
+      game?.p1 !== '' && game?.p2 !== '' &&
+      game?.p1 != null && game?.p2 != null
+    )
+  ) || [];
   const publicLiveSetWins = publicLiveScoreGames.reduce(
     (score, game) => {
       const p1 = Number(game?.p1);
@@ -7602,7 +7612,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                         <line x1="12" x2="12" y1="19" y2="22"/>
                       </svg>
-                    ))}
+                    )}
                   </button>
                   <div className="hidden rounded-2xl bg-black/30 backdrop-blur-sm border-2 border-white/40 px-2 py-1 min-[420px]:block">
                     <div className="text-center">
@@ -7905,7 +7915,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             </div>
           </div>
         </div>
-      )}
+      ))}
 
       {showPrintModal && (
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
