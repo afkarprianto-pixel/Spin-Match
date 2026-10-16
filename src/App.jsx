@@ -1529,6 +1529,7 @@ const AuthenticatedContent = () => {
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [showSeedStatusList, setShowSeedStatusList] = useState(false);
   const [showPoolSimulation, setShowPoolSimulation] = useState(false);
+  const [showSeedSettings, setShowSeedSettings] = useState(false);
   const [showDrawControls, setShowDrawControls] = useState(false);
   const [tempSeedData, setTempSeedData] = useState({ seed1: '', seed2: '', seed3: '', seed4: '' });
   const [showDrawAnimation, setShowDrawAnimation] = useState(false);
@@ -1537,6 +1538,7 @@ const AuthenticatedContent = () => {
   const spinIntervalRef = useRef(null);
   useEffect(() => {
     setShowPoolSimulation(false);
+    setShowSeedSettings(false);
     setShowDrawControls(false);
   }, [activeView, selectedEventIdForDraw]);
 
@@ -4707,7 +4709,6 @@ const handleUpdatePlayerSubmit = async (e) => {
   const drawSeedKeys = Array.from({ length: drawProjection.numPools }, (_, i) => `seed${i + 1}`);
   const drawSeedPoolIndexes = getSeedPoolIndexes(drawProjection.numPools, drawProjection.numPools);
   const currentPoolData = poolResults[selectedDrawEvent?.id] || null;
-  const showDrawWorkspace = !((isEO || isSuperAdmin) && selectedDrawEvent && canManageEvent(selectedDrawEvent)) || showDrawControls;
   const schedulePoolData = poolResults[selectedScheduleEvent?.id] || null;
   const scheduleRows = selectedScheduleEvent ? generateScheduleFromPools(selectedScheduleEvent.id) : [];
   const currentRankings = poolRankings[selectedScheduleEvent?.id] || {};
@@ -6493,8 +6494,8 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </div>
                     {!isWasit && !isPublic && selectedDrawEvent && canManageEvent(selectedDrawEvent) && (
                       <div className="flex flex-wrap items-center justify-center gap-2">
-                        <button type="button" onClick={handleOpenSeedModal} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-amber-600">
-                          <Settings className="h-4 w-4" /> Atur Seed
+                        <button type="button" onClick={() => setShowSeedSettings(value => !value)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-amber-600">
+                          <Settings className="h-4 w-4" /> {showSeedSettings ? 'Tutup Atur Seeded' : 'Atur Seeded'}
                         </button>
                         <button type="button" onClick={() => setShowDrawControls(value => !value)} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-emerald-800">
                           <Dices className="h-4 w-4" /> {showDrawControls ? 'Tutup Undian' : 'Undian'}
@@ -6517,31 +6518,31 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </button>
                 </div>
               )}
-              {showDrawWorkspace && !isWasit && !isPublic && <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
+              {showSeedSettings && !isWasit && !isPublic && <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Settings className="w-5 h-5 text-slate-700" />
-                  <h3 className="text-base font-bold text-slate-900">Panel Kontrol Undian</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Pengaturan Seeded dan Pool</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <Crown className="w-4 h-4 text-amber-500" />
-                      <span className="text-xs font-bold text-slate-700">Pengaturan Seeded</span>
+                      <span className="text-[11px] font-bold text-slate-700">Pengaturan Seeded</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mb-3">
+                    <p className="text-[10px] leading-4 text-slate-500 mb-2">
                       Jumlah Seeded mengikuti jumlah Pool. Kebutuhan BYE dihitung terpisah dari ukuran bracket Knockout.
                       <span className="block mt-1 font-bold text-amber-700">Seeded: {drawProjection.numPools} pemain • BYE: {drawProjection.byeCount}</span>
                     </p>
-                    <button onClick={handleOpenSeedModal} className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
-                      <Settings className="w-3.5 h-3.5" /> Atur Seeded
+                    <button onClick={handleOpenSeedModal} className="w-full px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] transition cursor-pointer flex items-center justify-center gap-1.5">
+                      <Settings className="w-3 h-3" /> Pilih Pemain Seeded
                     </button>
                     {Object.keys(currentSeedData).length > 0 && (
-                      <button onClick={handleResetSeed} className="w-full mt-2 px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer border border-slate-200 flex items-center justify-center gap-1.5">
-                        <RotateCcw className="w-3.5 h-3.5" /> Reset Seeded
+                      <button onClick={handleResetSeed} className="w-full mt-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 font-bold rounded-lg text-[10px] transition cursor-pointer border border-slate-200 flex items-center justify-center gap-1.5">
+                        <RotateCcw className="w-3 h-3" /> Reset Seeded
                       </button>
                     )}
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
                     <button
                       type="button"
                       onClick={() => setShowSeedStatusList(v => !v)}
@@ -6549,12 +6550,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                     >
                       <div className="flex items-center gap-2">
                         <Medal className="w-4 h-4 text-emerald-600" />
-                        <span className="text-xs font-bold text-slate-700">Status Seeded Saat Ini</span>
+                        <span className="text-[11px] font-bold text-slate-700">Status Seeded Saat Ini</span>
                       </div>
                       <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showSeedStatusList ? 'rotate-180' : ''}`} />
                     </button>
 
-                    <div className="mt-3 bg-white px-2.5 py-2 rounded-lg border border-slate-200 flex items-center justify-between gap-2 text-[11px]">
+                    <div className="mt-2 bg-white px-2 py-1.5 rounded-lg border border-slate-200 flex items-center justify-between gap-2 text-[10px]">
                       <span className="font-semibold text-slate-600">Terisi</span>
                       <span className="font-black text-slate-900">
                         {Object.values(currentSeedData).filter(Boolean).length} / {drawProjection.numPools} Seeded
@@ -6562,50 +6563,50 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </div>
 
                     {showSeedStatusList && (
-                      <div className="mt-2 space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                      <div className="mt-2 space-y-1 max-h-44 overflow-y-auto pr-1">
                         {drawSeedKeys.map((seedKey, idx) => {
                           const seedPlayer = drawEventParticipants.find(p => String(p.id) === String(currentSeedData[seedKey]));
                           const poolIdx = drawSeedPoolIndexes[idx];
                           const poolLabel = Number.isInteger(poolIdx) ? `Pool ${String.fromCharCode(65 + poolIdx)}` : '-';
                           return (
-                            <div key={seedKey} className="flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-200">
-                              <span className="font-semibold text-slate-600">
-                                Seed {idx + 1} ({poolLabel}) {(idx + 1) <= drawProjection.byeCount ? '• BYE' : ''}
+                            <div key={seedKey} className="flex items-center justify-between gap-1 bg-white px-2 py-1 rounded-md border border-slate-200 text-[9px] leading-3">
+                              <span className="shrink-0 font-semibold text-slate-600">
+                                Seeded {idx + 1} ({poolLabel}) {(idx + 1) <= drawProjection.byeCount ? '• BYE' : ''}
                               </span>
-                              <span className="font-bold text-slate-900 truncate ml-2 max-w-[105px]">{seedPlayer ? seedPlayer.nama : '--'}</span>
+                              <span className="ml-1 max-w-[105px] truncate text-right font-bold text-slate-900">{seedPlayer ? seedPlayer.nama : '--'}</span>
                             </div>
                           );
                         })}
                       </div>
                     )}
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                    <div className="text-xs font-black text-slate-800 mb-2">Proyeksi Knockout Otomatis</div>
-                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                      <div className="bg-white rounded-lg border border-slate-200 px-2 py-1.5">Pool: <b>{drawProjection.numPools}</b></div>
-                      <div className="bg-white rounded-lg border border-slate-200 px-2 py-1.5">Lolos/Pool: <b>{drawProjection.lolosCount}</b></div>
-                      <div className="bg-white rounded-lg border border-slate-200 px-2 py-1.5">Peserta KO: <b>{drawProjection.knockoutPlayers}</b></div>
-                      <div className="bg-white rounded-lg border border-slate-200 px-2 py-1.5">Bracket: <b>{drawProjection.bracketSize || '-'}</b></div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                    <div className="text-[11px] font-black text-slate-800 mb-2">Proyeksi Knockout Otomatis</div>
+                    <div className="grid grid-cols-2 gap-1 text-[9px]">
+                      <div className="bg-white rounded-md border border-slate-200 px-2 py-1">Pool: <b>{drawProjection.numPools}</b></div>
+                      <div className="bg-white rounded-md border border-slate-200 px-2 py-1">Lolos/Pool: <b>{drawProjection.lolosCount}</b></div>
+                      <div className="bg-white rounded-md border border-slate-200 px-2 py-1">Peserta KO: <b>{drawProjection.knockoutPlayers}</b></div>
+                      <div className="bg-white rounded-md border border-slate-200 px-2 py-1">Bracket: <b>{drawProjection.bracketSize || '-'}</b></div>
                     </div>
-                    <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-2 py-2 text-[11px] font-black text-amber-800">
+                    <div className="mt-1.5 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 text-[9px] font-black text-amber-800">
                       Kebutuhan BYE: {drawProjection.byeCount} • Jumlah Seeded: {drawProjection.numPools}
                     </div>
                   </div>
-                  <div className="self-start bg-gradient-to-br from-emerald-50 to-lime-50 border-2 border-dashed border-emerald-300 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Dices className="w-4 h-4 text-emerald-700" />
-                      <span className="text-xs font-bold text-emerald-800">Mesin Undian Otomatis</span>
-                    </div>
-                    <p className="text-[11px] leading-4 text-emerald-700 mb-3">
-                      Acak seluruh pemain secara adil ke dalam sistem Pool.
-                    </p>
-                    <button onClick={handleStartDraw} disabled={drawEventParticipants.length < 2} className="w-full px-3 py-2.5 bg-[#bef264] hover:bg-[#a3e635] disabled:bg-slate-300 disabled:cursor-not-allowed text-slate-950 font-black rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center justify-center gap-1.5">
-                      <Play className="w-3.5 h-3.5" /> Mulai Acak & Undi Pemain
-                    </button>
-                  </div>
                 </div>
               </div>}
-              {showDrawWorkspace && currentPoolData && (
+              {showDrawControls && !isWasit && !isPublic && <div className="mx-auto w-full max-w-2xl rounded-3xl border-2 border-dashed border-emerald-300 bg-gradient-to-br from-emerald-50 to-lime-50 p-5 shadow-sm sm:p-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Dices className="h-5 w-5 text-emerald-700" />
+                    <h3 className="text-base font-black text-emerald-900">Mesin Undian Otomatis</h3>
+                  </div>
+                  <p className="mb-4 text-xs leading-5 text-emerald-800">Acak seluruh pemain secara adil ke dalam sistem Pool.</p>
+                  <button onClick={handleStartDraw} disabled={drawEventParticipants.length < 2} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#bef264] px-5 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:bg-[#a3e635] disabled:cursor-not-allowed disabled:bg-slate-300">
+                    <Play className="h-4 w-4" /> Mulai Acak & Undi Pemain
+                  </button>
+                </div>
+              </div>}
+              {showDrawControls && currentPoolData && (
                 <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
                   <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                     <div className="flex items-center gap-2">
@@ -6666,7 +6667,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
               )}
-              {showDrawWorkspace && !currentPoolData && (
+              {showDrawControls && !currentPoolData && (
                 <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center">
                   <Dices className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Hasil Undian</h4>
@@ -8430,31 +8431,31 @@ const handleUpdatePlayerSubmit = async (e) => {
 
       {showSeedModal && selectedDrawEvent && (
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl relative border border-slate-100 my-8">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
-              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <Settings className="w-5 h-5 text-slate-700" /> Pengaturan Pemain Seeded
+          <div className="my-auto flex max-h-[90dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
+              <h3 className="flex items-center gap-2 text-sm font-black text-slate-900">
+                <Settings className="h-4 w-4 text-slate-700" /> Atur Pemain Seeded
               </h3>
-              <button onClick={() => setShowSeedModal(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition cursor-pointer">
-                <X className="w-4 h-4" />
+              <button onClick={() => setShowSeedModal(false)} aria-label="Tutup pengaturan Seeded" className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700">
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="p-6">
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 rounded-xl p-3 mb-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <div className="w-4 h-4 bg-amber-500 rounded flex items-center justify-center"><span className="text-white text-[10px] font-black">i</span></div>
-                  <span className="text-xs font-black text-amber-800">Informasi:</span>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              <div className="mb-3 rounded-lg border-l-4 border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50 p-2.5">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <div className="flex h-3.5 w-3.5 items-center justify-center rounded bg-amber-500"><span className="text-[9px] font-black text-white">i</span></div>
+                  <span className="text-[10px] font-black text-amber-800">Informasi Seeded</span>
                 </div>
-                <ul className="text-[11px] text-amber-900 space-y-0.5 ml-5.5">
+                <ul className="ml-5 grid grid-cols-1 gap-x-4 gap-y-0.5 text-[9px] leading-4 text-amber-900 sm:grid-cols-2">
                   <li>• Total Pemain di Divisi Ini: <span className="font-black text-amber-700">{drawEventParticipants.length}</span></li>
-                  <li>• Jumlah Pool: <span className="font-black">{drawProjection.numPools}</span> × lolos <span className="font-black">{drawProjection.lolosCount}</span> pemain</li>
+                  <li>• Jumlah Pool: <span className="font-black">{drawProjection.numPools}</span> × lolos <span className="font-black">{drawProjection.lolosCount}</span></li>
                   <li>• Proyeksi Knockout: <span className="font-black">{drawProjection.knockoutPlayers}</span> pemain → bracket <span className="font-black">{drawProjection.bracketSize || '-'}</span></li>
-                  <li>• Jumlah Seeded: <span className="font-black text-amber-700">{drawProjection.numPools}</span> pemain (sama dengan jumlah Pool)</li>
-                  <li>• Kebutuhan BYE: <span className="font-black text-amber-700">{drawProjection.byeCount}</span> — prioritas Seed 1 s/d {drawProjection.byeCount}</li>
-                  <li>• Seed ganjil dari atas, Seed genap dari bawah.</li>
+                  <li>• Jumlah Seeded: <span className="font-black text-amber-700">{drawProjection.numPools}</span> pemain</li>
+                  <li>• BYE: <span className="font-black text-amber-700">{drawProjection.byeCount}</span> — prioritas Seeded 1 s/d {drawProjection.byeCount}</li>
+                  <li>• Seeded ganjil dari atas, genap dari bawah.</li>
                 </ul>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {drawSeedKeys.map((seedKey, idx) => {
                   const poolIdx = drawSeedPoolIndexes[idx];
                   const poolLabel = Number.isInteger(poolIdx) ? `Pool ${String.fromCharCode(65 + poolIdx)}` : '-';
@@ -8464,34 +8465,34 @@ const handleUpdatePlayerSubmit = async (e) => {
                       .map(([, value]) => String(value))
                   );
                   return (
-                    <div key={seedKey} className="space-y-1.5">
-                      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                    <div key={seedKey} className="min-w-0 space-y-1">
+                      <label className="flex items-center gap-1 text-[10px] font-bold leading-4 text-slate-700">
                         <span>
-                          Seed {idx + 1} <span className="text-slate-400 font-normal">({poolLabel})</span>
-                          {(idx + 1) <= drawProjection.byeCount && <span className="ml-1 text-amber-600">• Prioritas BYE</span>}
+                          Seeded {idx + 1} <span className="font-normal text-slate-400">({poolLabel})</span>
+                          {(idx + 1) <= drawProjection.byeCount && <span className="ml-1 text-amber-600">• BYE</span>}
                         </span>
                       </label>
                       <div className="relative">
                         <select
                           value={tempSeedData[seedKey] || ''}
                           onChange={(e) => setTempSeedData({ ...tempSeedData, [seedKey]: e.target.value })}
-                          className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800 transition appearance-none cursor-pointer pr-7"
+                          className="h-8 w-full appearance-none rounded-md border border-slate-200 bg-white py-1 pl-2 pr-6 text-[10px] font-medium text-slate-900 transition focus:border-slate-800 focus:outline-none"
                         >
                           <option value="">-- Tidak Ada --</option>
                           {drawEventParticipants.map(p => (
-                            <option key={p.id} value={p.id} disabled={selectedElsewhere.has(String(p.id))}>{p.nama}</option>
+                            <option key={p.id} value={p.id} disabled={selectedElsewhere.has(String(p.id))} className="text-[10px]">{p.nama}</option>
                           ))}
                         </select>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" />
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <button type="button" onClick={() => setShowSeedModal(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition cursor-pointer">Batal</button>
-                <button type="button" onClick={handleSaveSeed} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-lg text-xs shadow-sm cursor-pointer flex items-center gap-1.5">
-                  <Settings className="w-3.5 h-3.5" /> Simpan & Terapkan
+              <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                <button type="button" onClick={() => setShowSeedModal(false)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-[10px] font-bold text-slate-700 transition hover:bg-slate-200">Batal</button>
+                <button type="button" onClick={handleSaveSeed} className="flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-emerald-600">
+                  <Settings className="h-3 w-3" /> Simpan Seeded
                 </button>
               </div>
             </div>
