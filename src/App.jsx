@@ -1235,6 +1235,7 @@ const AuthenticatedContent = () => {
   });
 
   const [participants, setParticipants] = useState(() => {
+    if (isPublic || isReferee) return {};
     const savedParticipants = localStorage.getItem('spinmatch_participants');
     if (savedParticipants) {
       try { return JSON.parse(savedParticipants); } catch (e) { console.error(e); }
@@ -1242,6 +1243,8 @@ const AuthenticatedContent = () => {
     // Tidak ada lagi peserta contoh bawaan. Data utama mengikuti Supabase.
     return {};
   });
+  const [publicParticipantsLoading, setPublicParticipantsLoading] = useState(false);
+  const [publicParticipantsError, setPublicParticipantsError] = useState('');
 
   const [seededPlayers, setSeededPlayers] = useState(() => {
     const saved = localStorage.getItem('spinmatch_seeded');
@@ -1497,34 +1500,53 @@ const AuthenticatedContent = () => {
     let cancelled = false;
 
     const loadParticipantsFromSupabase = async () => {
-      const { data, error } = isPublic || isReferee
-        ? await supabase.rpc('spinmatch_get_visible_participants')
-        : await supabase.from('Participants').select('*').order('id', { ascending: true });
-
-      if (cancelled) return;
-
-      if (error) {
-        console.error('❌ Gagal membaca Participants dari Supabase:', error);
-        return;
+      if (isPublic) {
+        setPublicParticipantsLoading(true);
+        setPublicParticipantsError('');
       }
+      try {
+        const { data, error } = isPublic || isReferee
+          ? await supabase.rpc('spinmatch_get_visible_participants')
+          : await supabase.from('Participants').select('*').order('id', { ascending: true });
 
-      if (Array.isArray(data) && data.length > 0) {
-        const groupedParticipants = {};
+        if (cancelled) return;
 
-        data.forEach((row) => {
-          const eventId = Number(row.event_id);
-          if (!groupedParticipants[eventId]) groupedParticipants[eventId] = [];
-          groupedParticipants[eventId].push(participantFromSupabase(row));
-        });
+        if (error) {
+          console.error('❌ Gagal membaca Participants dari Supabase:', error);
+          if (isPublic) {
+            setParticipants({});
+            setPublicParticipantsError('Data peserta gagal dimuat. Silakan muat ulang halaman.');
+          }
+          return;
+        }
 
-        setParticipants(groupedParticipants);
-        localStorage.setItem('spinmatch_participants', JSON.stringify(groupedParticipants));
-        console.log(`✅ ${data.length} Participant dimuat dari Supabase`);
-      } else {
-        // Jangan hapus cache pemain hanya karena query Supabase mengembalikan 0 baris.
-        // Bisa terjadi karena RLS, masalah sinkronisasi, atau data server belum dipulihkan.
-        // Penghapusan pemain harus dilakukan melalui aksi hapus yang disengaja.
-        console.warn('⚠️ Supabase mengembalikan 0 peserta. Cache lokal dipertahankan; periksa tabel Participants dan RLS.');
+        if (Array.isArray(data) && (data.length > 0 || isPublic || isReferee)) {
+          const groupedParticipants = {};
+
+          data.forEach((row) => {
+            const eventId = Number(row.event_id);
+            if (!groupedParticipants[eventId]) groupedParticipants[eventId] = [];
+            groupedParticipants[eventId].push(participantFromSupabase(row));
+          });
+
+          setParticipants(groupedParticipants);
+          if (!isPublic && !isReferee) {
+            localStorage.setItem('spinmatch_participants', JSON.stringify(groupedParticipants));
+          }
+          console.log(`✅ ${data.length} Participant dimuat dari Supabase`);
+        } else {
+          // Cache lokal dipertahankan untuk pengguna EO/Admin jika query kosong.
+          console.warn('⚠️ Supabase mengembalikan 0 peserta. Cache lokal dipertahankan; periksa tabel Participants dan RLS.');
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error('❌ Gagal membaca Participants dari Supabase:', error);
+        if (isPublic) {
+          setParticipants({});
+          setPublicParticipantsError('Data peserta gagal dimuat. Silakan muat ulang halaman.');
+        }
+      } finally {
+        if (!cancelled && isPublic) setPublicParticipantsLoading(false);
       }
     };
 
@@ -6531,7 +6553,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
                       {(!selectedEventItem || currentEventParticipants.length === 0) ? (
-                        <tr><td colSpan={isPublic ? 7 : 8} className="py-12 text-center text-slate-400">{isReferee && !refereeAssignedEventId ? 'Belum ada penugasan event aktif.' : 'Belum ada peserta terdaftar untuk event ini.'}</td></tr>
+                        <tr><td role={isPublic && publicParticipantsError ? 'alert' : undefined} colSpan={isPublic ? 7 : 8} className={`py-12 text-center ${isPublic && publicParticipantsError ? 'text-red-600' : 'text-slate-400'}`}>{isPublic && publicParticipantsLoading ? 'Memuat data peserta...' : isPublic && publicParticipantsError ? publicParticipantsError : isReferee && !refereeAssignedEventId ? 'Belum ada penugasan event aktif.' : 'Belum ada peserta terdaftar untuk event ini.'}</td></tr>
                       ) : (
                         currentEventParticipants.map((p) => (
                           <tr key={p.id} onClick={isPublic || isReferee ? undefined : () => handlePlayerLeftClick(p)} onContextMenu={isPublic || isReferee ? undefined : (e) => handlePlayerContextMenu(e, p)} className={`${isPublic || isReferee ? '' : 'hover:bg-lime-50/60 cursor-pointer'} text-center select-none transition-colors`}>
