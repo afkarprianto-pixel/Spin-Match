@@ -118,7 +118,7 @@ export const EventChat = ({ eventId, eventName, user }) => {
     <section className="mx-auto flex h-[min(70vh,680px)] min-h-[420px] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <header className="flex items-center gap-3 border-b border-slate-200 p-4">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><MessageCircle className="h-5 w-5" /></span>
-        <div className="min-w-0"><h2 className="font-black text-slate-900">Chat Pengundian</h2><p className="truncate text-xs text-slate-500">{eventName}</p></div>
+        <div className="min-w-0"><h2 className="font-black text-slate-900">Chat Publik</h2><p className="truncate text-xs text-slate-500">{eventName}</p></div>
       </header>
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {loading ? <p className="text-center text-sm text-slate-500">Memuat percakapan...</p>

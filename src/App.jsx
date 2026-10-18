@@ -54,13 +54,13 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       { view: 'REF_WASIT', label: 'Kelola Wasit', icon: Users },
       { view: 'REF_LIVE', label: 'Pantau Live Score', icon: Activity },
       { view: 'REGISTRATION', label: 'Data Peserta', icon: Users },
-      { view: 'CHAT', label: 'Chat Pengundian', icon: MessageCircle },
+      { view: 'CHAT', label: 'Chat Publik', icon: MessageCircle },
     ] : []),
     ...(!isRefereeRole ? [{ view: 'REGISTRATION', label: isPublicRole ? 'Data Peserta' : 'Kelola Pemain', icon: Users }] : []),
     { view: 'REFEREE_MANAGEMENT', label: 'Kelola Wasit', icon: Users },
     { view: 'SUPERVISOR_MANAGEMENT', label: 'Kelola Referee', icon: ShieldCheck },
     { view: 'DRAW', label: isPublicRole ? 'Mesin Undian' : 'Undian Pool', icon: Dices },
-    ...(!isRefereeRole ? [{ view: 'CHAT', label: 'Chat Pengundian', icon: MessageCircle }] : []),
+    ...(!isRefereeRole ? [{ view: 'CHAT', label: 'Chat Publik', icon: MessageCircle }] : []),
     ...(!isRefereeRole ? [{ view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar }] : []),
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
@@ -920,7 +920,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users, color: 'from-[#6857d9] to-[#9581ef]', span: 'col-span-2' },
     { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity, color: 'from-[#e83c55] to-[#fa6b78]', span: 'col-span-2' },
     { view: 'REGISTRATION', label: 'Data Peserta', Icon: Users, color: 'from-[#1478f2] to-[#26a7ff]', span: 'col-span-2' },
-    { view: 'CHAT', label: 'Chat Pengundian', Icon: MessageCircle, color: 'from-[#635bdb] to-[#8b83f6]', span: 'col-span-2' },
+    { view: 'CHAT', label: 'Chat Publik', Icon: MessageCircle, color: 'from-[#635bdb] to-[#8b83f6]', span: 'col-span-2' },
     { view: 'RANKING', label: 'Peringkat & Poin', Icon: Medal, color: 'from-[#13a86b] to-[#36cf8b]', span: 'col-span-2' },
   ];
   if (activeView === 'DASHBOARD') return <div className="mx-auto w-full max-w-4xl space-y-5">
@@ -5613,7 +5613,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             <div className="sm-mobile-page-header mt-4 flex flex-col gap-4 rounded-3xl border border-white/10 bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 text-white shadow-xs sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <button onClick={() => setActiveView('DASHBOARD')} className="rounded-xl bg-white/10 p-2 text-blue-50 transition hover:bg-white/20" title="Kembali ke Dashboard"><ArrowLeft className="h-5 w-5" /></button>
-                <div><h2 className="text-lg font-bold">Chat Pengundian</h2><p className="text-xs text-blue-100/70">Percakapan langsung per event</p></div>
+                <div><h2 className="text-lg font-bold">Chat Publik</h2><p className="text-xs text-blue-100/70">Percakapan langsung per event</p></div>
               </div>
               <label className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-3 py-2">
                 <Filter className="h-4 w-4 text-blue-100/80" /><span className="text-xs font-bold text-slate-200">Pilih Event:</span>
@@ -6448,7 +6448,7 @@ const handleUpdatePlayerSubmit = async (e) => {
             onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
             className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
           >
-            <MessageCircle className="h-5 w-5 shrink-0" /> Chat Pengundian
+            <MessageCircle className="h-5 w-5 shrink-0" /> Chat Publik
           </button>
 
           {!isPublic && (
@@ -6468,11 +6468,11 @@ const handleUpdatePlayerSubmit = async (e) => {
             { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
             { label: isPublic ? 'Data Peserta' : 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
             { label: isPublic ? 'Mesin Undian' : 'Undian Pool', icon: Shuffle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
-            { label: 'Chat Pengundian', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
+            { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
-          ].filter(item => !isPublic || ['Data Peserta', 'Mesin Undian', 'Chat Pengundian', 'Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
+          ].filter(item => !isPublic || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className={`group flex items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
               <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
