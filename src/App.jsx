@@ -6457,7 +6457,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
       </section>
 
       {/* ===================== QUICK MENU ===================== */}
-      <section className="sm-dashboard-quick rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5">
+      <section className={`sm-dashboard-quick ${isPublic ? 'sm-public-quick' : ''} rounded-[26px] border border-slate-100 bg-white p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:p-5`}>
         <div className="mb-4 text-center md:text-left">
           <div className="flex items-center justify-center gap-2 md:justify-start">
             <span className="h-6 w-1.5 rounded-full bg-[#0874c9]" />
@@ -9098,6 +9098,22 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen .sm-dashboard-stats-public { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
           .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; max-width:640px !important; }
           .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid button { min-height:64px !important; flex-direction:row !important; font-size:12px !important; }
+          /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
+             Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
+             di atas konten ketika Preview/public app memakai iframe. */
+          .sm-dashboard-screen .sm-public-quick {
+            position:relative !important;
+            inset:auto !important;
+            z-index:50 !important;
+            pointer-events:auto !important;
+          }
+          .sm-dashboard-screen .sm-public-quick button {
+            position:relative !important;
+            z-index:51 !important;
+            pointer-events:auto !important;
+            touch-action:manipulation !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) { padding-bottom:18px !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
