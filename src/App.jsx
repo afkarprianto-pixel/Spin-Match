@@ -4801,7 +4801,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
 
     const dashboardScheduleRows = dashboardActiveEvent
       ? generateScheduleFromPools(dashboardActiveEvent.id).filter(
-          row => row?.type === 'player' && row?.showMatch && row?.matchId
+          row => row?.type === 'player' && row?.matchId && Number.isFinite(normalizeMeja(row?.meja))
         )
       : [];
 
@@ -4812,7 +4812,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         const tableName = `Meja ${tableNo}`;
 
         const rowsForTable = dashboardScheduleRows.filter(
-          row => String(row.meja || '').toLowerCase() === tableName.toLowerCase()
+          row => normalizeMeja(row.meja) === tableNo
         );
 
         const runningRow = rowsForTable.find(
@@ -4894,7 +4894,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     if (!isWasit) return true;
     // Jadwal memakai 'Meja 1', sedangkan penugasan Supabase memakai angka 1.
     // Jangan tampilkan header pool kosong atau baris meja lain untuk wasit.
-    return row.type === 'player' && row.showMatch &&
+    return row.type === 'player' && row.matchId && Number.isFinite(normalizeMeja(row.meja)) &&
       normalizeMeja(row.meja) === normalizeMeja(wasitAssignment?.nomor_meja);
   }) : [];
   const visibleLiveScoreRows = isPublic && publicLiveTable !== 'ALL' ? liveScoreRows.filter(row => row.type === 'player' && normalizeMeja(row.meja) === Number(publicLiveTable)) : liveScoreRows;
