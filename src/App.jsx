@@ -6590,7 +6590,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                   </div>
                 </div>
                 <div className="sm-participant-table overflow-x-auto rounded-2xl border border-slate-200">
-                  <table className={`w-max ${isPublic ? 'min-w-[860px]' : 'min-w-[980px]'} text-left text-xs border-collapse whitespace-nowrap`}>
+                  <table className="w-max min-w-full whitespace-nowrap border-collapse text-[12px] [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap [&_th]:!px-2 [&_td]:!px-2 [&_th]:py-2 [&_td]:py-2 [&_th]:!text-[12px] [&_td]:!text-[12px]">
                     <thead>
                       <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-center">
                         <th className="py-3.5 px-4 text-left">Nomor ID</th>
@@ -8881,19 +8881,12 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-registration > div > div:first-child > div:last-child { display:grid !important; grid-template-columns:1fr 1fr !important; width:100% !important; gap:7px !important; }
           .sm-registration > div > div:first-child > div:last-child > * { min-height:38px !important; padding:7px 9px !important; justify-content:center !important; border-radius:12px !important; font-size:10px !important; }
           .sm-registration > div > div:first-child > div:last-child > *:first-child { grid-column:1 / -1 !important; }
-          .sm-participant-table { overflow:visible !important; border:0 !important; border-radius:0 !important; }
-          .sm-participant-table table, .sm-participant-table tbody { display:block !important; width:100% !important; }
-          .sm-participant-table thead { display:none !important; }
-          .sm-participant-table tbody { display:grid !important; gap:8px !important; }
-          .sm-participant-table tr { display:grid !important; grid-template-columns:54px 1fr auto !important; gap:4px 9px !important; padding:11px 12px !important; border:1px solid #e2e8f0 !important; border-radius:15px !important; background:#fff !important; box-shadow:0 4px 14px rgba(15,23,42,.04) !important; }
-          .sm-participant-table td { display:block !important; padding:0 !important; border:0 !important; text-align:left !important; font-size:10px !important; }
-          .sm-participant-table td:nth-child(1) { display:none !important; }
-          .sm-participant-table td:nth-child(2) { grid-column:1; grid-row:1 / span 2; align-self:center; font-size:9px !important; line-height:1.2; word-break:break-word; }
-          .sm-participant-table td:nth-child(3) { grid-column:2; grid-row:1; font-size:13px !important; }
-          .sm-participant-table td:nth-child(4) { grid-column:2; grid-row:2; color:#64748b !important; }
-          .sm-participant-table td:nth-child(5) { grid-column:3; grid-row:2; color:#64748b !important; }
-          .sm-participant-table td:nth-child(6) { grid-column:3; grid-row:1; font-weight:800 !important; }
-          .sm-participant-table td:nth-child(7), .sm-participant-table td:nth-child(8) { display:none !important; }
+          .sm-participant-table { max-width:100% !important; overflow-x:auto !important; overflow-y:hidden !important; -webkit-overflow-scrolling:touch; }
+          .sm-participant-table table { display:table !important; width:max-content !important; min-width:100% !important; }
+          .sm-participant-table thead { display:table-header-group !important; }
+          .sm-participant-table tbody { display:table-row-group !important; }
+          .sm-participant-table tr { display:table-row !important; }
+          .sm-participant-table th, .sm-participant-table td { display:table-cell !important; }
 
           .sm-draw > div { padding:14px !important; }
           .sm-draw h2 { font-size:18px !important; }
