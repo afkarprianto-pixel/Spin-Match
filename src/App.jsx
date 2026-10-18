@@ -4691,6 +4691,49 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     const dashboardActiveEvent = heroEvents[safeHeroIndex] || null;
     const dashboardActiveEventId = dashboardActiveEvent?.id ?? null;
 
+    // Publik dapat membuka dashboard sebelum sinkronisasi global event_data selesai.
+    // Ambil ulang data event yang sedang tampil agar pool dan hasil pertandingan
+    // turnamen yang sudah selesai tetap dapat ditampilkan pada kartu meja.
+    useEffect(() => {
+      if (!isPublic || dashboardActiveEventId == null) return undefined;
+      let cancelled = false;
+      const refreshPublicDashboardData = async () => {
+        const { data, error } = await supabase
+          .from('spinmatch_event_data')
+          .select('pool_results, match_results')
+          .eq('event_id', Number(dashboardActiveEventId))
+          .maybeSingle();
+        if (cancelled || error || !data) return;
+
+        if (data.pool_results && Object.keys(data.pool_results).length > 0) {
+          setPoolResults(previous => ({
+            ...previous,
+            [String(dashboardActiveEventId)]: data.pool_results
+          }));
+        }
+
+        const publicMatches = {};
+        Object.entries(data.match_results || {}).forEach(([matchId, result]) => {
+          if (!result) return;
+          if (result.liveScore) {
+            setOnlineLiveScores(previous => ({
+              ...previous,
+              [matchId]: result.liveScore
+            }));
+          }
+          const finishedResult = { ...result };
+          delete finishedResult.liveScore;
+          if (Object.keys(finishedResult).length > 0) publicMatches[matchId] = finishedResult;
+        });
+        if (Object.keys(publicMatches).length > 0) {
+          setMatchResults(previous => ({ ...previous, ...publicMatches }));
+        }
+      };
+
+      refreshPublicDashboardData();
+      return () => { cancelled = true; };
+    }, [isPublic, dashboardActiveEventId]);
+
     const dashboardParticipants = dashboardActiveEventId !== null
       ? (
           participants[dashboardActiveEventId] ||
@@ -6107,7 +6150,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               <div className="grid grid-cols-2 gap-2">
                 {dashboardTableCards.map(card => (
                   <button key={card.tableNo} type="button" disabled={!card.row} onClick={() => {
-                    if (!dashboardActiveEvent || !card.row) return;
+                    if (!dashboardActiveEvent) return;
                     setSelectedEventIdForLive(String(dashboardActiveEvent.id));
                     if (isPublic) {
                       setPublicLiveTable(String(card.tableNo));
@@ -6115,7 +6158,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                       return;
                     }
                     openLiveScore(card.row);
-                  }} className={`flex min-w-0 flex-col items-center rounded-xl border p-2 text-center transition ${card.isLive ? 'border-emerald-400 bg-emerald-50' : card.isFinished ? 'border-blue-200 bg-blue-50' : card.hasSchedule ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'} ${card.row ? 'cursor-pointer active:scale-[.98]' : 'cursor-default'}`}>
+                  }} className={`flex min-w-0 flex-col items-center rounded-xl border p-2 text-center transition ${card.isLive ? 'border-emerald-400 bg-emerald-50' : card.isFinished ? 'border-blue-200 bg-blue-50' : card.hasSchedule ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'} ${isPublic || card.row ? 'cursor-pointer active:scale-[.98]' : 'cursor-default'}`}>
                     <div className="flex w-full items-center justify-between gap-1"><span className="text-[11px] font-black text-slate-900">Meja {card.tableNo}</span><span className={`rounded-md px-1.5 py-0.5 text-[8px] font-black ${card.isLive ? 'bg-emerald-600 text-white' : card.isFinished ? 'bg-blue-600 text-white' : card.hasSchedule ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-600'}`}>{card.isLive ? 'LIVE' : card.isFinished ? 'SELESAI' : card.hasSchedule ? 'SIAP' : 'KOSONG'}</span></div>
                     <svg viewBox="0 0 120 67" className="mt-1 h-[49px] w-[96px]" aria-hidden="true"><path d="M14 25 60 9 106 25 60 42Z" fill="#0874c9" stroke="#064374" strokeWidth="2"/><path d="M60 9V42M14 25h92" fill="none" stroke="#fff" strokeWidth="2"/><path d="M22 31v28M98 31v28" stroke="#475569" strokeWidth="4" strokeLinecap="round"/><path d="M60 12v27" stroke="white" strokeWidth="3" strokeDasharray="3 2"/><circle cx="85" cy="8" r="5" fill="#f97316"/></svg>
                     <span className="text-[11px] font-black text-[#0a3971]">{card.isLive ? `${card.point1} - ${card.point2}` : card.isFinished ? (card.result?.score || 'Selesai') : card.hasSchedule ? 'Menunggu mulai' : 'Belum ada jadwal'}</span>
@@ -6373,9 +6416,8 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                     <button
                       key={card.tableNo}
                       type="button"
-                      disabled={!card.row}
                       onClick={() => {
-                        if (!card.row || !dashboardActiveEvent) return;
+                        if (!dashboardActiveEvent) return;
                         setSelectedEventIdForLive(String(dashboardActiveEvent.id));
                         if (isPublic) {
                           setPublicLiveTable(String(card.tableNo));
@@ -6396,7 +6438,9 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                             ? 'border-white/10 bg-white/10 text-white hover:bg-white/15'
                             : card.hasSchedule
                               ? 'border-cyan-200/15 bg-[#0b2c55]/75 text-white hover:-translate-y-0.5 hover:border-cyan-200/30 hover:bg-[#103965]'
-                              : 'cursor-default border-white/5 bg-[#071b3b]/45 text-white/35'
+                              : isPublic
+                                ? 'cursor-pointer border-white/5 bg-[#071b3b]/45 text-white/70 hover:bg-[#103965]'
+                                : 'cursor-default border-white/5 bg-[#071b3b]/45 text-white/35'
                       }`}
                     >
                       {card.isLive && (
