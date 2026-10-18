@@ -106,6 +106,48 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
   );
 };
 
+const getVideoSource = (rawUrl) => {
+  const value = String(rawUrl || '').trim();
+  if (!value) return { type: 'none', url: '' };
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    let videoId = '';
+    if (host === 'youtu.be') videoId = parsed.pathname.split('/').filter(Boolean)[0] || '';
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+      videoId = parsed.searchParams.get('v') || parsed.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/)?.[1] || '';
+    }
+    if (videoId) return { type: 'youtube', url: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?rel=0` };
+    if (/\.(mp4|webm|ogg)(?:\?.*)?$/i.test(parsed.pathname)) return { type: 'file', url: parsed.href };
+    return { type: 'link', url: parsed.href };
+  } catch (_) {
+    return { type: 'link', url: value };
+  }
+};
+
+const PublicEventVideo = ({ eventItem }) => {
+  const source = getVideoSource(eventItem?.videoUrl);
+  return (
+    <section className="overflow-hidden rounded-[26px] border border-sky-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
+      <div className="flex items-center justify-between gap-3 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white px-4 py-3 sm:px-5">
+        <div>
+          <h2 className="flex items-center gap-2 text-base font-black text-[#0a3971]"><Radio className="h-5 w-5 text-red-500" /> Video Pertandingan</h2>
+          <p className="mt-1 text-[10px] font-semibold text-slate-500">Live streaming atau video pertandingan event</p>
+        </div>
+        {source.type === 'youtube' && <span className="rounded-full bg-red-100 px-2 py-1 text-[9px] font-black text-red-700">YOUTUBE</span>}
+      </div>
+      {source.type === 'youtube' ? (
+        <div className="aspect-video w-full bg-slate-950"><iframe title={`Video ${eventItem?.nama || 'pertandingan'}`} src={source.url} className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div>
+      ) : source.type === 'file' ? (
+        <video controls playsInline preload="metadata" className="aspect-video w-full bg-slate-950 object-contain" src={source.url} />
+      ) : source.type === 'link' ? (
+        <div className="flex flex-col items-center justify-center gap-3 p-8 text-center"><Play className="h-10 w-10 text-sky-500" /><p className="text-xs font-bold text-slate-600">Video tersedia melalui tautan eksternal.</p><a href={source.url} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-sky-600 px-4 py-2 text-xs font-black text-white hover:bg-sky-700">Buka Video</a></div>
+      ) : (
+        <div className="flex flex-col items-center justify-center gap-2 p-8 text-center"><Radio className="h-9 w-9 text-slate-300" /><p className="text-sm font-black text-slate-500">Video belum tersedia</p><p className="text-[10px] text-slate-400">EO dapat menambahkan link YouTube Live atau video rekaman pada pengaturan event.</p></div>
+      )}
+    </section>
+  );
+};
 
 // Akun login wasit online. Terpisah dari Master Wasit lokal agar Live Score lama tetap aman.
 const RefereeOnlineAccounts = ({ eventItem, tableCount, onAccountsChanged }) => {
@@ -1415,7 +1457,8 @@ const AuthenticatedContent = () => {
     ownerId: String(row.eo_auth_id || row.owner_id || row.ownerid || row.created_by || row.owner || ''),
     ownerName: row.owner_name || row.ownername || row.eo_name || row.eo || '',
     lokasi: row.lokasi || row.location || '',
-    contactPerson: row.contact_person || row.contactperson || row.kontak || ''
+    contactPerson: row.contact_person || row.contactperson || row.kontak || '',
+    videoUrl: row.video_url || row.videourl || row.videoUrl || row.youtube_live_url || row.youtubeLiveUrl || ''
   });
 
   const eventToSupabase = (eventItem) => ({
@@ -1430,6 +1473,7 @@ const AuthenticatedContent = () => {
     jumlahmeja: Math.max(1, Number(eventItem.jumlahMeja || 4)),
     metodeundian: eventItem.metodePengundian || 'PER_DIVISI',
     divisilist: Array.isArray(eventItem.divisiList) ? eventItem.divisiList : [],
+    ...(eventItem.videoUrl ? { video_url: eventItem.videoUrl } : {}),
     ...(eventItem.ownerId ? { eo_auth_id: eventItem.ownerId } : {})
   });
 
@@ -1579,6 +1623,7 @@ const AuthenticatedContent = () => {
   const [jamSelesai, setJamSelesai] = useState('18:00');
   const [jumlahMeja, setJumlahMeja] = useState(4);
   const [metodePengundian, setMetodePengundian] = useState('PER_DIVISI');
+  const [formVideoUrl, setFormVideoUrl] = useState('');
 
   const [inputDivisi, setInputDivisi] = useState('');
   const [divisiList, setDivisiList] = useState([]);
@@ -2393,6 +2438,7 @@ const AuthenticatedContent = () => {
     setJamSelesai('18:00');
     setJumlahMeja(4);
     setMetodePengundian('PER_DIVISI');
+    setFormVideoUrl('');
     setDivisiList([]);
     setActiveDivisiTab(null);
     setSelectedDivisiForConfig(null);
@@ -2419,6 +2465,7 @@ const AuthenticatedContent = () => {
     setJamSelesai(eventItem.jamSelesai || '18:00');
     setJumlahMeja(Math.max(1, Number(eventItem.jumlahMeja || eventItem.jumlahmeja || 4)));
     setMetodePengundian(eventItem.metodePengundian || 'PER_DIVISI');
+    setFormVideoUrl(eventItem.videoUrl || '');
     setDivisiList(eventItem.divisiList ? [...eventItem.divisiList] : []);
     setActiveDivisiTab(eventItem.divisiList?.[0]?.nama || null);
     setSelectedDivisiForConfig(null);
@@ -2488,7 +2535,8 @@ const AuthenticatedContent = () => {
         jamSelesai,
         jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
-        divisiList
+        divisiList,
+        videoUrl: formVideoUrl.trim()
       };
 
       // UPDATE tidak boleh dianggap berhasil hanya karena error=null.
@@ -2563,6 +2611,7 @@ const AuthenticatedContent = () => {
         jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
         divisiList,
+        videoUrl: formVideoUrl.trim(),
         ownerId: currentUserId,
         ownerName: currentUserName
       };
@@ -5872,11 +5921,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         <div className={`spinmatch-main-content ${activeView === 'DASHBOARD' ? 'sm-dashboard-screen' : ''} flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8`}>
-{isPublic && (
-  <div className="mx-auto mb-3 w-full max-w-[1500px] rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700 md:mb-4 md:px-4 md:py-3 md:text-xs">
-    Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
-  </div>
-)}
 {isReferee && activeView !== 'RANKING' && !['REGISTRATION', 'CHAT'].includes(activeView) ? (
   <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} onAssignedEventChange={setRefereeAssignedEventId} />
 ) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
@@ -6073,6 +6117,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         )}
       </section>
 
+      {isPublic && <PublicEventVideo eventItem={dashboardActiveEvent} />}
 
       {/* ===================== STATISTICS ===================== */}
       <section className={`sm-dashboard-stats ${isPublic ? 'sm-dashboard-stats-public' : ''} grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
@@ -7349,6 +7394,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             </div>
           ) : activeView === 'LIVE_SCORE' ? (
             <div className="sm-live space-y-6">
+              {isPublic && <PublicEventVideo eventItem={selectedLiveEvent} />}
               {selectedLiveEvent && (
                 <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-3xl p-6">
                   <div className={`flex flex-wrap gap-4 ${isPublic ? 'flex-col items-center justify-center text-center' : 'items-center justify-between'}`}>
@@ -8574,6 +8620,13 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nama Event</label>
                 <input type="text" required value={formNama} onChange={(e) => setFormNama(e.target.value)} placeholder="Contoh: Turnamen Pingpong Divisi 5 2026" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-800 text-sm" />
               </div>
+              {!isPublic && !isReferee && (isEO || isSuperAdmin) && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Link Video / YouTube Live <span className="font-normal text-slate-400">(khusus EO pemilik / Super Admin)</span></label>
+                  <input type="url" value={formVideoUrl} onChange={(e) => setFormVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=... atau https://domain/video.mp4" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-sky-500 text-sm" />
+                  <p className="mt-1 text-[10px] text-slate-400">Bisa berupa YouTube Live, video YouTube, file MP4/WebM, atau link video eksternal.</p>
+                </div>
+              )}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
                 <label className="block text-xs font-bold text-slate-900">Durasi Pelaksanaan</label>
                 <div className="flex items-center gap-3">
