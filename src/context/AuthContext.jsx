@@ -169,7 +169,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginAsPublic = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      return { success: false, message: `Tidak dapat membuka mode Publik: ${error.message}` };
+    }
     const guest = { id: '', name: 'Public', username: 'public', role: 'PUBLIC', roleLabel: 'Public', isGuest: true };
     setUser(guest);
     return { success: true, user: guest };

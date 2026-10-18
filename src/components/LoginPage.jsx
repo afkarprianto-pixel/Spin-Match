@@ -355,17 +355,13 @@ export const LoginPage = ({ onCancel }) => {
   };
 
   const handlePublic = async () => {
-
-
-
     resetMessage();
-
-
-
-    await loginAsPublic();
-
-
-
+    try {
+      const result = await loginAsPublic();
+      if (!result?.success) setError(result?.message || 'Gagal membuka mode Publik.');
+    } catch (err) {
+      setError(err?.message || 'Gagal membuka mode Publik.');
+    }
   };
 
 
