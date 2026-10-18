@@ -3295,8 +3295,9 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     const eventData = events.find(e => String(e.id) === String(eventId));
     const division = eventData?.divisiList?.[0] || {};
     const configured = Number(poolData?.config?.lolosCount || 0);
-    const qualifyCount = configured > 0 ? configured : (division.lolosPool === '2 Pemain' ? 2 : 1);
+      const qualifyCount = configured > 0 ? configured : (division.lolosPool === '2 Pemain' ? 2 : 1);
     const rankings = {};
+    const scheduleRowsForEvent = generateScheduleFromPools(eventId);
     Object.entries(poolData.pools).forEach(([poolName, players]) => {
       const matches = [];
       const m1 = matchResults[`${eventId}_${poolName}_M1`];
@@ -3308,6 +3309,19 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           if (ref === 'M1') { p1=players[1]; p2=players[2]; }
           if (ref === 'M2' && m1?.winner) { p1=m1.winner === 'player1' ? players[2] : players[1]; p2=players[0]; }
           if (ref === 'M3' && m1?.winner) { p1=m1.winner === 'player1' ? players[1] : players[2]; p2=players[0]; }
+        }
+        // Hasil input wasit biasanya hanya menyimpan skor dan pemenang,
+        // bukan objek player1/player2. Ambil pasangan pemain dari jadwal
+        // agar pool 2 pemain maupun pool lain tetap ikut klasemen.
+        if (!p1?.id || !p2?.id) {
+          const scheduledMatch = scheduleRowsForEvent.find(row =>
+            row?.type === 'player' && row?.showMatch &&
+            row?.pool === poolName && row?.matchRef === ref && row?.matchId === key
+          );
+          if (scheduledMatch) {
+            p1 = scheduledMatch.player;
+            p2 = scheduledMatch.opponent;
+          }
         }
         if (!p1?.id || !p2?.id) return;
         const games = Array.isArray(result.gameHistory) ? result.gameHistory.filter(g =>
@@ -3475,11 +3489,15 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     }
   };
 
+  // Ranking harus dihitung ulang untuk semua role, termasuk Publik.
+  // Sebelumnya kalkulasi hanya berjalan untuk EO/Super Admin sehingga akun
+  // Publik dapat melihat klasemen lama atau kosong walaupun hasil pertandingan
+  // terbaru sudah berhasil dimuat dari Supabase.
   useEffect(() => {
-    if (!selectedEventIdForDraw || !poolResults[selectedEventIdForDraw]?.pools) return;
-    if (!(isEO || isSuperAdmin)) return;
-    calculatePoolRankings(selectedEventIdForDraw);
-  }, [matchResults, selectedEventIdForDraw]);
+    const rankingEventId = selectedEventIdForRanking || selectedEventIdForDraw;
+    if (!rankingEventId || !poolResults[rankingEventId]?.pools) return;
+    calculatePoolRankings(rankingEventId);
+  }, [matchResults, poolResults, selectedEventIdForRanking, selectedEventIdForDraw]);
 
   const generateScheduleFromPools = (eventId) => {
     const poolData = poolResults[eventId];
