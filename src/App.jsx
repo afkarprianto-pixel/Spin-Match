@@ -6,13 +6,14 @@ import heroPingpong from './assets/hero-pingpong-new.png';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { StatCard } from './components/StatCard';
 import { LoginPage } from './components/LoginPage';
+import { EventChat } from './components/EventChat';
 import * as XLSX from 'xlsx';
 import {
   Trophy, Users, Activity, DollarSign, Plus, X, Trash2, Edit3,
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck, Eye, EyeOff
+  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck, Eye, EyeOff, MessageCircle
 } from 'lucide-react';
 
 
@@ -29,9 +30,9 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
   const isRefereeRole = normalizedRole === 'REFEREE';
 
   const openView = (view) => {
-    if (isRefereeRole && !['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING'].includes(view)) return;
-    const publicBlocked = ['REGISTRATION', 'DRAW', 'SETTINGS', 'REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'];
-    if (isWasitRole && !['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING'].includes(view)) {
+    if (isRefereeRole && !['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING', 'REGISTRATION', 'CHAT'].includes(view)) return;
+    const publicBlocked = ['SETTINGS', 'REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'];
+    if (isWasitRole && !['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING', 'CHAT'].includes(view)) {
       alert('Akun Wasit hanya dapat mengelola skor meja tugasnya dan melihat informasi pertandingan.');
       return;
     }
@@ -52,11 +53,14 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       { view: 'REF_TABLES', label: 'Penempatan Meja', icon: Target },
       { view: 'REF_WASIT', label: 'Kelola Wasit', icon: Users },
       { view: 'REF_LIVE', label: 'Pantau Live Score', icon: Activity },
+      { view: 'REGISTRATION', label: 'Data Peserta', icon: Users },
+      { view: 'CHAT', label: 'Chat Pengundian', icon: MessageCircle },
     ] : []),
-    { view: 'REGISTRATION', label: 'Kelola Pemain', icon: Users },
+    ...(!isRefereeRole ? [{ view: 'REGISTRATION', label: isPublicRole ? 'Data Peserta' : 'Kelola Pemain', icon: Users }] : []),
     { view: 'REFEREE_MANAGEMENT', label: 'Kelola Wasit', icon: Users },
     { view: 'SUPERVISOR_MANAGEMENT', label: 'Kelola Referee', icon: ShieldCheck },
-    { view: 'DRAW', label: 'Undian Pool', icon: Dices },
+    { view: 'DRAW', label: isPublicRole ? 'Mesin Undian' : 'Undian Pool', icon: Dices },
+    ...(!isRefereeRole ? [{ view: 'CHAT', label: 'Chat Pengundian', icon: MessageCircle }] : []),
     ...(!isRefereeRole ? [{ view: 'SCHEDULE', label: 'Jadwal Pertandingan', icon: Calendar }] : []),
     { view: 'LIVE_SCORE', label: 'Live Score', icon: Radio },
     { view: 'RANKING', label: 'Peringkat & Poin', icon: Medal },
@@ -74,7 +78,7 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
+        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING', 'REGISTRATION', 'CHAT'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING', 'CHAT'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
           <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
             <Icon className={`h-[18px] w-[18px] shrink-0 ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
@@ -725,7 +729,7 @@ const SpinMatchBreakEditor = ({ eventId, breaks, onSaved, canEdit }) => {
   </div>;
 };
 
-const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule, getWasit, getMatchPlayers, eventBreaks, onBreaksSaved }) => {
+const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule, getWasit, getMatchPlayers, eventBreaks, onBreaksSaved, onAssignedEventChange }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -761,6 +765,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
   useEffect(() => { if (user?.id) load(); else setLoading(false); }, [user?.id]);
   const assignedEventId = rows[0]?.event_id;
   const assignedEvent = events.find(ev => String(ev.id) === String(assignedEventId));
+  useEffect(() => { onAssignedEventChange?.(assignedEventId || ''); }, [assignedEventId, onAssignedEventChange]);
   useEffect(() => {
     let cancelled = false;
     const refreshEventWasits = async () => {
@@ -914,6 +919,8 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     { view: 'REF_TABLES', label: 'Penempatan Meja', Icon: Target, color: 'from-[#08a878] to-[#19c995]', span: 'col-span-2' },
     { view: 'REF_WASIT', label: 'Kelola Wasit', Icon: Users, color: 'from-[#6857d9] to-[#9581ef]', span: 'col-span-2' },
     { view: 'REF_LIVE', label: 'Pantau Live Score', Icon: Activity, color: 'from-[#e83c55] to-[#fa6b78]', span: 'col-span-2' },
+    { view: 'REGISTRATION', label: 'Data Peserta', Icon: Users, color: 'from-[#1478f2] to-[#26a7ff]', span: 'col-span-2' },
+    { view: 'CHAT', label: 'Chat Pengundian', Icon: MessageCircle, color: 'from-[#635bdb] to-[#8b83f6]', span: 'col-span-2' },
     { view: 'RANKING', label: 'Peringkat & Poin', Icon: Medal, color: 'from-[#13a86b] to-[#36cf8b]', span: 'col-span-2' },
   ];
   if (activeView === 'DASHBOARD') return <div className="mx-auto w-full max-w-4xl space-y-5">
@@ -928,7 +935,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     <section className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4"><h2 className="text-base font-black text-slate-950">Menu Cepat</h2><p className="mt-1 text-xs text-slate-500">Akses operasional pertandingan</p></div>
       <div className="grid grid-cols-6 gap-2 sm:gap-3">
-        {quickLinks.map(({ view, label, Icon, color, span }) => <button key={view} type="button" onClick={() => setActiveView(view)} className={`${span} flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r ${color} px-2 py-2.5 text-center text-[10px] font-black leading-tight text-white shadow-sm active:scale-[.98] sm:min-h-[72px] sm:flex-row sm:gap-2 sm:text-xs`}>
+        {quickLinks.map(({ view, label, Icon, color, span }) => <button key={view} type="button" onClick={() => setActiveView(view)} className={`${span} flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-r ${color} px-2 py-1.5 text-center text-[10px] font-black leading-tight text-white shadow-sm active:scale-[.98] sm:min-h-[52px] sm:flex-row sm:gap-2 sm:text-xs`}>
           <Icon className="h-5 w-5 shrink-0" /><span>{label}</span>
         </button>)}
       </div>
@@ -1085,6 +1092,10 @@ const AuthenticatedContent = () => {
   const [heroEventIndex, setHeroEventIndex] = useState(0);
   const [selectedEventIdForReg, setSelectedEventIdForReg] = useState('');
   const [selectedEventIdForDraw, setSelectedEventIdForDraw] = useState('');
+  const [selectedChatEventId, setSelectedChatEventId] = useState('');
+  const [refereeAssignedEventId, setRefereeAssignedEventId] = useState('');
+  const [publicDrawLoading, setPublicDrawLoading] = useState(false);
+  const [publicDrawLoadError, setPublicDrawLoadError] = useState('');
   const [selectedEventIdForSchedule, setSelectedEventIdForSchedule] = useState('');
   const [selectedEventIdForLive, setSelectedEventIdForLive] = useState('');
   const [publicLiveTable, setPublicLiveTable] = useState('ALL');
@@ -1128,6 +1139,7 @@ const AuthenticatedContent = () => {
     setSelectedEventIdForKnockout(eventId);
     setSelectedEventIdForRanking(eventId);
     setSelectedEventIdForSettings(eventId);
+    setSelectedChatEventId(eventId);
     setSelectedDivisionForRanking('');
     setPublicLiveTable('ALL');
     if (isPublic) {
@@ -1462,7 +1474,7 @@ const AuthenticatedContent = () => {
 
     loadEventsFromSupabase();
     return () => { cancelled = true; };
-  }, []);
+  }, [isPublic, isReferee]);
 
   // ============================================
   // SUPABASE SYNC - PARTICIPANTS
@@ -1485,10 +1497,9 @@ const AuthenticatedContent = () => {
     let cancelled = false;
 
     const loadParticipantsFromSupabase = async () => {
-      const { data, error } = await supabase
-        .from('Participants')
-        .select('*')
-        .order('id', { ascending: true });
+      const { data, error } = isPublic || isReferee
+        ? await supabase.rpc('spinmatch_get_visible_participants')
+        : await supabase.from('Participants').select('*').order('id', { ascending: true });
 
       if (cancelled) return;
 
@@ -1617,9 +1628,53 @@ const AuthenticatedContent = () => {
   // Event terpilih harus didefinisikan sebelum dipakai oleh dependency useEffect.
   const selectedEventItem = events.find(e => String(e.id) === String(selectedEventIdForReg));
   const selectedDrawEvent = events.find(e => String(e.id) === String(selectedEventIdForDraw));
+  const selectedChatEvent = events.find(e => String(e.id) === String(selectedChatEventId));
   const selectedScheduleEvent = events.find(e => String(e.id) === String(selectedEventIdForSchedule));
   const selectedLiveEvent = events.find(e => String(e.id) === String(selectedEventIdForLive) && (!isWasit || String(e.id) === String(wasitAssignment?.event_id)));
   const selectedKnockoutEvent = events.find(e => String(e.id) === String(selectedEventIdForKnockout));
+
+  useEffect(() => {
+    if (!isPublic || activeView !== 'DRAW' || !selectedDrawEvent?.id) return undefined;
+    let cancelled = false;
+    const refreshPublicDraw = async () => {
+      setPublicDrawLoading(true);
+      setPublicDrawLoadError('');
+      const { data, error } = await supabase.from('spinmatch_event_data')
+        .select('pool_results')
+        .eq('event_id', Number(selectedDrawEvent.id))
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        setPublicDrawLoadError(`Gagal memuat hasil undian: ${error.message}`);
+      } else if (data?.pool_results && Object.keys(data.pool_results).length > 0) {
+        setPoolResults(previous => ({ ...previous, [selectedDrawEvent.id]: data.pool_results }));
+      } else {
+        setPoolResults(previous => {
+          const next = { ...previous };
+          delete next[selectedDrawEvent.id];
+          return next;
+        });
+      }
+      setPublicDrawLoading(false);
+    };
+    refreshPublicDraw();
+    const channel = supabase.channel(`public-draw-${selectedDrawEvent.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'spinmatch_event_data',
+        filter: `event_id=eq.${Number(selectedDrawEvent.id)}`,
+      }, refreshPublicDraw)
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setPublicDrawLoadError('Koneksi pembaruan undian gagal. Muat ulang halaman untuk mencoba lagi.');
+        }
+      });
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [isPublic, activeView, selectedDrawEvent?.id]);
 
   useEffect(() => {
     if (isPublic || !liveScoreMatch?.matchId || !selectedLiveEvent?.id) return undefined;
@@ -2080,7 +2135,7 @@ const AuthenticatedContent = () => {
 
   useEffect(() => {
     if (!user || !isPublic) return;
-    const publicAllowedViews = ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT'];
+    const publicAllowedViews = ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT'];
     if (!publicAllowedViews.includes(activeView)) setActiveView('DASHBOARD');
   }, [user, isPublic, activeView]);
 
@@ -2091,12 +2146,17 @@ const AuthenticatedContent = () => {
     ) || events.find(eventItem => String(eventItem.status || '').toLowerCase() === 'aktif') || events[0];
     const defaultEventId = isWasit
       ? String(wasitAssignment?.event_id || preferredEvent?.id || '')
+      : isReferee
+        ? String(refereeAssignedEventId || '')
       : String(preferredEvent?.id || '');
     if (activeView === 'REGISTRATION' && !selectedEventIdForReg && events.length > 0) {
       setSelectedEventIdForReg(defaultEventId);
     }
     if (activeView === 'DRAW' && !selectedEventIdForDraw && events.length > 0) {
       setSelectedEventIdForDraw(defaultEventId);
+    }
+    if (activeView === 'CHAT' && !selectedChatEventId && events.length > 0) {
+      setSelectedChatEventId(defaultEventId);
     }
     if (activeView === 'SCHEDULE' && !selectedEventIdForSchedule && events.length > 0) {
       setSelectedEventIdForSchedule(defaultEventId);
@@ -2113,7 +2173,7 @@ const AuthenticatedContent = () => {
     if (activeView === 'SETTINGS' && !selectedEventIdForSettings && events.length > 0) {
       setSelectedEventIdForSettings(defaultEventId);
     }
-  }, [user, activeView, events, isWasit, wasitAssignment?.event_id, selectedDashboardEventId, publicViewedEventId, selectedEventIdForReg, selectedEventIdForDraw, selectedEventIdForSchedule, selectedEventIdForLive, selectedEventIdForKnockout]);
+  }, [user, activeView, events, isWasit, isReferee, refereeAssignedEventId, wasitAssignment?.event_id, selectedDashboardEventId, publicViewedEventId, selectedEventIdForReg, selectedEventIdForDraw, selectedChatEventId, selectedEventIdForSchedule, selectedEventIdForLive, selectedEventIdForKnockout]);
 
   useEffect(() => {
     if (!selectedScheduleEvent?.id || !poolResults[selectedScheduleEvent.id]) return;
@@ -5509,12 +5569,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                   <Filter className="w-4 h-4 text-blue-100/80" />
                   <span className="text-xs font-bold text-slate-200">Pilih Event:</span>
                   <select value={selectedEventIdForReg} onChange={(e) => selectDashboardEvent(events.find(ev => String(ev.id) === e.target.value))} className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
-                    {events.filter(ev => !isWasit || String(ev.id) === String(wasitAssignment?.event_id)).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
+                    {events.filter(ev => (!isWasit || String(ev.id) === String(wasitAssignment?.event_id)) && (!isReferee || String(ev.id) === String(refereeAssignedEventId))).map((ev) => (<option key={ev.id} value={ev.id}>{ev.nama} ({ev.tanggal})</option>))}
                   </select>
                 </div>
-                <button onClick={() => setShowRegModal(true)} className="flex items-center gap-1.5 text-xs font-bold bg-[#bef264] hover:bg-[#a3e635] text-slate-950 px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm whitespace-nowrap">
+                {!isPublic && !isReferee && <button onClick={() => setShowRegModal(true)} className="flex items-center gap-1.5 text-xs font-bold bg-[#bef264] hover:bg-[#a3e635] text-slate-950 px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm whitespace-nowrap">
                   <UserPlus className="w-4 h-4" /> Tambah Peserta
-                </button>
+                </button>}
               </div>
             </div>
           )}
@@ -5546,6 +5606,21 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </select>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeView === 'CHAT' && (
+            <div className="sm-mobile-page-header mt-4 flex flex-col gap-4 rounded-3xl border border-white/10 bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 text-white shadow-xs sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setActiveView('DASHBOARD')} className="rounded-xl bg-white/10 p-2 text-blue-50 transition hover:bg-white/20" title="Kembali ke Dashboard"><ArrowLeft className="h-5 w-5" /></button>
+                <div><h2 className="text-lg font-bold">Chat Pengundian</h2><p className="text-xs text-blue-100/70">Percakapan langsung per event</p></div>
+              </div>
+              <label className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-3 py-2">
+                <Filter className="h-4 w-4 text-blue-100/80" /><span className="text-xs font-bold text-slate-200">Pilih Event:</span>
+                <select value={selectedChatEventId} onChange={(event) => setSelectedChatEventId(event.target.value)} className="max-w-[220px] bg-transparent text-xs font-bold text-white outline-none [&>option]:text-slate-900">
+                  {events.map((eventItem) => <option key={eventItem.id} value={eventItem.id}>{eventItem.nama}</option>)}
+                </select>
+              </label>
             </div>
           )}
 
@@ -5667,8 +5742,8 @@ const handleUpdatePlayerSubmit = async (e) => {
     Mode Publik • Hanya lihat. Pembuatan event, pendaftaran peserta, undian, dan pengaturan dinonaktifkan.
   </div>
 )}
-{isReferee && activeView !== 'RANKING' ? (
-  <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} />
+{isReferee && activeView !== 'RANKING' && !['REGISTRATION', 'CHAT'].includes(activeView) ? (
+  <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} onAssignedEventChange={setRefereeAssignedEventId} />
 ) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
   <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">{wasitAssignmentLoading ? 'Memeriksa penugasan wasit...' : 'Belum ada penugasan wasit aktif. Hubungi EO.'}</div>
 ) : activeView === 'DASHBOARD' ? (
@@ -6328,24 +6403,24 @@ const handleUpdatePlayerSubmit = async (e) => {
             <Settings className="h-5 w-5" /> Kelola Event
           </button>}
 
-          {!isPublic && <button
+          {!isReferee && <button
             onClick={() => {
               if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('REGISTRATION');
             }}
             className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
           >
-            <Users className="h-5 w-5 shrink-0" /> Kelola Pemain
+            <Users className="h-5 w-5 shrink-0" /> {isPublic ? 'Data Peserta' : 'Kelola Pemain'}
           </button>}
 
-          {!isPublic && <button
+          {!isReferee && <button
             onClick={() => {
               if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('DRAW');
             }}
             className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
           >
-            <Shuffle className="h-5 w-5 shrink-0" /> Undian Pool
+            <Shuffle className="h-5 w-5 shrink-0" /> {isPublic ? 'Mesin Undian' : 'Undian Pool'}
           </button>}
 
           <button
@@ -6368,6 +6443,14 @@ const handleUpdatePlayerSubmit = async (e) => {
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
 
+          <button
+            type="button"
+            onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
+            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+          >
+            <MessageCircle className="h-5 w-5 shrink-0" /> Chat Pengundian
+          </button>
+
           {!isPublic && (
             <button
               type="button"
@@ -6383,12 +6466,13 @@ const handleUpdatePlayerSubmit = async (e) => {
         <div className={`hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6 ${isPublic ? 'mx-auto max-w-2xl md:grid-cols-2 xl:grid-cols-2' : ''}`}>
           {[
             { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
-            { label: 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
-            { label: 'Undian Pool', icon: Shuffle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
+            { label: isPublic ? 'Data Peserta' : 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
+            { label: isPublic ? 'Mesin Undian' : 'Undian Pool', icon: Shuffle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
+            { label: 'Chat Pengundian', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
-          ].filter(item => !isPublic || ['Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
+          ].filter(item => !isPublic || ['Data Peserta', 'Mesin Undian', 'Chat Pengundian', 'Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className={`group flex items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
               <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
@@ -6403,58 +6487,62 @@ const handleUpdatePlayerSubmit = async (e) => {
     </div>
   </>
 
+          ) : activeView === 'CHAT' ? (
+            selectedChatEvent
+              ? <EventChat eventId={selectedChatEvent.id} eventName={selectedChatEvent.nama} user={user} />
+              : <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Belum ada event yang dapat dibuka untuk chat.</div>
           ) : activeView === 'REGISTRATION' ? (
             <div className="sm-registration space-y-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Daftar Peserta: <span className="text-lime-700">{selectedEventItem?.nama || 'Pilih Event'}</span></h3>
-                    <p className="text-[11px] text-slate-400">💡 <span className="font-semibold text-slate-600">Klik Kiri</span> pada baris pemain untuk Edit | <span className="font-semibold text-slate-600">Klik Kanan</span> untuk Opsi Lain.</p>
+                    <h3 className="text-base font-bold text-slate-900">{isPublic || isReferee ? 'Data Peserta' : 'Daftar Peserta'}: <span className="text-lime-700">{selectedEventItem?.nama || 'Pilih Event'}</span></h3>
+                    {!isPublic && !isReferee && <p className="text-[11px] text-slate-400">💡 <span className="font-semibold text-slate-600">Klik Kiri</span> pada baris pemain untuk Edit | <span className="font-semibold text-slate-600">Klik Kanan</span> untuk Opsi Lain.</p>}
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
+                    {!isPublic && !isReferee && <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
                       <Wallet className="w-4 h-4 text-emerald-600" />
                       <span className="text-xs font-bold text-slate-600">Saldo Daftar:</span>
                       <span className="text-xs font-black text-emerald-700">Rp {totalSaldoDaftar.toLocaleString('id-ID')}</span>
-                    </div>
-                    <label className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition border border-slate-200">
+                    </div>}
+                    {!isPublic && !isReferee && <label className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition border border-slate-200">
                       <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Upload Excel
                       <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} className="hidden" />
-                    </label>
+                    </label>}
                     <span className="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-2 rounded-xl border border-slate-200">Total: {currentEventParticipants.length} Pemain</span>
-                    <button onClick={handleDeleteAllParticipants} disabled={currentEventParticipants.length === 0} className="flex items-center gap-1.5 px-3.5 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm border border-red-600">
+                    {!isPublic && !isReferee && <button onClick={handleDeleteAllParticipants} disabled={currentEventParticipants.length === 0} className="flex items-center gap-1.5 px-3.5 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-sm border border-red-600">
                       <Trash2 className="w-4 h-4" /> Hapus Semua
-                    </button>
+                    </button>}
                   </div>
                 </div>
                 <div className="sm-participant-table overflow-x-auto rounded-2xl border border-slate-200">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className={`w-max ${isPublic ? 'min-w-[860px]' : 'min-w-[980px]'} text-left text-xs border-collapse whitespace-nowrap`}>
                     <thead>
                       <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-center">
-                        <th className="py-3.5 px-3 w-12">No</th>
-                        <th className="py-3.5 px-4 text-left">ID Peserta</th>
-                        <th className="py-3.5 px-4 text-left">Nama Lengkap</th>
+                        <th className="py-3.5 px-4 text-left">Nomor ID</th>
+                        <th className="py-3.5 px-4 text-left">Nama Pemain</th>
                         <th className="py-3.5 px-4 text-left">Klub / PTM</th>
-                        <th className="py-3.5 px-3">No HP / WA</th>
+                        {!isPublic && <th className="py-3.5 px-3">No HP / WA</th>}
+                        <th className="py-3.5 px-3">Usia</th>
                         <th className="py-3.5 px-3">Divisi</th>
                         <th className="py-3.5 px-3">Status Bayar</th>
-                        <th className="py-3.5 px-4 text-right">Nilai (Rp)</th>
+                        <th className="py-3.5 px-4 text-right">Nilai Bayar (Rp)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
                       {(!selectedEventItem || currentEventParticipants.length === 0) ? (
-                        <tr><td colSpan="8" className="py-12 text-center text-slate-400">Belum ada peserta terdaftar untuk event ini.</td></tr>
+                        <tr><td colSpan={isPublic ? 7 : 8} className="py-12 text-center text-slate-400">{isReferee && !refereeAssignedEventId ? 'Belum ada penugasan event aktif.' : 'Belum ada peserta terdaftar untuk event ini.'}</td></tr>
                       ) : (
-                        currentEventParticipants.map((p, idx) => (
-                          <tr key={p.id} onClick={() => handlePlayerLeftClick(p)} onContextMenu={(e) => handlePlayerContextMenu(e, p)} className="hover:bg-lime-50/60 cursor-pointer text-center select-none transition-colors">
-                            <td className="py-3.5 px-3 text-slate-400 font-medium">{idx + 1}</td>
+                        currentEventParticipants.map((p) => (
+                          <tr key={p.id} onClick={isPublic || isReferee ? undefined : () => handlePlayerLeftClick(p)} onContextMenu={isPublic || isReferee ? undefined : (e) => handlePlayerContextMenu(e, p)} className={`${isPublic || isReferee ? '' : 'hover:bg-lime-50/60 cursor-pointer'} text-center select-none transition-colors`}>
                             <td className="py-3.5 px-4 text-left font-mono font-bold text-indigo-700">{p.customId}</td>
                             <td className="py-3.5 px-4 text-left font-bold text-slate-900">{p.nama}</td>
                             <td className="py-3.5 px-4 text-left font-semibold text-slate-600">{p.ptm}</td>
-                            <td className="py-3.5 px-3 font-mono text-slate-500">{p.noTelp || '-'}</td>
+                            {!isPublic && <td className="py-3.5 px-3 font-mono text-slate-500">{p.noTelp || '-'}</td>}
+                            <td className="py-3.5 px-3 font-semibold text-slate-700">{p.usia || '-'}</td>
                             <td className="py-3.5 px-3 font-semibold text-slate-700">{p.divisi}</td>
                             <td className="py-3.5 px-3" onClick={(e) => e.stopPropagation()}>
-                              <select value={p.statusBayar} onChange={(e) => {
+                              {!isPublic && !isReferee ? <select value={p.statusBayar} onChange={(e) => {
                                 const eventId = selectedEventItem.id;
                                 const updatedList = participants[eventId].map(item =>
                                   item.id === p.id ? { ...item, statusBayar: e.target.value, nilaiBayar: e.target.value === 'Bayar' ? (item.nilaiBayar || 50000) : 0 } : item
@@ -6463,7 +6551,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                               }} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${p.statusBayar === 'Bayar' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
                                 <option value="Bayar">Bayar</option>
                                 <option value="Belum">Belum</option>
-                              </select>
+                              </select> : <span className={`inline-flex rounded-lg px-2.5 py-1 text-[11px] font-bold border ${p.statusBayar === 'Bayar' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>{p.statusBayar || 'Belum'}</span>}
                             </td>
                             <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800">{p.nilaiBayar ? p.nilaiBayar.toLocaleString('id-ID') : 0}</td>
                           </tr>
@@ -6509,6 +6597,19 @@ const handleUpdatePlayerSubmit = async (e) => {
                           <Play className="h-4 w-4" /> {showPoolSimulation ? 'Tutup Simulasi' : 'Simulasi'}
                         </button>
                       </div>
+                    )}
+                    {isPublic && selectedDrawEvent && (
+                      <section className="mx-auto w-full max-w-3xl rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 p-5 text-center shadow-sm sm:p-7">
+                        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border-4 border-emerald-200 bg-white text-emerald-700 shadow-sm"><Dices className={`h-8 w-8 ${publicDrawLoading ? 'animate-spin' : ''}`} /></div>
+                        <h3 className="text-lg font-black text-emerald-950">Mesin Undian</h3>
+                        <p className="mt-1 text-xs text-emerald-800">{selectedDrawEvent.nama}</p>
+                        {publicDrawLoading
+                          ? <p role="status" className="mt-3 text-sm font-semibold text-emerald-800">Memeriksa pembaruan hasil undian...</p>
+                          : currentPoolData
+                            ? <p className="mt-3 text-sm font-bold text-emerald-800">Undian selesai. Hasil pembagian pool tersedia di bawah.</p>
+                            : <p className="mt-3 text-sm font-semibold text-emerald-800">Menunggu EO memulai dan menyimpan hasil undian.</p>}
+                        {publicDrawLoadError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-left text-xs text-red-700">{publicDrawLoadError}</p>}
+                      </section>
                     )}
                   </div>
                 </div>
@@ -6611,7 +6712,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </button>
                 </div>
               </div>}
-              {showDrawControls && currentPoolData && (
+              {(showDrawControls || isPublic) && currentPoolData && (
                 <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6">
                   <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                     <div className="flex items-center gap-2">
@@ -6634,6 +6735,14 @@ const handleUpdatePlayerSubmit = async (e) => {
                       </button>
                       <button onClick={() => { setActiveView('SCHEDULE'); setTimeout(() => calculatePoolRankings(selectedDrawEvent.id), 100); }} className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Lanjut ke Jadwal
+                      </button>
+                    </div>}
+                    {isPublic && <div className="flex flex-wrap items-center gap-2">
+                      <button type="button" onClick={() => { selectDashboardEvent(selectedDrawEvent); setActiveView('SCHEDULE'); }} className="inline-flex items-center gap-1.5 rounded-xl bg-[#bef264] px-4 py-2 text-xs font-bold text-slate-950 shadow-sm transition hover:bg-[#a3e635]">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Lanjut ke Jadwal
+                      </button>
+                      <button type="button" onClick={() => { selectDashboardEvent(selectedDrawEvent); setActiveView('KNOCKOUT'); }} className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700">
+                        <Trophy className="h-3.5 w-3.5" /> Lihat Knockout
                       </button>
                     </div>}
                   </div>
@@ -6672,7 +6781,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                   </div>
                 </div>
               )}
-              {showDrawControls && !currentPoolData && (
+              {(showDrawControls || isPublic) && !currentPoolData && (
                 <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center">
                   <Dices className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <h4 className="text-sm font-bold text-slate-500 mb-1">Belum Ada Hasil Undian</h4>
@@ -6917,6 +7026,12 @@ const handleUpdatePlayerSubmit = async (e) => {
                           transform-origin: top center !important;
                           margin-inline: auto !important;
                         }
+                        @media (orientation: portrait) {
+                          #spinmatch-knockout-print-area #spinmatch-knockout-print > .min-w-max > .relative {
+                            height: var(--knockout-print-height-portrait) !important;
+                            transform: scale(var(--knockout-print-scale-portrait)) !important;
+                          }
+                        }
                         #spinmatch-knockout-print-area #spinmatch-knockout-print button {
                           color: #000 !important;
                           border-color: #172554 !important;
@@ -6941,12 +7056,13 @@ const handleUpdatePlayerSubmit = async (e) => {
                         const rounds = ko.rounds || [];
                         if (!rounds.length) return <p className="p-8 text-center text-sm text-slate-500">Belum ada peserta Knockout.</p>;
                         const eventId = selectedKnockoutEvent.id;
-                        const W = 160, H = 86, GAP = 12, COLUMN_GAP = 62, LEFT = 14, TOP = 62;
+                        const W = 132, H = 82, GAP = 10, COLUMN_GAP = 24, LEFT = 10, TOP = 54;
                         const stride = H + GAP;
                         const columnStep = W + COLUMN_GAP;
-                        const totalW = LEFT + rounds.length * columnStep - COLUMN_GAP + 24;
-                        const totalH = TOP + (ko.bracketSize / 2) * stride + 30;
+                        const totalW = LEFT + rounds.length * columnStep - COLUMN_GAP + 20;
+                        const totalH = TOP + (ko.bracketSize / 2) * stride + 24;
                         const printScale = Math.min(1.4, 1020 / totalW, 650 / totalH);
+                        const portraitPrintScale = Math.min(1.2, 730 / totalW, 930 / totalH);
                         const matchY = (r, i) => TOP + ((2 ** r) * (i + 0.5) - 0.5) * stride;
                         const matchX = r => LEFT + r * columnStep;
                         const getName = p => p?.nama || 'Menunggu pemenang';
@@ -6964,7 +7080,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                           </div>
                           <div
                             className="relative"
-                            style={{width:totalW,height:totalH * knockoutZoom,transform:`scale(${knockoutZoom})`,transformOrigin:'top left',touchAction:'pan-x pan-y','--knockout-print-scale':printScale,'--knockout-print-height':`${totalH * printScale}px`}}
+                            style={{width:totalW,height:totalH * knockoutZoom,transform:`scale(${knockoutZoom})`,transformOrigin:'top left',touchAction:'pan-x pan-y','--knockout-print-scale':printScale,'--knockout-print-height':`${totalH * printScale}px`,'--knockout-print-scale-portrait':portraitPrintScale,'--knockout-print-height-portrait':`${totalH * portraitPrintScale}px`}}
                             onTouchStart={event => {
                               if (event.touches.length !== 2) return;
                               const [first, second] = event.touches;
