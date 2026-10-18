@@ -6117,8 +6117,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         )}
       </section>
 
-      {isPublic && <PublicEventVideo eventItem={dashboardActiveEvent} />}
-
       {/* ===================== STATISTICS ===================== */}
       <section className={`sm-dashboard-stats ${isPublic ? 'sm-dashboard-stats-public' : ''} grid grid-cols-2 gap-3 ${isPublic ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
 
@@ -7394,7 +7392,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             </div>
           ) : activeView === 'LIVE_SCORE' ? (
             <div className="sm-live space-y-6">
-              {isPublic && <PublicEventVideo eventItem={selectedLiveEvent} />}
               {selectedLiveEvent && (
                 <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-3xl p-6">
                   <div className={`flex flex-wrap gap-4 ${isPublic ? 'flex-col items-center justify-center text-center' : 'items-center justify-between'}`}>
@@ -7990,7 +7987,9 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                 <X className="h-4 w-4" />
               </button>
             </header>
-            <div className="overflow-y-auto p-4">
+            <div className="overflow-y-auto p-3">
+              <PublicEventVideo eventItem={selectedLiveEvent} />
+              <div className="mt-3">
               {publicLiveScoreGames.some(game => game?.p1 !== '' && game?.p2 !== '' && game?.p1 != null && game?.p2 != null) ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-black uppercase text-slate-500">
@@ -8029,6 +8028,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               <p className="mt-3 text-center text-[10px] font-semibold text-slate-400">
                 Tampilan publik hanya untuk melihat. Skor tidak dapat diubah dari halaman ini.
               </p>
+              </div>
             </div>
           </section>
         </div>
