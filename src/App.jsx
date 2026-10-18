@@ -1243,8 +1243,8 @@ const AuthenticatedContent = () => {
     // Tidak ada lagi peserta contoh bawaan. Data utama mengikuti Supabase.
     return {};
   });
-  const [publicParticipantsLoading, setPublicParticipantsLoading] = useState(false);
-  const [publicParticipantsError, setPublicParticipantsError] = useState('');
+  const [participantsLoading, setParticipantsLoading] = useState(true);
+  const [participantsLoadError, setParticipantsLoadError] = useState('');
 
   const [seededPlayers, setSeededPlayers] = useState(() => {
     const saved = localStorage.getItem('spinmatch_seeded');
@@ -1297,7 +1297,10 @@ const AuthenticatedContent = () => {
   const [showKnockoutTopEight, setShowKnockoutTopEight] = useState(false);
 
   useEffect(() => { localStorage.setItem('spinmatch_events', JSON.stringify(events)); }, [events]);
-  useEffect(() => { localStorage.setItem('spinmatch_participants', JSON.stringify(participants)); }, [participants]);
+  useEffect(() => {
+    if (isPublic || isReferee) return;
+    localStorage.setItem('spinmatch_participants', JSON.stringify(participants));
+  }, [participants, isPublic, isReferee]);
   useEffect(() => { localStorage.setItem('spinmatch_seeded', JSON.stringify(seededPlayers)); }, [seededPlayers]);
   useEffect(() => { localStorage.setItem('spinmatch_pools', JSON.stringify(poolResults)); }, [poolResults]);
   useEffect(() => { localStorage.setItem('spinmatch_match_results', JSON.stringify(matchResults)); }, [matchResults]);
@@ -1500,10 +1503,8 @@ const AuthenticatedContent = () => {
     let cancelled = false;
 
     const loadParticipantsFromSupabase = async () => {
-      if (isPublic) {
-        setPublicParticipantsLoading(true);
-        setPublicParticipantsError('');
-      }
+      setParticipantsLoading(true);
+      setParticipantsLoadError('');
       try {
         const { data, error } = isPublic || isReferee
           ? await supabase.rpc('spinmatch_get_visible_participants')
@@ -1513,14 +1514,11 @@ const AuthenticatedContent = () => {
 
         if (error) {
           console.error('❌ Gagal membaca Participants dari Supabase:', error);
-          if (isPublic) {
-            setParticipants({});
-            setPublicParticipantsError('Data peserta gagal dimuat. Silakan muat ulang halaman.');
-          }
+          setParticipantsLoadError(`Data peserta gagal dimuat: ${error.message}`);
           return;
         }
 
-        if (Array.isArray(data) && (data.length > 0 || isPublic || isReferee)) {
+        if (Array.isArray(data)) {
           const groupedParticipants = {};
 
           data.forEach((row) => {
@@ -1534,25 +1532,19 @@ const AuthenticatedContent = () => {
             localStorage.setItem('spinmatch_participants', JSON.stringify(groupedParticipants));
           }
           console.log(`✅ ${data.length} Participant dimuat dari Supabase`);
-        } else {
-          // Cache lokal dipertahankan untuk pengguna EO/Admin jika query kosong.
-          console.warn('⚠️ Supabase mengembalikan 0 peserta. Cache lokal dipertahankan; periksa tabel Participants dan RLS.');
         }
       } catch (error) {
         if (cancelled) return;
         console.error('❌ Gagal membaca Participants dari Supabase:', error);
-        if (isPublic) {
-          setParticipants({});
-          setPublicParticipantsError('Data peserta gagal dimuat. Silakan muat ulang halaman.');
-        }
+        setParticipantsLoadError(`Data peserta gagal dimuat: ${error?.message || 'kesalahan tidak diketahui'}`);
       } finally {
-        if (!cancelled && isPublic) setPublicParticipantsLoading(false);
+        if (!cancelled) setParticipantsLoading(false);
       }
     };
 
     loadParticipantsFromSupabase();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.id, isPublic, isReferee]);
 
   const [showModal, setShowModal] = useState(false);
   const [eventPaymentPreview, setEventPaymentPreview] = useState(null);
@@ -2688,10 +2680,11 @@ const handleDeleteAllParticipants = async () => {
   ) {
     const eventId = selectedEventItem.id;
 
-    const { error } = await supabase
+    const { data: deletedRows, error } = await supabase
       .from('Participants')
       .delete()
-      .eq('event_id', Number(eventId));
+      .eq('event_id', Number(eventId))
+      .select('id');
 
     if (error) {
       console.error('❌ Gagal menghapus semua peserta:', error);
@@ -2699,25 +2692,24 @@ const handleDeleteAllParticipants = async () => {
       return;
     }
 
-    const updatedParticipants = {
-      ...participants,
-      [eventId]: []
-    };
+    const deletedIds = new Set((deletedRows || []).map(row => Number(row.id)));
+    setParticipants(previous => ({
+      ...previous,
+      [eventId]: (previous[eventId] || []).filter(player => !deletedIds.has(Number(player.id)))
+    }));
 
-    setParticipants(updatedParticipants);
-
-    localStorage.setItem(
-      'spinmatch_participants',
-      JSON.stringify(updatedParticipants)
-    );
-
-    setEvents(events.map(ev =>
-      ev.id === eventId
-        ? { ...ev, peserta: 0 }
+    const remainingCount = Math.max(0, (participants[eventId] || []).length - deletedIds.size);
+    setEvents(previous => previous.map(ev =>
+      Number(ev.id) === Number(eventId)
+        ? { ...ev, peserta: remainingCount }
         : ev
     ));
 
-    alert('Semua peserta berhasil dihapus!');
+    if ((participants[eventId] || []).length > deletedIds.size) {
+      alert(`Sebagian peserta terhapus (${deletedIds.size}). Sisanya tidak berubah; periksa izin Supabase lalu muat ulang.`);
+    } else {
+      alert('Semua peserta berhasil dihapus!');
+    }
   }
 };
 
@@ -2738,7 +2730,7 @@ const handleDeleteAllParticipants = async () => {
       nilaiBayar: Number(regNilaiBayar) || 0,
       usia: regUsia
     };
-       const { error } = await supabase
+    const { data: savedRow, error } = await supabase
       .from('Participants')
       .insert({
         id: Number(newParticipant.id),
@@ -2751,20 +2743,22 @@ const handleDeleteAllParticipants = async () => {
         statusbayar: newParticipant.statusBayar,
         nilaibayar: Number(newParticipant.nilaiBayar) || 0,
         usia: Number(newParticipant.usia) || 0
-      });
+      })
+      .select('*')
+      .single();
 
-    if (error) {
+    if (error || !savedRow) {
       console.error('❌ Gagal menyimpan peserta', error);
-      alert(`Peserta belum tersimpan ${error.message}`);
+      alert(`Peserta belum tersimpan${error?.message ? `: ${error.message}` : '.'}`);
       return;
     }
 
-    const updatedList = [...currentList, newParticipant];
-
-    setParticipants({
-      ...participants,
-      [selectedEventItem.id]: updatedList
-    });
+    const savedParticipant = participantFromSupabase(savedRow);
+    const updatedList = [...currentList, savedParticipant];
+    setParticipants(previous => ({
+      ...previous,
+      [selectedEventItem.id]: [...(previous[selectedEventItem.id] || []), savedParticipant]
+    }));
 
     setEvents(events.map(ev =>
       ev.id === selectedEventItem.id
@@ -2787,7 +2781,7 @@ const handleDeleteAllParticipants = async () => {
     const defaultDivisi = selectedEventItem.divisiList[0]?.nama || 'Divisi 5';
     const currentList = participants[selectedEventItem.id] || [];
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const bstr = evt.target.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
@@ -2817,13 +2811,45 @@ const handleDeleteAllParticipants = async () => {
           tempCurrentList.push(newPlayerObj);
           return newPlayerObj;
         });
-        const updatedList = [...currentList, ...importedData];
+
+        const { data: savedRows, error } = await supabase
+          .from('Participants')
+          .insert(importedData.map(player => ({
+            id: Number(player.id),
+            event_id: Number(selectedEventItem.id),
+            custom_id: player.customId,
+            nama: player.nama,
+            ptm: player.ptm,
+            notelp: player.noTelp,
+            divisi: player.divisi,
+            statusbayar: player.statusBayar,
+            nilaibayar: Number(player.nilaiBayar) || 0,
+            usia: Number(player.usia) || 0
+          })))
+          .select('*');
+
+        if (error) {
+          console.error('❌ Gagal menyimpan peserta impor ke Supabase:', error);
+          alert(`Data Excel belum tersimpan: ${error.message}`);
+          return;
+        }
+        if (!Array.isArray(savedRows) || savedRows.length !== importedData.length) {
+          console.error('❌ Jumlah peserta hasil impor tidak cocok:', {
+            expected: importedData.length,
+            saved: savedRows?.length
+          });
+          alert('Impor belum dapat dikonfirmasi dari Supabase. Periksa data event sebelum mencoba lagi.');
+          return;
+        }
+
+        const savedParticipants = savedRows.map(participantFromSupabase);
+        const updatedList = [...currentList, ...savedParticipants];
         setParticipants({ ...participants, [selectedEventItem.id]: updatedList });
         setEvents(events.map(ev => ev.id === selectedEventItem.id ? { ...ev, peserta: updatedList.length } : ev));
-        alert(`Berhasil mengimpor ${importedData.length} data peserta dari Excel! (Status: Belum Bayar)`);
+        alert(`Berhasil mengimpor dan menyimpan ${savedParticipants.length} data peserta dari Excel! (Status: Belum Bayar)`);
       } catch (error) {
         console.error(error);
-        alert('Terjadi kesalahan saat membaca file Excel.');
+        alert(`Terjadi kesalahan saat membaca atau menyimpan file Excel: ${error?.message || 'kesalahan tidak diketahui'}`);
       }
     };
     reader.readAsBinaryString(file);
@@ -2846,11 +2872,12 @@ const handleDeleteAllParticipants = async () => {
   if (window.confirm(`Hapus pemain "${player.nama}" (${player.customId}) dari daftar?`)) {
     const eventId = selectedEventItem.id;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('Participants')
       .delete()
       .eq('id', Number(player.id))
-      .eq('event_id', Number(eventId));
+      .eq('event_id', Number(eventId))
+      .select('id');
 
     if (error) {
       console.error('❌ Gagal menghapus pemain dari Supabase:', error);
@@ -2858,20 +2885,17 @@ const handleDeleteAllParticipants = async () => {
       return;
     }
 
+    if (!Array.isArray(data) || data.length === 0) {
+      alert('Pemain tidak terhapus. Data mungkin sudah berubah atau Anda tidak memiliki izin.');
+      return;
+    }
+
     const currentList = participants[eventId] || [];
-    const updatedList = currentList.filter(p => p.id !== player.id);
-
-    const updatedParticipants = {
-      ...participants,
-      [eventId]: updatedList
-    };
-
-    setParticipants(updatedParticipants);
-
-    localStorage.setItem(
-      'spinmatch_participants',
-      JSON.stringify(updatedParticipants)
-    );
+    const updatedList = currentList.filter(p => Number(p.id) !== Number(player.id));
+    setParticipants(previous => ({
+      ...previous,
+      [eventId]: (previous[eventId] || []).filter(p => Number(p.id) !== Number(player.id))
+    }));
 
     setEvents(events.map(ev =>
       ev.id === eventId
@@ -2890,7 +2914,7 @@ const handleUpdatePlayerSubmit = async (e) => {
 
   const eventId = selectedEventItem.id;
 
-  const { error } = await supabase
+  const { data: savedRow, error } = await supabase
     .from('Participants')
     .update({
       nama: editingPlayer.nama,
@@ -2902,36 +2926,64 @@ const handleUpdatePlayerSubmit = async (e) => {
       usia: Number(editingPlayer.usia) || 0
     })
     .eq('id', Number(editingPlayer.id))
-    .eq('event_id', Number(eventId));
+    .eq('event_id', Number(eventId))
+    .select('*')
+    .maybeSingle();
 
-  if (error) {
+  if (error || !savedRow) {
     console.error('❌ Gagal update pemain:', error);
-    alert(`Gagal menyimpan perubahan: ${error.message}`);
+    alert(`Gagal menyimpan perubahan${error?.message ? `: ${error.message}` : '. Peserta tidak ditemukan atau izin ditolak.'}`);
     return;
   }
 
+  const savedParticipant = participantFromSupabase(savedRow);
   const currentList = participants[eventId] || [];
 
   const updatedList = currentList.map(p =>
-    p.id === editingPlayer.id ? { ...editingPlayer } : p
+    Number(p.id) === Number(savedParticipant.id) ? savedParticipant : p
   );
 
-  const updatedParticipants = {
-    ...participants,
-    [eventId]: updatedList
-  };
-
-  setParticipants(updatedParticipants);
-
-  localStorage.setItem(
-    'spinmatch_participants',
-    JSON.stringify(updatedParticipants)
-  );
+  setParticipants(previous => ({
+    ...previous,
+    [eventId]: (previous[eventId] || []).map(p =>
+      Number(p.id) === Number(savedParticipant.id) ? savedParticipant : p
+    )
+  }));
 
   setShowEditPlayerModal(false);
   setEditingPlayer(null);
 
   alert('Data pemain berhasil diperbarui!');
+};
+
+const handleParticipantPaymentChange = async (player, statusBayar) => {
+  if (!selectedEventItem) return;
+
+  const eventId = Number(selectedEventItem.id);
+  const nilaiBayar = statusBayar === 'Bayar'
+    ? (Number(player.nilaiBayar) || 50000)
+    : 0;
+  const { data: savedRow, error } = await supabase
+    .from('Participants')
+    .update({ statusbayar: statusBayar, nilaibayar: nilaiBayar })
+    .eq('id', Number(player.id))
+    .eq('event_id', eventId)
+    .select('*')
+    .maybeSingle();
+
+  if (error || !savedRow) {
+    console.error('❌ Gagal memperbarui status pembayaran peserta:', error);
+    alert(`Status pembayaran gagal disimpan${error?.message ? `: ${error.message}` : '. Peserta tidak ditemukan atau izin ditolak.'}`);
+    return;
+  }
+
+  const savedParticipant = participantFromSupabase(savedRow);
+  setParticipants(previous => ({
+    ...previous,
+    [eventId]: (previous[eventId] || []).map(item =>
+      Number(item.id) === Number(savedParticipant.id) ? savedParticipant : item
+    )
+  }));
 };
 
   // ============================================================
@@ -6552,8 +6604,8 @@ const handleUpdatePlayerSubmit = async (e) => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {(!selectedEventItem || currentEventParticipants.length === 0) ? (
-                        <tr><td role={isPublic && publicParticipantsError ? 'alert' : undefined} colSpan={isPublic ? 7 : 8} className={`py-12 text-center ${isPublic && publicParticipantsError ? 'text-red-600' : 'text-slate-400'}`}>{isPublic && publicParticipantsLoading ? 'Memuat data peserta...' : isPublic && publicParticipantsError ? publicParticipantsError : isReferee && !refereeAssignedEventId ? 'Belum ada penugasan event aktif.' : 'Belum ada peserta terdaftar untuk event ini.'}</td></tr>
+                      {(participantsLoading || participantsLoadError || !selectedEventItem || currentEventParticipants.length === 0) ? (
+                        <tr><td role={participantsLoadError ? 'alert' : undefined} colSpan={isPublic ? 7 : 8} className={`py-12 text-center ${participantsLoadError ? 'text-red-600' : 'text-slate-400'}`}>{participantsLoading ? 'Memuat data peserta...' : participantsLoadError || (isReferee && !refereeAssignedEventId ? 'Belum ada penugasan event aktif.' : selectedEventItem ? 'Belum ada peserta terdaftar untuk event ini.' : 'Pilih event untuk melihat peserta.')}</td></tr>
                       ) : (
                         currentEventParticipants.map((p) => (
                           <tr key={p.id} onClick={isPublic || isReferee ? undefined : () => handlePlayerLeftClick(p)} onContextMenu={isPublic || isReferee ? undefined : (e) => handlePlayerContextMenu(e, p)} className={`${isPublic || isReferee ? '' : 'hover:bg-lime-50/60 cursor-pointer'} text-center select-none transition-colors`}>
@@ -6564,13 +6616,7 @@ const handleUpdatePlayerSubmit = async (e) => {
                             <td className="py-3.5 px-3 font-semibold text-slate-700">{p.usia || '-'}</td>
                             <td className="py-3.5 px-3 font-semibold text-slate-700">{p.divisi}</td>
                             <td className="py-3.5 px-3" onClick={(e) => e.stopPropagation()}>
-                              {!isPublic && !isReferee ? <select value={p.statusBayar} onChange={(e) => {
-                                const eventId = selectedEventItem.id;
-                                const updatedList = participants[eventId].map(item =>
-                                  item.id === p.id ? { ...item, statusBayar: e.target.value, nilaiBayar: e.target.value === 'Bayar' ? (item.nilaiBayar || 50000) : 0 } : item
-                                );
-                                setParticipants({ ...participants, [eventId]: updatedList });
-                              }} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${p.statusBayar === 'Bayar' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                              {!isPublic && !isReferee ? <select value={p.statusBayar} onChange={(e) => handleParticipantPaymentChange(p, e.target.value)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${p.statusBayar === 'Bayar' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
                                 <option value="Bayar">Bayar</option>
                                 <option value="Belum">Belum</option>
                               </select> : <span className={`inline-flex rounded-lg px-2.5 py-1 text-[11px] font-bold border ${p.statusBayar === 'Bayar' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>{p.statusBayar || 'Belum'}</span>}
