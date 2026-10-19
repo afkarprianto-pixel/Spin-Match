@@ -1396,6 +1396,25 @@ const AuthenticatedContent = () => {
     if (error) throw error;
   };
 
+  const saveOnlineMatchVideo = async (eventId, matchId, videoUrl) => {
+    const { data: existing, error: readError } = await supabase.from('spinmatch_event_data')
+      .select('pool_results, match_results').eq('event_id', Number(eventId)).maybeSingle();
+    if (readError) throw readError;
+    const nextMatches = { ...(existing?.match_results || {}) };
+    const current = { ...(nextMatches[matchId] || {}) };
+    if (videoUrl) nextMatches[matchId] = { ...current, videoUrl };
+    else {
+      delete current.videoUrl;
+      if (Object.keys(current).length) nextMatches[matchId] = current;
+      else delete nextMatches[matchId];
+    }
+    const { error } = await supabase.from('spinmatch_event_data').upsert({
+      event_id: Number(eventId), pool_results: existing?.pool_results || {},
+      match_results: nextMatches, updated_at: new Date().toISOString()
+    }, { onConflict: 'event_id' });
+    if (error) throw error;
+  };
+
   const saveOnlineMatch = async (eventId, matchId, result) => {
     const { data: existing, error: readError } = await supabase.from('spinmatch_event_data')
       .select('pool_results, match_results').eq('event_id', Number(eventId)).maybeSingle();
@@ -1661,6 +1680,12 @@ const AuthenticatedContent = () => {
   const [streamsLoading, setStreamsLoading] = useState(false);
   const [streamSavingTable, setStreamSavingTable] = useState(null);
   const [streamSettingsTable, setStreamSettingsTable] = useState(1);
+  // Video disematkan ke ID pertandingan, bukan lagi hanya ke nomor meja.
+  const [videoRound, setVideoRound] = useState('POOL');
+  const [videoPool, setVideoPool] = useState('');
+  const [videoMatchId, setVideoMatchId] = useState('');
+  const [videoMatchInput, setVideoMatchInput] = useState('');
+  const [videoSaving, setVideoSaving] = useState(false);
   const [livePlayer1Score, setLivePlayer1Score] = useState(0);
   const [livePlayer2Score, setLivePlayer2Score] = useState(0);
   const [livePoint1, setLivePoint1] = useState(0);
@@ -1800,6 +1825,10 @@ const AuthenticatedContent = () => {
     if (!selectedLiveEvent?.id || activeView !== 'LIVE_SCORE') return undefined;
     let cancelled = false;
     setStreamSettingsTable(1);
+    setVideoRound('POOL');
+    setVideoPool('');
+    setVideoMatchId('');
+    setVideoMatchInput('');
     const loadEventStreams = async () => {
       setStreamsLoading(true);
       const { data, error } = await supabase
@@ -1828,6 +1857,39 @@ const AuthenticatedContent = () => {
     loadEventStreams();
     return () => { cancelled = true; };
   }, [selectedLiveEvent?.id, activeView]);
+
+  const saveMatchVideo = async () => {
+    if (isPublic || isWasit || isReferee || !selectedLiveEvent?.id || !canManageEvent(selectedLiveEvent)) {
+      alert('Hanya EO pemilik event atau Super Admin yang dapat mengatur link video.');
+      return;
+    }
+    if (!videoMatchId) { alert('Pilih babak dan match terlebih dahulu.'); return; }
+    const videoUrl = String(videoMatchInput || '').trim();
+    if (!videoUrl) { await removeMatchVideo(); return; }
+    setVideoSaving(true);
+    try {
+      await saveOnlineMatchVideo(selectedLiveEvent.id, videoMatchId, videoUrl);
+      setMatchResults(previous => ({ ...previous, [videoMatchId]: { ...(previous[videoMatchId] || {}), videoUrl } }));
+      alert('Link video pertandingan berhasil disimpan.');
+    } catch (error) {
+      alert(`Link video belum tersimpan: ${error?.message || 'Terjadi kesalahan.'}`);
+    } finally { setVideoSaving(false); }
+  };
+
+  const removeMatchVideo = async () => {
+    if (!selectedLiveEvent?.id || !videoMatchId) return;
+    setVideoSaving(true);
+    try {
+      await saveOnlineMatchVideo(selectedLiveEvent.id, videoMatchId, '');
+      setMatchResults(previous => {
+        const next = { ...previous };
+        if (next[videoMatchId]) { next[videoMatchId] = { ...next[videoMatchId] }; delete next[videoMatchId].videoUrl; }
+        return next;
+      });
+      setVideoMatchInput('');
+    } catch (error) { alert(`Link video belum terhapus: ${error?.message || 'Terjadi kesalahan.'}`); }
+    finally { setVideoSaving(false); }
+  };
 
   const saveTableStream = async (tableNo) => {
     if (isPublic || isWasit || isReferee || !selectedLiveEvent?.id || !canManageEvent(selectedLiveEvent)) {
@@ -5055,9 +5117,39 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
   const visibleLiveScoreRows = isPublic && publicLiveTable !== 'ALL' ? liveScoreRows.filter(row => row.type === 'player' && normalizeMeja(row.meja) === Number(publicLiveTable)) : liveScoreRows;
   const liveScoreRankings = poolRankings[selectedLiveEvent?.id] || {};
   const liveScoreTableNo = normalizeMeja(liveScoreMatch?.meja);
-  const liveScoreStreamUrl = liveScoreTableNo
-    ? eventStreams[String(selectedLiveEvent?.id)]?.[liveScoreTableNo]?.video_url || ''
+  // Utamakan video khusus match; fallback ini menjaga link meja lama tetap tampil.
+  const liveScoreStreamUrl = liveScoreMatch?.matchId
+    ? matchResults[liveScoreMatch.matchId]?.videoUrl ||
+      (liveScoreTableNo ? eventStreams[String(selectedLiveEvent?.id)]?.[liveScoreTableNo]?.video_url || '' : '')
     : '';
+
+  const matchVideoRounds = selectedLiveEvent ? (() => {
+    const poolRows = generateScheduleFromPools(selectedLiveEvent.id)
+      .filter(row => row.type === 'player' && row.showMatch && row.matchId);
+    const pools = [...new Set(poolRows.map(row => row.pool).filter(Boolean))];
+    const knockout = buildKnockoutBracket(selectedLiveEvent.id);
+    const knockoutRounds = (knockout.rounds || []).map((round, index) => ({
+      value: `KO_R${index + 1}`,
+      label: round.length === 1 ? 'Babak Final' : round.length === 2 ? 'Babak Semifinal' : round.length === 4 ? 'Babak Perempat Final' : `Babak ${round.length * 2} Besar`,
+      matches: round.map((match, matchIndex) => {
+        const matchId = match.id || `KO_R${index + 1}_M${matchIndex + 1}`;
+        return { id: matchId, label: `${matchId} • ${match.player1?.nama || 'Menunggu pemain'} vs ${match.player2?.nama || 'Menunggu pemain'}`, pool: 'Knockout', matchId };
+      })
+    }));
+    return {
+      poolRows, pools,
+      rounds: [
+        { value: 'POOL', label: 'Babak Pool', matches: [] },
+        ...knockoutRounds
+      ]
+    };
+  })() : { poolRows: [], pools: [], rounds: [] };
+  const selectedVideoPoolRows = matchVideoRounds.poolRows.filter(row => row.pool === videoPool);
+  const selectedVideoRound = matchVideoRounds.rounds.find(round => round.value === videoRound);
+  const selectedVideoMatches = videoRound === 'POOL'
+    ? selectedVideoPoolRows.map(row => ({ id: row.matchId, label: `${row.matchRef || row.matchId} • ${row.player?.nama || 'Pemain'} vs ${row.opponent?.nama || 'Lawan'}`, pool: row.pool, matchId: row.matchId }))
+    : (selectedVideoRound?.matches || []);
+  const selectedVideo = selectedLiveEvent?.id && videoMatchId ? matchResults[videoMatchId]?.videoUrl || '' : '';
 
   const publicLiveScoreResult = liveScoreMatch
     ? matchResults[liveScoreMatch.matchId]
@@ -7512,31 +7604,38 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                 <section className="rounded-2xl border border-sky-200 bg-white p-4 shadow-sm">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <h3 className="flex items-center gap-2 text-sm font-black text-slate-800"><Radio className="h-4 w-4 text-red-600" /> Link Video Live per Meja</h3>
-                      <p className="mt-1 text-[10px] text-slate-500">Atur link YouTube untuk setiap meja. Link akan tampil saat publik memilih match di meja tersebut.</p>
+                      <h3 className="flex items-center gap-2 text-sm font-black text-slate-800"><Radio className="h-4 w-4 text-red-600" /> Link Video per Babak dan Match</h3>
+                      <p className="mt-1 text-[10px] text-slate-500">Pilih babak, lalu Pool (untuk babak pool), kemudian match. Daftar babak knockout dapat digeser ke bawah.</p>
                     </div>
-                    {streamsLoading && <span className="text-[10px] font-bold text-sky-600">Memuat...</span>}
                   </div>
-                  {(() => {
-                    const tableCount = Math.max(1, Number(selectedLiveEvent.jumlahMeja || 4));
-                    const tableNo = Math.min(tableCount, Math.max(1, Number(streamSettingsTable) || 1));
-                    const inputKey = `${selectedLiveEvent.id}_${tableNo}`;
-                    const hasStream = Boolean(eventStreams[String(selectedLiveEvent.id)]?.[tableNo]?.video_url);
-                    return (
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <div className="flex flex-wrap items-end gap-2">
-                          <label className="min-w-[150px] flex-1"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-500">Pilih Meja</span><select value={tableNo} onChange={e => setStreamSettingsTable(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 outline-none focus:border-sky-500">{Array.from({ length: tableCount }, (_, index) => { const optionTable = index + 1; const optionHasStream = Boolean(eventStreams[String(selectedLiveEvent.id)]?.[optionTable]?.video_url); return <option key={optionTable} value={optionTable}>Meja {optionTable}{optionHasStream ? ' • Link aktif' : ''}</option>; })}</select></label>
-                          <span className={`pb-2 text-[10px] font-bold ${hasStream ? 'text-emerald-600' : 'text-slate-400'}`}>{hasStream ? 'Link aktif' : 'Belum ada link'}</span>
-                        </div>
-                        <label className="mt-3 block text-[10px] font-black uppercase tracking-wide text-slate-500">Link YouTube Meja {tableNo}</label>
-                        <input type="url" value={streamInputs[inputKey] || ''} onChange={e => setStreamInputs(previous => ({ ...previous, [inputKey]: e.target.value }))} placeholder="https://youtube.com/live/..." className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-sky-500" />
-                        <div className="mt-2 flex justify-end gap-1.5">
-                          {hasStream && <button type="button" onClick={() => removeTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-50 disabled:opacity-50">Hapus Link</button>}
-                          <button type="button" onClick={() => saveTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg bg-sky-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-sky-700 disabled:opacity-50">{streamSavingTable === tableNo ? 'Menyimpan...' : 'Simpan Link'}</button>
-                        </div>
+                  <div className="grid max-h-[360px] grid-cols-1 gap-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-3">
+                    <label className="text-[10px] font-black uppercase tracking-wide text-slate-500">Babak
+                      <select value={videoRound} onChange={e => { setVideoRound(e.target.value); setVideoPool(''); setVideoMatchId(''); setVideoMatchInput(''); }} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black normal-case tracking-normal text-slate-800">
+                        {matchVideoRounds.rounds.map(round => <option key={round.value} value={round.value}>{round.label}</option>)}
+                      </select>
+                    </label>
+                    {videoRound === 'POOL' ? (
+                      <label className="text-[10px] font-black uppercase tracking-wide text-slate-500">Pool
+                        <select value={videoPool} onChange={e => { setVideoPool(e.target.value); setVideoMatchId(''); setVideoMatchInput(''); }} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black normal-case tracking-normal text-slate-800">
+                          <option value="">Pilih Pool</option>{matchVideoRounds.pools.map(pool => <option key={pool} value={pool}>{pool}</option>)}
+                        </select>
+                      </label>
+                    ) : <div className="hidden md:block" />}
+                    <label className="text-[10px] font-black uppercase tracking-wide text-slate-500">Match
+                      <select value={videoMatchId} onChange={e => { const id = e.target.value; setVideoMatchId(id); setVideoMatchInput(matchResults[id]?.videoUrl || ''); }} disabled={videoRound === 'POOL' && !videoPool} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black normal-case tracking-normal text-slate-800 disabled:bg-slate-100">
+                        <option value="">Pilih Match</option>{selectedVideoMatches.map(match => <option key={match.id} value={match.id}>{match.label}</option>)}
+                      </select>
+                    </label>
+                    <div className="md:col-span-3">
+                      <label className="text-[10px] font-black uppercase tracking-wide text-slate-500">Link YouTube Match Terpilih
+                        <input type="url" value={videoMatchInput} onChange={e => setVideoMatchInput(e.target.value)} disabled={!videoMatchId} placeholder="https://youtube.com/watch?v=... atau https://youtu.be/..." className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-sky-500 disabled:bg-slate-100" />
+                      </label>
+                      <div className="mt-2 flex justify-end gap-1.5">
+                        {selectedVideo && <button type="button" onClick={removeMatchVideo} disabled={videoSaving} className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-50 disabled:opacity-50">Hapus Link</button>}
+                        <button type="button" onClick={saveMatchVideo} disabled={videoSaving || !videoMatchId} className="rounded-lg bg-sky-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-sky-700 disabled:opacity-50">{videoSaving ? 'Menyimpan...' : 'Simpan Link Match'}</button>
                       </div>
-                    );
-                  })()}
+                    </div>
+                  </div>
                 </section>
               )}
               {selectedLiveEvent && liveScorePoolData && liveScoreRows.length > 0 ? (
