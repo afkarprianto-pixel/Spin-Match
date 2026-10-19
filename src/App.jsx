@@ -125,8 +125,8 @@ const getVideoSource = (rawUrl) => {
   }
 };
 
-const PublicEventVideo = ({ eventItem }) => {
-  const source = getVideoSource(eventItem?.videoUrl);
+const PublicEventVideo = ({ eventItem, streamUrl = '' }) => {
+  const source = getVideoSource(streamUrl);
   return (
     <section className="overflow-hidden rounded-[26px] border border-sky-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,.06)]">
       <div className="flex items-center justify-between gap-3 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white px-4 py-3 sm:px-5">
@@ -143,7 +143,7 @@ const PublicEventVideo = ({ eventItem }) => {
       ) : source.type === 'link' ? (
         <div className="flex flex-col items-center justify-center gap-3 p-8 text-center"><Play className="h-10 w-10 text-sky-500" /><p className="text-xs font-bold text-slate-600">Video tersedia melalui tautan eksternal.</p><a href={source.url} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-sky-600 px-4 py-2 text-xs font-black text-white hover:bg-sky-700">Buka Video</a></div>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-2 p-8 text-center"><Radio className="h-9 w-9 text-slate-300" /><p className="text-sm font-black text-slate-500">Video belum tersedia</p><p className="text-[10px] text-slate-400">EO dapat menambahkan link YouTube Live atau video rekaman pada pengaturan event.</p></div>
+        <div className="flex flex-col items-center justify-center gap-2 p-8 text-center"><Radio className="h-9 w-9 text-slate-300" /><p className="text-sm font-black text-slate-500">Video meja belum tersedia</p><p className="text-[10px] text-slate-400">Link video untuk meja ini belum ditambahkan pada halaman Live Score.</p></div>
       )}
     </section>
   );
@@ -1623,7 +1623,6 @@ const AuthenticatedContent = () => {
   const [jamSelesai, setJamSelesai] = useState('18:00');
   const [jumlahMeja, setJumlahMeja] = useState(4);
   const [metodePengundian, setMetodePengundian] = useState('PER_DIVISI');
-  const [formVideoUrl, setFormVideoUrl] = useState('');
 
   const [inputDivisi, setInputDivisi] = useState('');
   const [divisiList, setDivisiList] = useState([]);
@@ -1657,6 +1656,10 @@ const AuthenticatedContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [liveScoreMatch, setLiveScoreMatch] = useState(null);
+  const [eventStreams, setEventStreams] = useState({});
+  const [streamInputs, setStreamInputs] = useState({});
+  const [streamsLoading, setStreamsLoading] = useState(false);
+  const [streamSavingTable, setStreamSavingTable] = useState(null);
   const [livePlayer1Score, setLivePlayer1Score] = useState(0);
   const [livePlayer2Score, setLivePlayer2Score] = useState(0);
   const [livePoint1, setLivePoint1] = useState(0);
@@ -1791,6 +1794,93 @@ const AuthenticatedContent = () => {
       window.clearInterval(interval);
     };
   }, [isPublic, selectedLiveEvent?.id, activeView, liveScoreMatch?.matchId]);
+
+  useEffect(() => {
+    if (!selectedLiveEvent?.id || activeView !== 'LIVE_SCORE') return undefined;
+    let cancelled = false;
+    const loadEventStreams = async () => {
+      setStreamsLoading(true);
+      const { data, error } = await supabase
+        .from('spinmatch_event_streams')
+        .select('event_id, table_no, video_url, is_active')
+        .eq('event_id', Number(selectedLiveEvent.id))
+        .eq('is_active', true)
+        .order('table_no', { ascending: true });
+      if (cancelled) return;
+      setStreamsLoading(false);
+      if (error) {
+        console.error('Gagal memuat link video meja:', error);
+        return;
+      }
+      const byTable = {};
+      const byInput = {};
+      (data || []).forEach(row => {
+        const tableNo = Number(row.table_no);
+        if (!Number.isInteger(tableNo) || tableNo < 1) return;
+        byTable[tableNo] = row;
+        byInput[`${selectedLiveEvent.id}_${tableNo}`] = row.video_url || '';
+      });
+      setEventStreams(previous => ({ ...previous, [String(selectedLiveEvent.id)]: byTable }));
+      setStreamInputs(previous => ({ ...previous, ...byInput }));
+    };
+    loadEventStreams();
+    return () => { cancelled = true; };
+  }, [selectedLiveEvent?.id, activeView]);
+
+  const saveTableStream = async (tableNo) => {
+    if (isPublic || isWasit || isReferee || !selectedLiveEvent?.id || !canManageEvent(selectedLiveEvent)) {
+      alert('Hanya EO pemilik event atau Super Admin yang dapat mengatur link video.');
+      return;
+    }
+    const key = `${selectedLiveEvent.id}_${tableNo}`;
+    const videoUrl = String(streamInputs[key] || '').trim();
+    if (!videoUrl) {
+      await removeTableStream(tableNo);
+      return;
+    }
+    setStreamSavingTable(tableNo);
+    const { data, error } = await supabase.from('spinmatch_event_streams').upsert({
+      event_id: Number(selectedLiveEvent.id),
+      table_no: Number(tableNo),
+      video_url: videoUrl,
+      is_active: true,
+      updated_by: user?.id || null
+    }, { onConflict: 'event_id,table_no' }).select('event_id, table_no, video_url, is_active').single();
+    setStreamSavingTable(null);
+    if (error || !data) {
+      console.error('Gagal menyimpan link video meja:', error);
+      alert(`Link video meja belum tersimpan${error?.message ? `: ${error.message}` : '.'}`);
+      return;
+    }
+    setEventStreams(previous => ({
+      ...previous,
+      [String(selectedLiveEvent.id)]: {
+        ...(previous[String(selectedLiveEvent.id)] || {}),
+        [tableNo]: data
+      }
+    }));
+    alert(`Link video Meja ${tableNo} berhasil disimpan.`);
+  };
+
+  const removeTableStream = async (tableNo) => {
+    if (isPublic || isWasit || isReferee || !selectedLiveEvent?.id || !canManageEvent(selectedLiveEvent)) return;
+    setStreamSavingTable(tableNo);
+    const { error } = await supabase.from('spinmatch_event_streams')
+      .delete().eq('event_id', Number(selectedLiveEvent.id)).eq('table_no', Number(tableNo));
+    setStreamSavingTable(null);
+    if (error) {
+      console.error('Gagal menghapus link video meja:', error);
+      alert(`Link video Meja ${tableNo} belum terhapus: ${error.message}`);
+      return;
+    }
+    const eventKey = String(selectedLiveEvent.id);
+    setEventStreams(previous => {
+      const next = { ...previous, [eventKey]: { ...(previous[eventKey] || {}) } };
+      delete next[eventKey][tableNo];
+      return next;
+    });
+    setStreamInputs(previous => ({ ...previous, [`${eventKey}_${tableNo}`]: '' }));
+  };
 
   // Update ref pemain live. Hook tetap dipanggil pada setiap render.
   useEffect(() => {
@@ -2438,7 +2528,6 @@ const AuthenticatedContent = () => {
     setJamSelesai('18:00');
     setJumlahMeja(4);
     setMetodePengundian('PER_DIVISI');
-    setFormVideoUrl('');
     setDivisiList([]);
     setActiveDivisiTab(null);
     setSelectedDivisiForConfig(null);
@@ -2465,7 +2554,6 @@ const AuthenticatedContent = () => {
     setJamSelesai(eventItem.jamSelesai || '18:00');
     setJumlahMeja(Math.max(1, Number(eventItem.jumlahMeja || eventItem.jumlahmeja || 4)));
     setMetodePengundian(eventItem.metodePengundian || 'PER_DIVISI');
-    setFormVideoUrl(eventItem.videoUrl || '');
     setDivisiList(eventItem.divisiList ? [...eventItem.divisiList] : []);
     setActiveDivisiTab(eventItem.divisiList?.[0]?.nama || null);
     setSelectedDivisiForConfig(null);
@@ -2535,8 +2623,7 @@ const AuthenticatedContent = () => {
         jamSelesai,
         jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
-        divisiList,
-        videoUrl: formVideoUrl.trim()
+        divisiList
       };
 
       // UPDATE tidak boleh dianggap berhasil hanya karena error=null.
@@ -2611,7 +2698,6 @@ const AuthenticatedContent = () => {
         jumlahMeja: Math.max(1, Number(jumlahMeja || 4)),
         metodePengundian,
         divisiList,
-        videoUrl: formVideoUrl.trim(),
         ownerId: currentUserId,
         ownerName: currentUserName
       };
@@ -4966,6 +5052,10 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
   }) : [];
   const visibleLiveScoreRows = isPublic && publicLiveTable !== 'ALL' ? liveScoreRows.filter(row => row.type === 'player' && normalizeMeja(row.meja) === Number(publicLiveTable)) : liveScoreRows;
   const liveScoreRankings = poolRankings[selectedLiveEvent?.id] || {};
+  const liveScoreTableNo = normalizeMeja(liveScoreMatch?.meja);
+  const liveScoreStreamUrl = liveScoreTableNo
+    ? eventStreams[String(selectedLiveEvent?.id)]?.[liveScoreTableNo]?.video_url || ''
+    : '';
 
   const publicLiveScoreResult = liveScoreMatch
     ? matchResults[liveScoreMatch.matchId]
@@ -7416,6 +7506,37 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                   </div>
                 </div>
               )}
+              {selectedLiveEvent && !isPublic && !isWasit && !isReferee && canManageEvent(selectedLiveEvent) && (
+                <section className="rounded-2xl border border-sky-200 bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h3 className="flex items-center gap-2 text-sm font-black text-slate-800"><Radio className="h-4 w-4 text-red-600" /> Link Video Live per Meja</h3>
+                      <p className="mt-1 text-[10px] text-slate-500">Atur link YouTube untuk setiap meja. Link akan tampil saat publik memilih match di meja tersebut.</p>
+                    </div>
+                    {streamsLoading && <span className="text-[10px] font-bold text-sky-600">Memuat...</span>}
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {Array.from({ length: Math.max(1, Number(selectedLiveEvent.jumlahMeja || 4)) }, (_, index) => {
+                      const tableNo = index + 1;
+                      const inputKey = `${selectedLiveEvent.id}_${tableNo}`;
+                      const hasStream = Boolean(eventStreams[String(selectedLiveEvent.id)]?.[tableNo]?.video_url);
+                      return (
+                        <div key={tableNo} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <label className="mb-1 block text-xs font-black text-slate-700">Meja {tableNo}</label>
+                          <input type="url" value={streamInputs[inputKey] || ''} onChange={e => setStreamInputs(previous => ({ ...previous, [inputKey]: e.target.value }))} placeholder="https://youtube.com/live/..." className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-sky-500" />
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <span className={`text-[10px] font-bold ${hasStream ? 'text-emerald-600' : 'text-slate-400'}`}>{hasStream ? 'Link aktif' : 'Belum ada link'}</span>
+                            <div className="flex gap-1.5">
+                              {hasStream && <button type="button" onClick={() => removeTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-50 disabled:opacity-50">Hapus</button>}
+                              <button type="button" onClick={() => saveTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg bg-sky-600 px-2.5 py-1.5 text-[10px] font-black text-white hover:bg-sky-700 disabled:opacity-50">{streamSavingTable === tableNo ? 'Menyimpan...' : 'Simpan'}</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
               {selectedLiveEvent && liveScorePoolData && liveScoreRows.length > 0 ? (
                 <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                   <div className={`p-4 bg-slate-50 border-b border-slate-200 ${isPublic ? 'text-center' : ''}`}>
@@ -7988,7 +8109,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               </button>
             </header>
             <div className="overflow-y-auto p-3">
-              <PublicEventVideo eventItem={selectedLiveEvent} />
+              <PublicEventVideo eventItem={selectedLiveEvent} streamUrl={liveScoreStreamUrl} />
               <div className="mt-3">
               {publicLiveScoreGames.some(game => game?.p1 !== '' && game?.p2 !== '' && game?.p1 != null && game?.p2 != null) ? (
                 <div className="space-y-2">
@@ -8620,13 +8741,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nama Event</label>
                 <input type="text" required value={formNama} onChange={(e) => setFormNama(e.target.value)} placeholder="Contoh: Turnamen Pingpong Divisi 5 2026" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-800 text-sm" />
               </div>
-              {!isPublic && !isReferee && (isEO || isSuperAdmin) && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Link Video / YouTube Live <span className="font-normal text-slate-400">(khusus EO pemilik / Super Admin)</span></label>
-                  <input type="url" value={formVideoUrl} onChange={(e) => setFormVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=... atau https://domain/video.mp4" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-sky-500 text-sm" />
-                  <p className="mt-1 text-[10px] text-slate-400">Bisa berupa YouTube Live, video YouTube, file MP4/WebM, atau link video eksternal.</p>
-                </div>
-              )}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
                 <label className="block text-xs font-bold text-slate-900">Durasi Pelaksanaan</label>
                 <div className="flex items-center gap-3">
