@@ -1660,6 +1660,7 @@ const AuthenticatedContent = () => {
   const [streamInputs, setStreamInputs] = useState({});
   const [streamsLoading, setStreamsLoading] = useState(false);
   const [streamSavingTable, setStreamSavingTable] = useState(null);
+  const [streamSettingsTable, setStreamSettingsTable] = useState(1);
   const [livePlayer1Score, setLivePlayer1Score] = useState(0);
   const [livePlayer2Score, setLivePlayer2Score] = useState(0);
   const [livePoint1, setLivePoint1] = useState(0);
@@ -1798,6 +1799,7 @@ const AuthenticatedContent = () => {
   useEffect(() => {
     if (!selectedLiveEvent?.id || activeView !== 'LIVE_SCORE') return undefined;
     let cancelled = false;
+    setStreamSettingsTable(1);
     const loadEventStreams = async () => {
       setStreamsLoading(true);
       const { data, error } = await supabase
@@ -7515,26 +7517,26 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                     </div>
                     {streamsLoading && <span className="text-[10px] font-bold text-sky-600">Memuat...</span>}
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {Array.from({ length: Math.max(1, Number(selectedLiveEvent.jumlahMeja || 4)) }, (_, index) => {
-                      const tableNo = index + 1;
-                      const inputKey = `${selectedLiveEvent.id}_${tableNo}`;
-                      const hasStream = Boolean(eventStreams[String(selectedLiveEvent.id)]?.[tableNo]?.video_url);
-                      return (
-                        <div key={tableNo} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                          <label className="mb-1 block text-xs font-black text-slate-700">Meja {tableNo}</label>
-                          <input type="url" value={streamInputs[inputKey] || ''} onChange={e => setStreamInputs(previous => ({ ...previous, [inputKey]: e.target.value }))} placeholder="https://youtube.com/live/..." className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-sky-500" />
-                          <div className="mt-2 flex items-center justify-between gap-2">
-                            <span className={`text-[10px] font-bold ${hasStream ? 'text-emerald-600' : 'text-slate-400'}`}>{hasStream ? 'Link aktif' : 'Belum ada link'}</span>
-                            <div className="flex gap-1.5">
-                              {hasStream && <button type="button" onClick={() => removeTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-50 disabled:opacity-50">Hapus</button>}
-                              <button type="button" onClick={() => saveTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg bg-sky-600 px-2.5 py-1.5 text-[10px] font-black text-white hover:bg-sky-700 disabled:opacity-50">{streamSavingTable === tableNo ? 'Menyimpan...' : 'Simpan'}</button>
-                            </div>
-                          </div>
+                  {(() => {
+                    const tableCount = Math.max(1, Number(selectedLiveEvent.jumlahMeja || 4));
+                    const tableNo = Math.min(tableCount, Math.max(1, Number(streamSettingsTable) || 1));
+                    const inputKey = `${selectedLiveEvent.id}_${tableNo}`;
+                    const hasStream = Boolean(eventStreams[String(selectedLiveEvent.id)]?.[tableNo]?.video_url);
+                    return (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex flex-wrap items-end gap-2">
+                          <label className="min-w-[150px] flex-1"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-500">Pilih Meja</span><select value={tableNo} onChange={e => setStreamSettingsTable(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 outline-none focus:border-sky-500">{Array.from({ length: tableCount }, (_, index) => { const optionTable = index + 1; const optionHasStream = Boolean(eventStreams[String(selectedLiveEvent.id)]?.[optionTable]?.video_url); return <option key={optionTable} value={optionTable}>Meja {optionTable}{optionHasStream ? ' • Link aktif' : ''}</option>; })}</select></label>
+                          <span className={`pb-2 text-[10px] font-bold ${hasStream ? 'text-emerald-600' : 'text-slate-400'}`}>{hasStream ? 'Link aktif' : 'Belum ada link'}</span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <label className="mt-3 block text-[10px] font-black uppercase tracking-wide text-slate-500">Link YouTube Meja {tableNo}</label>
+                        <input type="url" value={streamInputs[inputKey] || ''} onChange={e => setStreamInputs(previous => ({ ...previous, [inputKey]: e.target.value }))} placeholder="https://youtube.com/live/..." className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-sky-500" />
+                        <div className="mt-2 flex justify-end gap-1.5">
+                          {hasStream && <button type="button" onClick={() => removeTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-50 disabled:opacity-50">Hapus Link</button>}
+                          <button type="button" onClick={() => saveTableStream(tableNo)} disabled={streamSavingTable === tableNo} className="rounded-lg bg-sky-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-sky-700 disabled:opacity-50">{streamSavingTable === tableNo ? 'Menyimpan...' : 'Simpan Link'}</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </section>
               )}
               {selectedLiveEvent && liveScorePoolData && liveScoreRows.length > 0 ? (
