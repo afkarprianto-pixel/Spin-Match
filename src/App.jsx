@@ -9465,8 +9465,11 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen #dashboard-event-saya .sm-event-scroll > .group > div:last-child button { padding:4px 6px !important; font-size:8px !important; }
           /* Publik: tiga baris kartu meja terlihat, sisanya scroll internal. */
           .sm-dashboard-screen #dashboard-live-meja-publik { overflow:hidden !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik { order:4 !important; }
           .sm-dashboard-screen .sm-public-tables-scroll {
-            max-height:315px !important;
+            height:220px !important;
+            max-height:220px !important;
+            min-height:0 !important;
             overflow-y:scroll !important;
             overflow-x:hidden !important;
             overscroll-behavior-y:contain !important;
@@ -9520,6 +9523,33 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen .sm-dashboard-stats-public { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
           .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; max-width:640px !important; }
           .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid button { min-height:64px !important; flex-direction:row !important; font-size:12px !important; }
+          .sm-dashboard-screen .sm-public-quick { order:5 !important; padding:7px 8px !important; margin-top:0 !important; border-radius:18px !important; }
+          .sm-dashboard-screen .sm-public-quick .mb-4 { margin-bottom:4px !important; }
+          .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid { gap:5px !important; }
+          .sm-dashboard-screen .sm-dashboard-quick .sm-public-quick-grid button { min-height:44px !important; padding:6px 7px !important; font-size:10px !important; border-radius:11px !important; }
+          .sm-dashboard-screen .sm-public-quick-grid button svg { width:16px !important; height:16px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge {
+            position:fixed !important;
+            top:64px !important;
+            left:8px !important;
+            z-index:65 !important;
+            width:auto !important;
+            order:0 !important;
+            pointer-events:none !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section {
+            width:auto !important;
+            max-width:178px !important;
+            gap:7px !important;
+            padding:5px 8px !important;
+            border-radius:12px !important;
+            box-shadow:0 5px 15px rgba(15,23,42,.16) !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:first-child { width:27px !important; height:27px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:first-child svg { width:14px !important; height:14px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:last-child p:first-child { font-size:7px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:last-child p:last-child { font-size:10px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:last-child { display:none !important; }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
              Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
              di atas konten ketika Preview/public app memakai iframe. */
