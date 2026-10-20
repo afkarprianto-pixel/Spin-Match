@@ -7069,8 +7069,8 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           </p>
         </div>
 
-        {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
-        <div className={`mx-auto w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid sm-public-two-row-grid max-w-2xl' : 'grid grid-cols-3'}`} style={isPublic ? { display: 'flex', flexWrap: 'wrap', gap: '4px' } : undefined}>
+        {/* Mobile: menu publik selalu 2 baris x 3 kolom dengan lebar tombol seragam. */}
+        <div className={`mx-auto w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid grid-cols-3' : 'grid grid-cols-3'}`}>
           {!isPublic && <button
             onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
@@ -7083,7 +7083,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('REGISTRATION');
             }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
+            className="flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1788f5] to-[#26a7ff] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(23,136,245,.20)] active:scale-[.98]"
           >
             <Users className="h-5 w-5 shrink-0" /> {isPublic ? 'Data Peserta' : 'Kelola Pemain'}
           </button>}
@@ -7093,7 +7093,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('DRAW');
             }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
+            className="flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#08b978] to-[#14d69a] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(8,185,120,.20)] active:scale-[.98]"
           >
             <Shuffle className="h-5 w-5 shrink-0" /> {isPublic ? 'Mesin Undian' : 'Undian Pool'}
           </button>}
@@ -7103,7 +7103,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('SCHEDULE');
             }}
-            className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98] ${isPublic ? 'min-h-[72px] text-sm' : ''}`}
+            className={`flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff8a16] to-[#ffad24] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(255,138,22,.20)] active:scale-[.98] ${isPublic ? 'min-h-[72px] text-sm' : ''}`}
           >
             <Calendar className="h-5 w-5 shrink-0" /> Jadwal
           </button>
@@ -7113,16 +7113,16 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent);
               setActiveView('KNOCKOUT');
             }}
-            className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98] ${isPublic ? 'min-h-[72px] text-sm' : ''}`}
+            className={`flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef3655] to-[#f54d6c] px-3 py-3 text-[11px] font-black text-white shadow-[0_8px_20px_rgba(239,54,85,.20)] active:scale-[.98] ${isPublic ? 'min-h-[72px] text-sm' : ''}`}
           >
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
 
-          {(isPublic || isSuperAdmin) && <button type="button" onClick={() => setActiveView('BROCHURES')} className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0891b2] to-[#22d3ee] px-2 py-3 text-[10px] font-black text-white shadow-md active:scale-[.98]"><FileText className="h-5 w-5 shrink-0" /> Brosur Kejuaraan</button>}
+          {(isPublic || isSuperAdmin) && <button type="button" onClick={() => setActiveView('BROCHURES')} className="flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0891b2] to-[#22d3ee] px-2 py-3 text-[10px] font-black text-white shadow-md active:scale-[.98]"><FileText className="h-5 w-5 shrink-0" /> Brosur Kejuaraan</button>}
           <button
             type="button"
             onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
-            className="sm-chat-quick-button flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+            className="sm-chat-quick-button flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
           >
             <MessageCircle className="h-5 w-5 shrink-0" /> Chat Publik
           </button>
@@ -7144,13 +7144,13 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
             { label: isPublic ? 'Data Peserta' : 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
             { label: isPublic ? 'Mesin Undian' : 'Undian Pool', icon: Shuffle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
-            { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             { label: 'Brosur Kejuaraan', icon: FileText, action: () => setActiveView('BROCHURES'), box: 'from-cyan-50 to-cyan-100', iconColor: 'text-cyan-600' },
+            { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
           ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur Kejuaraan'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
-            <button key={label} onClick={action} className={`group flex items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
+            <button key={label} onClick={action} className={`group flex w-full min-w-0 items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
               <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
               </span>
@@ -9895,7 +9895,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen:has(.sm-public-quick) {
             padding-bottom:18px !important;
           }
-          /* Menu Cepat ultra-compact agar tiga baris terlihat utuh di HP. */
+          /* Menu Cepat ultra-compact agar dua baris terlihat utuh di HP. */
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick {
             padding:2px 5px !important;
             margin-top:0 !important;
@@ -9910,7 +9910,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             border-radius:8px !important;
             font-size:8px !important;
           }
-          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button:first-child { width:46% !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button svg,
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg { width:13px !important; height:13px !important; }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
@@ -9953,9 +9952,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             border-radius:8px !important;
             font-size:10px !important;
             line-height:1 !important;
-          }
-          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button:first-child {
-            width:46% !important;
           }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button svg,
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg {
