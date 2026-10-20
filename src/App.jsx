@@ -7789,7 +7789,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                   </div>
                 </section>
               )}
-              {selectedLiveEvent && liveScorePoolData && liveScoreRows.length > 0 ? (
+              {selectedLiveEvent && liveScoreRows.length > 0 ? (
                 <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                   <div className={`p-4 bg-slate-50 border-b border-slate-200 ${isPublic ? 'text-center' : ''}`}>
                     <h3 className={`text-sm font-bold text-slate-700 flex items-center gap-2 ${isPublic ? 'justify-center' : ''}`}>
@@ -9732,16 +9732,16 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           }
           /* Menu Cepat ultra-compact agar tiga baris terlihat utuh di HP. */
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick {
-            padding:3px 5px !important;
-            margin-top:4px !important;
+            padding:2px 5px !important;
+            margin-top:0 !important;
             margin-bottom:0 !important;
           }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .mb-4 { margin-bottom:2px !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid { gap:3px !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button,
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button {
-            min-height:30px !important;
-            padding:3px 4px !important;
+            min-height:27px !important;
+            padding:2px 4px !important;
             border-radius:8px !important;
             font-size:8px !important;
           }
@@ -9763,7 +9763,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             pointer-events:auto !important;
             touch-action:manipulation !important;
           }
-          .sm-dashboard-screen:has(.sm-public-quick) { padding-bottom:18px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) { padding-bottom:0 !important; }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
