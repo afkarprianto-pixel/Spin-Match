@@ -9691,6 +9691,27 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button > span { font-size:9px !important; }
           .sm-dashboard-screen:has(.sm-public-quick) { padding-bottom:82px !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick { margin-bottom:10px !important; }
+          /* Posisi akhir: Live Meja lebih panjang, Menu Cepat turun mendekati navigasi HP. */
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll {
+            height:252px !important;
+            max-height:252px !important;
+            padding:8px !important;
+          }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button {
+            min-height:92px !important;
+            padding:5px !important;
+          }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button svg {
+            width:70px !important;
+            height:38px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick {
+            margin-top:7px !important;
+            margin-bottom:3px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) {
+            padding-bottom:18px !important;
+          }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
              Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
              di atas konten ketika Preview/public app memakai iframe. */
