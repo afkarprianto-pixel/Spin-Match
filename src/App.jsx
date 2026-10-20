@@ -1439,6 +1439,18 @@ const AuthenticatedContent = () => {
   useEffect(() => { localStorage.setItem('spinmatch_knockout_results', JSON.stringify(knockoutResults)); }, [knockoutResults]);
   useEffect(() => { localStorage.setItem('spinmatch_knockout_prizes', JSON.stringify(knockoutPrizes)); }, [knockoutPrizes]);
 
+  const parseSpinMatchJsonObject = (value) => {
+    if (!value) return {};
+    if (typeof value === 'object') return value;
+    if (typeof value !== 'string') return {};
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  };
+
   // Data undian dan skor online: Supabase adalah sumber bersama antar perangkat.
   // Jangan mengunggah cache lokal otomatis saat login (dapat menimpa data EO).
   useEffect(() => {
@@ -1453,10 +1465,12 @@ const AuthenticatedContent = () => {
       const onlineMatches = {};
       const onlineLiveScores = {};
       (data || []).forEach(row => {
-        if (row.pool_results && Object.keys(row.pool_results).length) {
-          onlinePools[String(row.event_id)] = row.pool_results;
+        const parsedPools = parseSpinMatchJsonObject(row.pool_results);
+        const parsedMatches = parseSpinMatchJsonObject(row.match_results);
+        if (Object.keys(parsedPools).length) {
+          onlinePools[String(row.event_id)] = parsedPools;
         }
-        Object.entries(row.match_results || {}).forEach(([matchId, result]) => {
+        Object.entries(parsedMatches).forEach(([matchId, result]) => {
           if (result?.liveScore) onlineLiveScores[matchId] = result.liveScore;
           if (result && Object.keys(result).some(key => key !== 'liveScore')) {
             const savedResult = { ...result };
@@ -5011,15 +5025,17 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .maybeSingle();
         if (cancelled || error || !data) return;
 
-        if (data.pool_results && Object.keys(data.pool_results).length > 0) {
+        const parsedPools = parseSpinMatchJsonObject(data.pool_results);
+        const parsedMatches = parseSpinMatchJsonObject(data.match_results);
+        if (Object.keys(parsedPools).length > 0) {
           setPoolResults(previous => ({
             ...previous,
-            [String(dashboardActiveEventId)]: data.pool_results
+            [String(dashboardActiveEventId)]: parsedPools
           }));
         }
 
         const publicMatches = {};
-        Object.entries(data.match_results || {}).forEach(([matchId, result]) => {
+        Object.entries(parsedMatches).forEach(([matchId, result]) => {
           if (!result) return;
           if (result.liveScore) {
             setOnlineLiveScores(previous => ({
@@ -5167,7 +5183,9 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .reverse()
           .find(row => matchResults[row.matchId]);
 
-        const row = runningRow || unfinishedRow || latestFinishedRow || null;
+        // Riwayat selesai diprioritaskan agar meja yang sudah dimainkan tidak
+        // kembali terlihat hanya sebagai SIAP ketika hasilnya sudah tersimpan.
+        const row = runningRow || latestFinishedRow || unfinishedRow || null;
         const result = row?.matchId ? matchResults[row.matchId] : null;
         const isLive = Boolean(
           runningRow &&
@@ -9712,6 +9730,24 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen:has(.sm-public-quick) {
             padding-bottom:18px !important;
           }
+          /* Menu Cepat ultra-compact agar tiga baris terlihat utuh di HP. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick {
+            padding:3px 5px !important;
+            margin-top:4px !important;
+            margin-bottom:0 !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .mb-4 { margin-bottom:2px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid { gap:3px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button {
+            min-height:30px !important;
+            padding:3px 4px !important;
+            border-radius:8px !important;
+            font-size:8px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button:first-child { width:46% !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button svg,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg { width:13px !important; height:13px !important; }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
              Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
              di atas konten ketika Preview/public app memakai iframe. */
