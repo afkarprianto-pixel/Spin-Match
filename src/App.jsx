@@ -2454,7 +2454,7 @@ const AuthenticatedContent = () => {
   const handlePublicSwipeStart = (event) => {
     if (!isPublic || !event.touches?.[0]) return;
     const target = event.target;
-    if (target instanceof Element && target.closest('button, a, input, select, textarea, .sm-public-tables-scroll')) {
+    if (target instanceof Element && target.closest('button, a, input, select, textarea, .sm-public-tables-scroll, .sm-participant-table, .sm-schedule .overflow-x-auto, .sm-knockout .overflow-x-auto, .sm-live .overflow-x-auto')) {
       swipeStartRef.current = null;
       return;
     }
