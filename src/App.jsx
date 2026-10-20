@@ -13,7 +13,7 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
-  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck, Eye, EyeOff, MessageCircle
+  Printer, Download, Search, Info, FileText, Radio, MoreVertical, LogOut, RefreshCw, ShieldCheck, Eye, EyeOff, MessageCircle, BarChart3
 } from 'lucide-react';
 
 
@@ -1090,6 +1090,65 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
       </div>}
   </div>;
   return null;
+};
+
+const SpinMatchVisitTracker = ({ user }) => {
+  useEffect(() => {
+    let visitorKey = localStorage.getItem('spinmatch_visitor_key');
+    if (!visitorKey) {
+      visitorKey = crypto.randomUUID();
+      localStorage.setItem('spinmatch_visitor_key', visitorKey);
+    }
+    const role = String(user?.app_metadata?.spinmatch_role || user?.app_metadata?.role || user?.role || user?.user_metadata?.role || '').toUpperCase();
+    const channel = role === 'EO' ? 'eo' : 'public';
+    const sessionKey = `spinmatch_visit_tracked:${channel}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
+    supabase.from('spinmatch_visit_events').insert({
+      visitor_key: visitorKey,
+      channel,
+      role: role || 'PUBLIC',
+      path: window.location.pathname || '/',
+    }).then(({ error }) => {
+      if (error) {
+        sessionStorage.removeItem(sessionKey);
+        console.warn('Statistik kunjungan belum tersimpan:', error.message);
+      }
+    });
+  }, [user]);
+  return null;
+};
+
+const SpinMatchVisitStats = ({ visible }) => {
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState('');
+  const load = async () => {
+    const { data, error: rpcError } = await supabase.rpc('spinmatch_get_visit_stats');
+    if (rpcError) setError(rpcError.message);
+    else setStats(data || null);
+  };
+  useEffect(() => { if (visible) load(); }, [visible]);
+  if (!visible) return null;
+  const number = value => Number(value || 0).toLocaleString('id-ID');
+  return (
+    <section className="rounded-[18px] border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-black text-[#0a3971]"><BarChart3 className="h-4 w-4 text-cyan-600" /> Statistik Kunjungan SpinMatch</div>
+          <p className="mt-1 text-[10px] font-semibold text-slate-500">Pengunjung unik berdasarkan kanal dan total kunjungan yang tercatat.</p>
+        </div>
+        <button type="button" onClick={load} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50">Muat ulang</button>
+      </div>
+      {error ? <p className="mt-3 rounded-lg bg-amber-50 p-3 text-[10px] font-bold text-amber-800">Statistik belum tersedia. Jalankan migrasi visitor SpinMatch terlebih dahulu.</p> : (
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="rounded-xl bg-blue-50 p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-blue-600">Publik</p><p className="mt-1 text-xl font-black text-[#0a3971]">{number(stats?.public_visitors)}</p><p className="text-[9px] text-slate-500">pengunjung unik</p></div>
+          <div className="rounded-xl bg-violet-50 p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-violet-600">EO</p><p className="mt-1 text-xl font-black text-violet-900">{number(stats?.eo_visitors)}</p><p className="text-[9px] text-slate-500">pengunjung unik</p></div>
+          <div className="rounded-xl bg-emerald-50 p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-emerald-600">Total unik</p><p className="mt-1 text-xl font-black text-emerald-900">{number(stats?.total_visitors)}</p><p className="text-[9px] text-slate-500">semua kanal</p></div>
+          <div className="rounded-xl bg-orange-50 p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-orange-600">Total kunjungan</p><p className="mt-1 text-xl font-black text-orange-900">{number(stats?.total_visits)}</p><p className="text-[9px] text-slate-500">semua sesi</p></div>
+        </div>
+      )}
+    </section>
+  );
 };
 
 const AuthenticatedContent = () => {
@@ -6117,6 +6176,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     ========================================================== */}
 
     <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
+      {(isSuperAdmin || isEO) && <SpinMatchVisitStats visible={isSuperAdmin || isEO} />}
 
       {!isPublic && <div className="sm-dashboard-event-buttons hidden md:hidden">
         <button type="button" className="sm-btn-my-events" onClick={() => {
@@ -9469,7 +9529,10 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
 // LoginPage dan Dashboard adalah komponen terpisah agar urutan React Hooks stabil.
 const MainContent = () => {
   const { user } = useAuth();
-  return user ? <AuthenticatedContent key={user.id || 'PUBLIC'} /> : <LoginPage />;
+  return <>
+    <SpinMatchVisitTracker user={user} />
+    {user ? <AuthenticatedContent key={user.id || 'PUBLIC'} /> : <LoginPage />}
+  </>;
 };
 
 export default function App() {
