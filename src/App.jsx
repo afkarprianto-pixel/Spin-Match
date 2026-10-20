@@ -5056,6 +5056,44 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
       return () => { cancelled = true; };
     }, [isPublic, dashboardActiveEventId]);
 
+    // Satu sumber data untuk EO, Super Admin, dan Publik.
+    // Memuat ulang pool + hasil match dari Supabase agar cache browser tidak
+    // membuat tampilan antar-role berbeda.
+    useEffect(() => {
+      const sharedEventId = dashboardActiveEventId || selectedLiveEvent?.id;
+      if (sharedEventId == null) return undefined;
+      let cancelled = false;
+      const syncSharedEventData = async () => {
+        const { data, error } = await supabase
+          .from('spinmatch_event_data')
+          .select('pool_results, match_results, updated_at')
+          .eq('event_id', Number(sharedEventId))
+          .maybeSingle();
+        if (cancelled || error || !data) return;
+        const sharedPools = parseSpinMatchJsonObject(data.pool_results);
+        const sharedMatches = parseSpinMatchJsonObject(data.match_results);
+        if (Object.keys(sharedPools).length > 0) {
+          setPoolResults(previous => ({ ...previous, [String(sharedEventId)]: sharedPools }));
+        }
+        setMatchResults(previous => ({ ...previous, ...Object.fromEntries(
+          Object.entries(sharedMatches).map(([matchId, result]) => {
+            const normalized = { ...(result || {}) };
+            delete normalized.liveScore;
+            return [matchId, normalized];
+          }).filter(([, result]) => Object.keys(result).length > 0)
+        ) }));
+        const liveScores = Object.fromEntries(
+          Object.entries(sharedMatches).filter(([, result]) => result?.liveScore).map(([matchId, result]) => [matchId, result.liveScore])
+        );
+        if (Object.keys(liveScores).length > 0) {
+          setOnlineLiveScores(previous => ({ ...previous, ...liveScores }));
+        }
+      };
+      syncSharedEventData();
+      const timer = window.setInterval(syncSharedEventData, 5000);
+      return () => { cancelled = true; window.clearInterval(timer); };
+    }, [dashboardActiveEventId, selectedLiveEvent?.id]);
+
     const dashboardParticipants = dashboardActiveEventId !== null
       ? (
           participants[dashboardActiveEventId] ||
