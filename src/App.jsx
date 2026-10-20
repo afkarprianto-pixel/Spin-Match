@@ -10052,6 +10052,15 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             height:14px !important;
             flex-shrink:0 !important;
           }
+          /* Override tertinggi: cegah CSS lama membuat tombol menjadi 100% lebar. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-two-row-grid > button,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-two-row-grid > button:first-child,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-two-row-grid .sm-chat-quick-button {
+            flex:0 0 calc((100% - 8px) / 3) !important;
+            width:calc((100% - 8px) / 3) !important;
+            max-width:calc((100% - 8px) / 3) !important;
+            min-width:0 !important;
+          }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
