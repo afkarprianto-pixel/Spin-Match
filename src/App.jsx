@@ -6898,7 +6898,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           <button
             type="button"
             onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
-            className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+            className="sm-chat-quick-button flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
           >
             <MessageCircle className="h-5 w-5 shrink-0" /> Chat Publik
           </button>
@@ -9550,6 +9550,31 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:last-child p:first-child { font-size:7px !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:last-child p:last-child { font-size:10px !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:last-child { display:none !important; }
+          /* Final compact layout Publik HP. */
+          .sm-dashboard-screen .sm-dashboard-layout { gap:4px !important; }
+          .sm-dashboard-screen .sm-dashboard-lower { gap:4px !important; margin-top:-2px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge { top:4px !important; left:8px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick { padding:5px 6px !important; border-radius:16px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid { gap:4px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid button:not(.sm-chat-quick-button) { min-height:36px !important; padding:4px 5px !important; border-radius:10px !important; font-size:9px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid button:not(.sm-chat-quick-button) svg { width:14px !important; height:14px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button {
+            position:fixed !important;
+            left:50% !important;
+            bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+            z-index:90 !important;
+            width:50px !important;
+            height:50px !important;
+            min-height:50px !important;
+            padding:0 !important;
+            transform:translateX(-50%) !important;
+            border-radius:9999px !important;
+            gap:0 !important;
+            flex-direction:column !important;
+            font-size:0 !important;
+            box-shadow:0 6px 18px rgba(76,58,190,.34) !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button::after { content:'CHAT'; font-size:9px; font-weight:900; letter-spacing:.08em; }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
              Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
              di atas konten ketika Preview/public app memakai iframe. */
