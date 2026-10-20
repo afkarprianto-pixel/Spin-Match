@@ -5096,6 +5096,40 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     // =====================================================
     // DASHBOARD LIVE MEJA - mengikuti event hero yang dipilih
     // =====================================================
+    // Fallback publik: jika pool_results belum tersinkron dari Supabase,
+    // peserta tetap dipetakan ke meja agar panel Live Meja tidak kosong.
+    const buildPublicFallbackSchedule = (eventItem) => {
+      if (!eventItem?.id) return [];
+      const eventKey = String(eventItem.id);
+      const rows = participants[eventKey] || participants[eventItem.id] || [];
+      const maxMeja = Math.max(1, Number(eventItem.jumlahMeja || eventItem.jumlahmeja || 4));
+      if (!rows.length) return [];
+      const schedule = [];
+      for (let index = 0; index < rows.length; index += 2) {
+        const player = rows[index];
+        const opponent = rows[index + 1] || null;
+        const matchNumber = Math.floor(index / 2) + 1;
+        const tableNumber = ((matchNumber - 1) % maxMeja) + 1;
+        const matchId = `${eventKey}_PUBLIC_M${matchNumber}`;
+        schedule.push({
+          type: 'player',
+          pool: player?.divisi || 'Peserta',
+          playerCode: player?.customId || `P${index + 1}`,
+          player,
+          opponent,
+          matchLabel: opponent ? `${player?.nama || 'Pemain'} VS ${opponent.nama || 'Pemain'}` : `${player?.nama || 'Pemain'} menunggu lawan`,
+          matchRef: `M${matchNumber}`,
+          jam: '-',
+          meja: `Meja ${tableNumber}`,
+          matchId,
+          matchType: 'fallback_public',
+          result: matchResults[matchId] || null,
+          showMatch: true
+        });
+      }
+      return schedule;
+    };
+
     const dashboardJumlahMeja = Math.max(
       1,
       Number(
@@ -5105,11 +5139,14 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
       )
     );
 
-    const dashboardScheduleRows = dashboardActiveEvent
+    const generatedDashboardRows = dashboardActiveEvent
       ? generateScheduleFromPools(dashboardActiveEvent.id).filter(
           row => row?.type === 'player' && row?.matchId && Number.isFinite(normalizeMeja(row?.meja))
         )
       : [];
+    const dashboardScheduleRows = generatedDashboardRows.length > 0
+      ? generatedDashboardRows
+      : buildPublicFallbackSchedule(dashboardActiveEvent);
 
     const dashboardTableCards = Array.from(
       { length: dashboardJumlahMeja },
@@ -5196,7 +5233,12 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
   const scheduleRows = selectedScheduleEvent ? generateScheduleFromPools(selectedScheduleEvent.id) : [];
   const currentRankings = poolRankings[selectedScheduleEvent?.id] || {};
   const liveScorePoolData = poolResults[selectedLiveEvent?.id] || null;
-  const liveScoreRows = selectedLiveEvent ? generateScheduleFromPools(selectedLiveEvent.id).filter(row => {
+  const liveScoreSourceRows = selectedLiveEvent
+    ? (generateScheduleFromPools(selectedLiveEvent.id).length > 0
+      ? generateScheduleFromPools(selectedLiveEvent.id)
+      : buildPublicFallbackSchedule(selectedLiveEvent))
+    : [];
+  const liveScoreRows = selectedLiveEvent ? liveScoreSourceRows.filter(row => {
     if (!isWasit) return true;
     // Jadwal memakai 'Meja 1', sedangkan penugasan Supabase memakai angka 1.
     // Jangan tampilkan header pool kosong atau baris meja lain untuk wasit.
@@ -9575,6 +9617,38 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             box-shadow:0 6px 18px rgba(76,58,190,.34) !important;
           }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button::after { content:'CHAT'; font-size:9px; font-weight:900; letter-spacing:.08em; }
+          /* Menu Cepat Publik: Data Peserta di tengah atas, Chat kembali menjadi kotak. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid {
+            grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+            max-width:340px !important;
+            margin-left:auto !important;
+            margin-right:auto !important;
+            gap:4px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button:first-child {
+            grid-column:1 / -1 !important;
+            width:50% !important;
+            min-width:0 !important;
+            justify-self:center !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid .sm-chat-quick-button {
+            position:relative !important;
+            left:auto !important;
+            bottom:auto !important;
+            z-index:51 !important;
+            width:100% !important;
+            height:auto !important;
+            min-height:36px !important;
+            padding:4px 5px !important;
+            transform:none !important;
+            border-radius:10px !important;
+            gap:4px !important;
+            flex-direction:row !important;
+            font-size:9px !important;
+            box-shadow:0 5px 14px rgba(76,58,190,.20) !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button::after { content:none !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg { width:14px !important; height:14px !important; }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
              Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
              di atas konten ketika Preview/public app memakai iframe. */
