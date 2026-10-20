@@ -2449,6 +2449,39 @@ const AuthenticatedContent = () => {
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
+  const publicSwipeViews = ['DASHBOARD', 'REGISTRATION', 'DRAW', 'SCHEDULE', 'KNOCKOUT', 'CHAT'];
+  const swipeStartRef = useRef(null);
+  const handlePublicSwipeStart = (event) => {
+    if (!isPublic || !event.touches?.[0]) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('button, a, input, select, textarea, .sm-public-tables-scroll')) {
+      swipeStartRef.current = null;
+      return;
+    }
+    const touch = event.touches[0];
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  };
+  const handlePublicSwipeEnd = (event) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!isPublic || !start || !event.changedTouches?.[0]) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+    if (elapsed > 900 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    const currentIndex = publicSwipeViews.indexOf(activeView);
+    if (currentIndex < 0) return;
+    const nextIndex = Math.max(0, Math.min(publicSwipeViews.length - 1, currentIndex + (dx < 0 ? 1 : -1)));
+    if (nextIndex === currentIndex) return;
+    const nextView = publicSwipeViews[nextIndex];
+    if (dashboardActiveEvent && nextView !== 'DASHBOARD') selectDashboardEvent(dashboardActiveEvent);
+    setActiveView(nextView);
+    requestAnimationFrame(() => {
+      document.querySelector('.spinmatch-main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
+
   useEffect(() => {
     if (!user || !isPublic) return;
     const publicAllowedViews = ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT'];
@@ -6291,7 +6324,12 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           )}
         </div>
 
-        <div className={`spinmatch-main-content ${activeView === 'DASHBOARD' ? 'sm-dashboard-screen' : ''} flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8`}>
+        <div
+          className={`spinmatch-main-content ${activeView === 'DASHBOARD' ? 'sm-dashboard-screen' : ''} flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-3 sm:px-5 sm:pt-4 md:p-8 md:pt-6 md:pb-8`}
+          onTouchStart={handlePublicSwipeStart}
+          onTouchEnd={handlePublicSwipeEnd}
+          onTouchCancel={() => { swipeStartRef.current = null; }}
+        >
 {isReferee && activeView !== 'RANKING' && !['REGISTRATION', 'CHAT'].includes(activeView) ? (
   <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} onAssignedEventChange={setRefereeAssignedEventId} />
 ) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
@@ -9834,6 +9872,24 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg {
             width:16px !important;
             height:16px !important;
+          }
+          /* Menu Cepat: area putih bawah sedikit lebih lega, judul lebih kecil,
+             tetapi label dan ikon tombol lebih mudah dibaca. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick {
+            padding:2px 5px 9px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick h2 {
+            font-size:12px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button {
+            min-height:34px !important;
+            font-size:11px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button svg,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg {
+            width:17px !important;
+            height:17px !important;
           }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
