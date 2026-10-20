@@ -9802,6 +9802,39 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             touch-action:manipulation !important;
           }
           .sm-dashboard-screen:has(.sm-public-quick) { padding-bottom:0 !important; }
+          /* Final balance: Menu Cepat penuh terlihat, ikon lebih seimbang, gambar meja lebih besar. */
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll {
+            height:220px !important;
+            max-height:220px !important;
+          }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button svg {
+            width:84px !important;
+            height:46px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick {
+            padding:2px 5px !important;
+            margin-top:0 !important;
+            margin-bottom:0 !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid {
+            gap:3px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button {
+            min-height:32px !important;
+            padding:3px 5px !important;
+            border-radius:8px !important;
+            font-size:10px !important;
+            line-height:1 !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button:first-child {
+            width:46% !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid > button svg,
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg {
+            width:16px !important;
+            height:16px !important;
+          }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
