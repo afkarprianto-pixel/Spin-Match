@@ -1096,14 +1096,16 @@ const SpinMatchVisitTracker = ({ user }) => {
   useEffect(() => {
     let visitorKey = localStorage.getItem('spinmatch_visitor_key');
     if (!visitorKey) {
-      visitorKey = crypto.randomUUID();
+      const uuid = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `sm-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+      visitorKey = uuid;
       localStorage.setItem('spinmatch_visitor_key', visitorKey);
     }
-    const role = String(user?.app_metadata?.spinmatch_role || user?.app_metadata?.role || user?.role || user?.user_metadata?.role || '').toUpperCase();
-    const channel = role === 'EO' ? 'eo' : 'public';
+    const role = String(user?.app_metadata?.spinmatch_role || user?.app_metadata?.role || user?.role || user?.user_metadata?.role || '').trim().toUpperCase();
+    const channel = ['EO', 'EVENT_ORGANIZER', 'EVENT ORGANIZER'].includes(role) ? 'eo' : 'public';
     const sessionKey = `spinmatch_visit_tracked:${channel}`;
     if (sessionStorage.getItem(sessionKey)) return;
-    sessionStorage.setItem(sessionKey, '1');
     supabase.from('spinmatch_visit_events').insert({
       visitor_key: visitorKey,
       channel,
@@ -1111,9 +1113,10 @@ const SpinMatchVisitTracker = ({ user }) => {
       path: window.location.pathname || '/',
     }).then(({ error }) => {
       if (error) {
-        sessionStorage.removeItem(sessionKey);
         console.warn('Statistik kunjungan belum tersimpan:', error.message);
+        return;
       }
+      sessionStorage.setItem(sessionKey, '1');
     });
   }, [user]);
   return null;
@@ -1151,12 +1154,39 @@ const SpinMatchVisitStats = ({ visible }) => {
   );
 };
 
+const SpinMatchVisitorBadge = () => {
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    supabase.rpc('spinmatch_get_visit_stats').then(({ data, error: rpcError }) => {
+      if (cancelled) return;
+      if (rpcError) setError(rpcError.message);
+      else setStats(data || null);
+    });
+    return () => { cancelled = true; };
+  }, []);
+  if (error) return null;
+  const number = value => Number(value || 0).toLocaleString('id-ID');
+  return (
+    <div className="sm-visitor-badge flex justify-start md:justify-end">
+      <section className="flex w-full max-w-[360px] items-center justify-between gap-5 rounded-2xl border border-cyan-100 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,.06)]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700"><Eye className="h-5 w-5" /></div>
+          <div><p className="text-[10px] font-black uppercase tracking-[.12em] text-slate-400">Statistik</p><p className="text-sm font-black text-slate-900">Pengunjung: {number(stats?.public_visitors)}</p></div>
+        </div>
+        <div className="text-right"><p className="text-[9px] font-bold text-slate-400">Total semua kanal</p><p className="text-base font-black text-[#0a3971]">{number(stats?.total_visitors)}</p></div>
+      </section>
+    </div>
+  );
+};
+
 const AuthenticatedContent = () => {
   const { user, logout } = useAuth();
   const userRole = String(user?.app_metadata?.spinmatch_role || user?.app_metadata?.role || user?.role || user?.user_metadata?.role || '').toUpperCase();
   const isPublic = userRole === 'PUBLIC' || userRole === 'PUBLIK';
   const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
-  const isEO = userRole === 'EO';
+  const isEO = ['EO', 'EVENT_ORGANIZER', 'EVENT ORGANIZER'].includes(userRole);
   const isWasit = userRole === 'WASIT';
   const isReferee = userRole === 'REFEREE';
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
@@ -6176,7 +6206,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
     ========================================================== */}
 
     <div className="sm-dashboard-layout mx-auto w-full max-w-[1500px] space-y-4 md:space-y-6">
-      {(isSuperAdmin || isEO) && <SpinMatchVisitStats visible={isSuperAdmin || isEO} />}
 
       {!isPublic && <div className="sm-dashboard-event-buttons hidden md:hidden">
         <button type="button" className="sm-btn-my-events" onClick={() => {
@@ -6906,6 +6935,8 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
       </section>
 
+      {/* Kartu pengunjung mandiri: tidak digabung dengan statistik event atau header. */}
+      <SpinMatchVisitorBadge />
 
     </div>
   </>
@@ -9304,6 +9335,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
 
           /* DASHBOARD MOBILE FINAL COMPACT V2 */
           .sm-dashboard-layout { display:flex !important; flex-direction:column !important; gap:10px !important; }
+          .sm-dashboard-layout > .sm-visitor-badge { order:6 !important; width:100% !important; }
           .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
           .sm-dashboard-event-buttons button { min-height:32px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
           .sm-btn-my-events { background:linear-gradient(135deg,#0a3971,#0874c9) !important; }
