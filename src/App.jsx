@@ -9649,6 +9649,48 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button::after { content:none !important; }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg { width:14px !important; height:14px !important; }
+          /* Final compact fit untuk layar HP kecil. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge {
+            top:4px !important;
+            left:8px !important;
+            z-index:220 !important;
+            visibility:visible !important;
+            opacity:1 !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section {
+            max-width:145px !important;
+            min-height:30px !important;
+            padding:3px 6px !important;
+            gap:5px !important;
+            border-radius:999px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child { gap:5px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:first-child { width:22px !important; height:22px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:first-child svg { width:12px !important; height:12px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:last-child p:first-child { display:none !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-visitor-badge section > div:first-child > div:last-child p:last-child { font-size:9px !important; white-space:nowrap !important; }
+          .sm-dashboard-screen .sm-dashboard-hero-inner { padding:3px 10px 4px !important; }
+          .sm-dashboard-screen .sm-dashboard-mobile-paddle { height:25px !important; }
+          .sm-dashboard-screen .sm-dashboard-mobile-paddle img { width:62px !important; height:30px !important; }
+          .sm-dashboard-screen .sm-dashboard-hero h1 { font-size:13px !important; }
+          .sm-dashboard-screen .sm-dashboard-hero-meta { margin-top:3px !important; }
+          .sm-dashboard-screen .sm-dashboard-hero-actions { margin-top:3px !important; }
+          .sm-dashboard-screen .sm-dashboard-hero-actions button { min-height:25px !important; padding:3px 7px !important; font-size:8px !important; }
+          .sm-dashboard-screen .sm-dashboard-stats { gap:4px !important; }
+          .sm-dashboard-screen .sm-dashboard-stats > div { height:36px !important; border-radius:12px !important; }
+          .sm-dashboard-screen .sm-dashboard-stats > div > div:nth-child(2) { font-size:12px !important; }
+          .sm-dashboard-screen .sm-dashboard-stats > div > div:nth-child(3) { font-size:7px !important; }
+          .sm-dashboard-screen .sm-dashboard-lower { margin-top:-4px !important; gap:3px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .border-b { padding:7px 10px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik h2 { font-size:13px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll { height:174px !important; max-height:174px !important; padding:6px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll > div { gap:4px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button { min-height:76px !important; padding:4px !important; border-radius:10px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button svg { width:62px !important; height:32px !important; margin-top:0 !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button > div { font-size:9px !important; }
+          .sm-dashboard-screen #dashboard-live-meja-publik .sm-public-tables-scroll button > span { font-size:9px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) { padding-bottom:82px !important; }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick { margin-bottom:10px !important; }
           /* Akun publik: jangan jadikan Menu Cepat layer fixed di dalam area scroll.
              Layer fixed sebelumnya dapat menutup hit-area tombol atau menerima pointer
              di atas konten ketika Preview/public app memakai iframe. */
