@@ -7070,7 +7070,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
-        <div className={`mx-auto grid w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid-cols-3 grid-rows-2' : 'grid-cols-3'}`} style={isPublic ? { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gridTemplateRows: 'repeat(2, minmax(0, auto))' } : undefined}>
+        <div className={`mx-auto w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid sm-public-two-row-grid max-w-2xl' : 'grid grid-cols-3'}`} style={isPublic ? { display: 'flex', flexWrap: 'wrap', gap: '4px' } : undefined}>
           {!isPublic && <button
             onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
@@ -10023,6 +10023,31 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             line-height:1 !important;
           }
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid > button svg {
+            width:14px !important;
+            height:14px !important;
+            flex-shrink:0 !important;
+          }
+          /* Layout final publik: enam tombol fixed 3 per baris. */
+          .sm-public-two-row-grid {
+            display:flex !important;
+            flex-wrap:wrap !important;
+            align-content:flex-start !important;
+            gap:4px !important;
+          }
+          .sm-public-two-row-grid > button {
+            flex:0 0 calc((100% - 8px) / 3) !important;
+            width:calc((100% - 8px) / 3) !important;
+            max-width:calc((100% - 8px) / 3) !important;
+            min-width:0 !important;
+            min-height:36px !important;
+            max-height:42px !important;
+            padding:2px 1px !important;
+            white-space:nowrap !important;
+            overflow:hidden !important;
+            font-size:8px !important;
+            line-height:1 !important;
+          }
+          .sm-public-two-row-grid > button svg {
             width:14px !important;
             height:14px !important;
             flex-shrink:0 !important;
