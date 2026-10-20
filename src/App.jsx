@@ -9,7 +9,7 @@ import { LoginPage } from './components/LoginPage';
 import { EventChat } from './components/EventChat';
 import * as XLSX from 'xlsx';
 import {
-  Trophy, Users, Activity, DollarSign, Plus, X, Trash2, Edit3,
+  Trophy, Users, Activity, DollarSign, Plus, X, Trash2, Edit3, Image as ImageIcon,
   ArrowLeft, Upload, FileSpreadsheet, UserPlus, Filter, Shuffle,
   Settings, ChevronDown, Pencil, Wallet, Play, Pause, RotateCcw,
   Crown, Medal, Sparkles, Target, Dices, CheckCircle2, Calendar,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false, onManageSupervisor, supervisorSectionActive = false }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false, onManageSupervisor, supervisorSectionActive = false, onOpenAlbum }) => {
   const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
   const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
   const handleDesktopLogout = () => {
@@ -78,7 +78,7 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING', 'REGISTRATION', 'CHAT'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING', 'CHAT'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT'].includes(item.view))).map(({ view, label, icon: Icon }) => (
+        {menu.filter(item => (!isRefereeRole || ['DASHBOARD', 'SCHEDULE', 'REF_CALLS', 'REF_TABLES', 'REF_WASIT', 'REF_LIVE', 'RANKING', 'REGISTRATION', 'CHAT'].includes(item.view)) && (!['REFEREE_MANAGEMENT', 'SUPERVISOR_MANAGEMENT'].includes(item.view) || !isPublicRole) && (item.view !== 'SUPERVISOR_MANAGEMENT' || ['EO', 'SUPER_ADMIN', 'SUPERADMIN', 'ADMIN'].includes(normalizedRole)) && (!isWasitRole || ['LIVE_SCORE', 'SCHEDULE', 'DASHBOARD', 'DRAW', 'KNOCKOUT', 'RANKING', 'CHAT'].includes(item.view)) && (!isPublicRole || ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT', 'BROCHURES', 'ALBUM'].includes(item.view))).map(({ view, label, icon: Icon }) => (
           <button key={view} type="button" onClick={() => openView(view)} className={`flex w-full items-center gap-3 rounded-[11px] px-3 py-2 text-left text-[13px] font-extrabold transition ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'bg-gradient-to-r from-[#0b67b2] to-[#0a86d8] text-white shadow-lg shadow-blue-950/20' : 'text-[#d5e3ed] hover:bg-white/10 hover:text-white'}`}>
             <Icon className={`h-[18px] w-[18px] shrink-0 ${(activeView === view || (view === 'REFEREE_MANAGEMENT' && refereeSectionActive) || (view === 'SUPERVISOR_MANAGEMENT' && supervisorSectionActive)) ? 'text-cyan-200' : 'text-[#8eb2cb]'}`} /><span>{label}</span>
           </button>
@@ -96,6 +96,7 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
 
         {showDesktopMoreMenu && (
           <div className="absolute bottom-[48px] right-2 z-50 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-[#07345c] p-1.5 shadow-2xl">
+            {isPublicRole && <button type="button" onClick={() => { setShowDesktopMoreMenu(false); onOpenAlbum?.(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><Trophy className="h-4 w-4 text-amber-300" />Album Juara</button>}
             <button type="button" onClick={handleDesktopRestart} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><RefreshCw className="h-4 w-4" />Restart</button>
             <button type="button" onClick={handleDesktopLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-red-200 hover:bg-red-500/10"><LogOut className="h-4 w-4" />Keluar</button>
           </div>
@@ -1401,6 +1402,13 @@ const AuthenticatedContent = () => {
     return {};
   });
   const [onlineLiveScores, setOnlineLiveScores] = useState({});
+  const [brochures, setBrochures] = useState([]);
+  const [championAlbums, setChampionAlbums] = useState([]);
+  const [galleryBusy, setGalleryBusy] = useState(false);
+  const [brochureTitle, setBrochureTitle] = useState('');
+  const [brochureDescription, setBrochureDescription] = useState('');
+  const [albumTitle, setAlbumTitle] = useState('');
+  const [albumCaption, setAlbumCaption] = useState('');
 
   const [poolRankings, setPoolRankings] = useState(() => {
     const saved = localStorage.getItem('spinmatch_pool_rankings');
@@ -1449,6 +1457,55 @@ const AuthenticatedContent = () => {
     } catch {
       return {};
     }
+  };
+
+  const loadGallery = async () => {
+    const [{ data: brochureRows, error: brochureError }, { data: albumRows, error: albumError }] = await Promise.all([
+      supabase.from('spinmatch_brochures').select('*').order('created_at', { ascending: false }),
+      supabase.from('spinmatch_champion_albums').select('*').order('created_at', { ascending: false })
+    ]);
+    if (!brochureError) setBrochures(brochureRows || []);
+    else console.warn('Brosur belum dapat dimuat:', brochureError.message);
+    if (!albumError) setChampionAlbums(albumRows || []);
+    else console.warn('Album juara belum dapat dimuat:', albumError.message);
+  };
+  useEffect(() => { loadGallery(); }, [user?.id]);
+
+  const uploadGalleryImage = async (file, bucket, title, description, tableName, setTitle, setDescription) => {
+    if (!file || !title.trim()) { alert('Judul wajib diisi dan foto/brosur wajib dipilih.'); return; }
+    if (!file.type.startsWith('image/')) { alert('File harus berupa gambar.'); return; }
+    if (file.size > 8 * 1024 * 1024) { alert('Ukuran file maksimal 8 MB.'); return; }
+    setGalleryBusy(true);
+    try {
+      const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: publicFile } = supabase.storage.from(bucket).getPublicUrl(path);
+      const payload = { title: title.trim(), image_url: publicFile.publicUrl, file_name: path, ...(tableName === 'spinmatch_brochures' ? { description: description.trim() } : { caption: description.trim() }) };
+      if (user?.id) payload.uploaded_by = user.id;
+      const { error: insertError } = await supabase.from(tableName).insert(payload);
+      if (insertError) {
+        await supabase.storage.from(bucket).remove([path]);
+        throw insertError;
+      }
+      setTitle(''); setDescription(''); await loadGallery();
+      alert('Berhasil diunggah dan sudah dapat dilihat publik.');
+    } catch (error) {
+      console.error('Upload galeri gagal:', error);
+      alert('Upload gagal: ' + (error?.message || 'periksa bucket dan policy Supabase.'));
+    } finally { setGalleryBusy(false); }
+  };
+  const deleteGalleryItem = async (item, bucket, tableName) => {
+    if (!isSuperAdmin || !window.confirm('Hapus item galeri ini?')) return;
+    setGalleryBusy(true);
+    try {
+      const { error: deleteError } = await supabase.from(tableName).delete().eq('id', item.id);
+      if (deleteError) throw deleteError;
+      if (item.file_name) await supabase.storage.from(bucket).remove([item.file_name]);
+      await loadGallery();
+    } catch (error) { alert('Item belum dapat dihapus: ' + (error?.message || 'akses ditolak.')); }
+    finally { setGalleryBusy(false); }
   };
 
   // Data undian dan skor online: Supabase adalah sumber bersama antar perangkat.
@@ -2484,7 +2541,7 @@ const AuthenticatedContent = () => {
 
   useEffect(() => {
     if (!user || !isPublic) return;
-    const publicAllowedViews = ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT'];
+    const publicAllowedViews = ['DASHBOARD', 'SCHEDULE', 'LIVE_SCORE', 'RANKING', 'KNOCKOUT', 'REGISTRATION', 'DRAW', 'CHAT', 'BROCHURES', 'ALBUM'];
     if (!publicAllowedViews.includes(activeView)) setActiveView('DASHBOARD');
   }, [user, isPublic, activeView]);
 
@@ -5938,6 +5995,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           }}
           onAllEvents={() => { setActiveView('DASHBOARD'); setDashboardEventBrowser('ALL'); }}
           onLogout={logout}
+          onOpenAlbum={() => setActiveView('ALBUM')}
         />
       </div>
 
@@ -5992,6 +6050,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                     </button>
                   )}
 
+                  {(isPublic || isSuperAdmin) && <button type="button" onClick={() => { setActiveView('ALBUM'); setShowMobileMoreMenu(false); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-amber-700 hover:bg-amber-50"><Trophy className="h-4 w-4" />Album Juara</button>}
                   <button
                     type="button"
                     onClick={handleMobileRestart}
@@ -6334,7 +6393,35 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
   <RefereeWorkspace user={user} activeView={activeView} setActiveView={setActiveView} events={events} getSchedule={generateScheduleFromPools} getWasit={getScheduledReferee} getMatchPlayers={getLiveMatchPlayers} eventBreaks={eventBreaks} onBreaksSaved={loadEventBreaks} onAssignedEventChange={setRefereeAssignedEventId} />
 ) : isWasit && (wasitAssignmentLoading || !wasitAssignment) ? (
   <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">{wasitAssignmentLoading ? 'Memeriksa penugasan wasit...' : 'Belum ada penugasan wasit aktif. Hubungi EO.'}</div>
-) : activeView === 'DASHBOARD' ? (
+) : activeView === 'BROCHURES' ? (
+            <div className="mx-auto w-full max-w-6xl space-y-4">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#052a4a] via-[#075a91] to-[#0b83c9] p-5 text-white shadow-lg">
+                <button type="button" onClick={() => setActiveView('DASHBOARD')} className="mb-3 rounded-xl bg-white/10 p-2 hover:bg-white/20"><ArrowLeft className="h-5 w-5" /></button>
+                <h2 className="text-xl font-black"><FileText className="mr-2 inline h-5 w-5 text-cyan-200" />Brosur Kejuaraan</h2>
+                <p className="mt-1 text-xs text-blue-100/80">Kumpulan brosur promosi kejuaraan SpinMatch.</p>
+              </div>
+              <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-black text-slate-900">Upload Brosur Baru</h3>
+                <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                  <input value={brochureTitle} onChange={e => setBrochureTitle(e.target.value)} placeholder="Judul kejuaraan" className="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+                  <input value={brochureDescription} onChange={e => setBrochureDescription(e.target.value)} placeholder="Keterangan singkat (opsional)" className="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0a3971] px-4 py-2 text-xs font-black text-white hover:bg-[#075a91]"><Upload className="h-4 w-4" /> Pilih & Upload<input type="file" accept="image/*" className="hidden" disabled={galleryBusy} onChange={e => { const file = e.target.files?.[0]; uploadGalleryImage(file, 'spinmatch-brosur', brochureTitle, brochureDescription, 'spinmatch_brochures', setBrochureTitle, setBrochureDescription); e.target.value = ''; }} /></label>
+                </div>
+                <p className="mt-2 text-[10px] text-slate-500">Publik dapat menambahkan brosur. Maksimal 8 MB per gambar.</p>
+              </section>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {brochures.map(item => <article key={item.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><img src={item.image_url} alt={item.title} className="h-52 w-full object-cover" /><div className="p-3"><h3 className="text-sm font-black text-slate-900">{item.title}</h3><p className="mt-1 text-xs text-slate-500">{item.description || 'Brosur kejuaraan SpinMatch'}</p>{isSuperAdmin && <button type="button" disabled={galleryBusy} onClick={() => deleteGalleryItem(item, 'spinmatch-brosur', 'spinmatch_brochures')} className="mt-3 flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600"><Trash2 className="h-3.5 w-3.5" />Hapus</button>}</div></article>)}
+              </div>
+              {!brochures.length && <div className="rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center text-sm text-slate-400">Belum ada brosur kejuaraan.</div>}
+            </div>
+          ) : activeView === 'ALBUM' ? (
+            <div className="mx-auto w-full max-w-6xl space-y-4">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#4a2405] via-[#9a5b0a] to-[#d99828] p-5 text-white shadow-lg"><button type="button" onClick={() => setActiveView('DASHBOARD')} className="mb-3 rounded-xl bg-white/10 p-2 hover:bg-white/20"><ArrowLeft className="h-5 w-5" /></button><h2 className="text-xl font-black"><Trophy className="mr-2 inline h-5 w-5 text-amber-200" />Album Juara</h2><p className="mt-1 text-xs text-amber-100/90">Dokumentasi juara dan momen terbaik kejuaraan.</p></div>
+              <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"><h3 className="text-sm font-black text-slate-900">Tambah Foto Juara</h3><div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]"><input value={albumTitle} onChange={e => setAlbumTitle(e.target.value)} placeholder="Judul foto / nama juara" className="rounded-xl border border-slate-200 px-3 py-2 text-sm" /><input value={albumCaption} onChange={e => setAlbumCaption(e.target.value)} placeholder="Keterangan" className="rounded-xl border border-slate-200 px-3 py-2 text-sm" /><label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700"><Upload className="h-4 w-4" /> Pilih & Upload<input type="file" accept="image/*" className="hidden" disabled={galleryBusy} onChange={e => { const file = e.target.files?.[0]; uploadGalleryImage(file, 'spinmatch-album', albumTitle, albumCaption, 'spinmatch_champion_albums', setAlbumTitle, setAlbumCaption); e.target.value = ''; }} /></label></div></section>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{championAlbums.map(item => <article key={item.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><img src={item.image_url} alt={item.title} className="h-56 w-full object-cover" /><div className="p-3"><h3 className="text-sm font-black text-slate-900">{item.title}</h3><p className="mt-1 text-xs text-slate-500">{item.caption}</p>{isSuperAdmin && <button type="button" disabled={galleryBusy} onClick={() => deleteGalleryItem(item, 'spinmatch-album', 'spinmatch_champion_albums')} className="mt-3 flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600"><Trash2 className="h-3.5 w-3.5" />Hapus</button>}</div></article>)}</div>
+              {!championAlbums.length && <div className="rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center text-sm text-slate-400">Belum ada foto juara.</div>}
+            </div>
+          ) : activeView === 'DASHBOARD' ? (
   <>
     {/* =========================================================
         SPINMATCH PREMIUM DASHBOARD
@@ -6983,7 +7070,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
-        <div className={`mx-auto grid w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid-cols-2' : 'grid-cols-3'}`}>
+        <div className={`mx-auto grid w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid-cols-3' : 'grid-cols-3'}`}>
           {!isPublic && <button
             onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
@@ -7031,6 +7118,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
 
+          {(isPublic || isSuperAdmin) && <button type="button" onClick={() => setActiveView('BROCHURES')} className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0891b2] to-[#22d3ee] px-2 py-3 text-[10px] font-black text-white shadow-md active:scale-[.98]"><FileText className="h-5 w-5 shrink-0" /> Brosur Kejuaraan</button>}
           <button
             type="button"
             onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
@@ -7051,7 +7139,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         {/* Tablet/Desktop: 6 menu termasuk Kelola Wasit untuk EO/Admin */}
-        <div className={`hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6 ${isPublic ? 'mx-auto max-w-2xl md:grid-cols-2 xl:grid-cols-2' : ''}`}>
+        <div className={`hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6 ${isPublic ? 'mx-auto max-w-4xl md:grid-cols-3 xl:grid-cols-3' : ''}`}>
           {[
             { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
             { label: isPublic ? 'Data Peserta' : 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
@@ -7059,8 +7147,9 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
+            { label: 'Brosur Kejuaraan', icon: FileText, action: () => setActiveView('BROCHURES'), box: 'from-cyan-50 to-cyan-100', iconColor: 'text-cyan-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
-          ].filter(item => !isPublic || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
+          ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur Kejuaraan'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className={`group flex items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
               <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
