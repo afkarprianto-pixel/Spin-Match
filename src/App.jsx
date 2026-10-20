@@ -7070,7 +7070,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         {/* Mobile: enam tombol dalam 2 baris x 3 kolom */}
-        <div className={`mx-auto grid w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid-cols-3' : 'grid-cols-3'}`}>
+        <div className={`mx-auto grid w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid-cols-3 grid-rows-2' : 'grid-cols-3'}`} style={isPublic ? { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gridTemplateRows: 'repeat(2, minmax(0, auto))' } : undefined}>
           {!isPublic && <button
             onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
@@ -10000,6 +10000,32 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-chat-quick-button svg {
             width:15px !important;
             height:15px !important;
+          }
+          /* Kunci Menu Cepat Publik: tepat 2 baris x 3 kolom, tanpa wrap menjadi baris tambahan. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid {
+            display:grid !important;
+            grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+            grid-template-rows:repeat(2,minmax(0,auto)) !important;
+            grid-auto-flow:row !important;
+            gap:4px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid > button {
+            grid-column:auto !important;
+            width:100% !important;
+            min-width:0 !important;
+            min-height:36px !important;
+            max-height:42px !important;
+            padding:2px 1px !important;
+            gap:2px !important;
+            white-space:nowrap !important;
+            overflow:hidden !important;
+            font-size:8px !important;
+            line-height:1 !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid > button svg {
+            width:14px !important;
+            height:14px !important;
+            flex-shrink:0 !important;
           }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
