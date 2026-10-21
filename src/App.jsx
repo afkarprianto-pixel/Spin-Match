@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 
-const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false, onManageSupervisor, supervisorSectionActive = false, onOpenAlbum }) => {
+const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, onAllEvents, onLogout, onManageReferees, refereeSectionActive = false, onManageSupervisor, supervisorSectionActive = false }) => {
   const [showDesktopMoreMenu, setShowDesktopMoreMenu] = useState(false);
   const handleDesktopRestart = () => { setShowDesktopMoreMenu(false); window.location.reload(); };
   const handleDesktopLogout = () => {
@@ -1193,7 +1193,7 @@ const AuthenticatedContent = () => {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(null);
   const saveFeedbackTimeoutRef = useRef(null);
-  const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : userRole === 'WASIT' ? 'Wasit' : isReferee ? 'Referee' : 'Pengguna';
+  const accountRoleLabel = isSuperAdmin ? 'Super Admin' : isEO ? 'Event Organizer (EO)' : isPublic ? 'Publik' : isReferee ? 'Referee' : userRole === 'WASIT' ? 'Wasit' : 'Pengguna';
 
   const showSaveFeedback = (saved) => {
     setSaveFeedback(saved);
@@ -5995,7 +5995,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           }}
           onAllEvents={() => { setActiveView('DASHBOARD'); setDashboardEventBrowser('ALL'); }}
           onLogout={logout}
-          onOpenAlbum={() => setActiveView('ALBUM')}
         />
       </div>
 
@@ -7145,7 +7144,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         {/* Tablet/Desktop: 6 menu termasuk Kelola Wasit untuk EO/Admin */}
-        <div className={`hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6 ${isPublic ? 'mx-auto max-w-4xl md:grid-cols-3 xl:grid-cols-3' : ''}`}>
+        <div className={`hidden grid-cols-3 gap-4 md:grid xl:grid-cols-6 ${isPublic ? 'sm-public-desktop-quick-grid mx-auto max-w-4xl md:grid-cols-3 xl:grid-cols-3' : ''}`}>
           {[
             { label: 'Kelola Event', icon: Settings, action: () => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })(), box: 'from-blue-50 to-blue-100', iconColor: 'text-blue-600' },
             { label: isPublic ? 'Data Peserta' : 'Kelola Pemain', icon: Users, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('REGISTRATION'); }, box: 'from-sky-50 to-cyan-100', iconColor: 'text-sky-600' },
@@ -7154,8 +7153,9 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             { label: 'Brosur Kejuaraan', icon: FileText, action: () => setActiveView('BROCHURES'), box: 'from-cyan-50 to-cyan-100', iconColor: 'text-cyan-600' },
             { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
+            ...(isPublic ? [{ label: 'Album Juara', icon: Trophy, action: () => setActiveView('ALBUM'), box: 'from-amber-50 to-yellow-100', iconColor: 'text-amber-600' }] : []),
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
-          ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur Kejuaraan'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
+          ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur Kejuaraan', 'Album Juara'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className={`group flex w-full min-w-0 items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
               <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
@@ -10409,8 +10409,8 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               white-space: nowrap !important;
               overflow: hidden !important;
             }
-            /* Baris 1: Data Peserta saja. */
-            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(1) { grid-column: 1 !important; grid-row: 1 !important; }
+            /* Baris 1: Data Peserta memenuhi satu baris. */
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(1) { grid-column: 1 / -1 !important; grid-row: 1 !important; }
             /* Baris 2: Mesin Undian, Jadwal, Knockout. */
             .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(2) { grid-column: 1 !important; grid-row: 2 !important; }
             .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(3) { grid-column: 2 !important; grid-row: 2 !important; }
@@ -10423,6 +10423,21 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button svg { width: 13px !important; height: 13px !important; min-width: 13px !important; flex: 0 0 13px !important; }
             .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button.sm-album-quick-button { grid-column: 3 !important; grid-row: 3 !important; }
             .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid ~ * { min-height: 0; }
+          }
+
+          @media (min-width: 768px) {
+            /* Desktop publik: Data Peserta sendiri di baris 1, tiga tombol di baris 2 dan 3. */
+            .sm-public-desktop-quick-grid {
+              grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              grid-template-rows: repeat(3, minmax(72px, auto)) !important;
+            }
+            .sm-public-desktop-quick-grid > button:nth-child(1) { grid-column: 1 / -1 !important; grid-row: 1 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(2) { grid-column: 1 !important; grid-row: 2 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(3) { grid-column: 2 !important; grid-row: 2 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(4) { grid-column: 3 !important; grid-row: 2 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(5) { grid-column: 1 !important; grid-row: 3 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(6) { grid-column: 2 !important; grid-row: 3 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(7) { grid-column: 3 !important; grid-row: 3 !important; }
           }
 </style>
       {saveFeedback !== null && (
