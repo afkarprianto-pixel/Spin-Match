@@ -10501,6 +10501,38 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               height: 16px !important;
               min-width: 16px !important;
             }
+            /* Override paling kuat untuk selector CSS lama nth-child yang sebelumnya mewarnai Chat Publik emas. */
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-data,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-draw,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-schedule,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-knockout,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-brochures,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-album,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-chat {
+              height: 36px !important;
+              min-height: 36px !important;
+              max-height: 36px !important;
+              border-radius: 14px !important;
+              font-size: 13px !important;
+              line-height: 1 !important;
+              font-weight: 900 !important;
+              padding: 3px 6px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-data {
+              grid-column: 2 / span 1 !important;
+              grid-row: 1 !important;
+              justify-content: center !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-chat {
+              background: #7c3aed !important;
+              background-image: none !important;
+              border-color: #6d28d9 !important;
+              color: #ffffff !important;
+            }
+            .spinmatch-app aside nav button,
+            .spinmatch-app aside > div:last-child button {
+              font-size: 13px !important;
+            }
           }
       `}</style>
       {saveFeedback !== null && (
