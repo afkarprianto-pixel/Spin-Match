@@ -10513,7 +10513,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               min-height: 36px !important;
               max-height: 36px !important;
               border-radius: 14px !important;
-              font-size: 13px !important;
+              font-size: 12px !important;
               line-height: 1 !important;
               font-weight: 900 !important;
               padding: 3px 6px !important;
@@ -10531,7 +10531,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             }
             .spinmatch-app aside nav button,
             .spinmatch-app aside > div:last-child button {
-              font-size: 13px !important;
+              font-size: 12px !important;
             }
           }
       `}</style>
