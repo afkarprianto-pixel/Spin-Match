@@ -96,7 +96,6 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
 
         {showDesktopMoreMenu && (
           <div className="absolute bottom-[48px] right-2 z-50 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-[#07345c] p-1.5 shadow-2xl">
-            {isPublicRole && <button type="button" onClick={() => { setShowDesktopMoreMenu(false); onOpenAlbum?.(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><Trophy className="h-4 w-4 text-amber-300" />Album Juara</button>}
             <button type="button" onClick={handleDesktopRestart} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10"><RefreshCw className="h-4 w-4" />Restart</button>
             <button type="button" onClick={handleDesktopLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-red-200 hover:bg-red-500/10"><LogOut className="h-4 w-4" />Keluar</button>
           </div>
@@ -10263,6 +10262,167 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               min-width:13px !important;
               flex:0 0 13px !important;
             }
+          }
+
+          /* KUNCI URUTAN MENU PUBLIK: posisi ditetapkan per tombol agar CSS lama tidak menggeser Data Peserta. */
+          @media (max-width: 767px) {
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid {
+              display:grid !important;
+              grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+              grid-template-rows:repeat(3,34px) !important;
+              grid-auto-flow:row !important;
+              grid-auto-rows:34px !important;
+              gap:5px !important;
+              height:auto !important;
+              max-height:none !important;
+              overflow:visible !important;
+              align-items:stretch !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button {
+              grid-column:auto !important;
+              grid-row:auto !important;
+              position:relative !important;
+              inset:auto !important;
+              width:100% !important;
+              min-width:0 !important;
+              min-height:34px !important;
+              height:34px !important;
+              max-height:34px !important;
+              margin:0 !important;
+              padding:2px 3px !important;
+              display:flex !important;
+              flex-direction:row !important;
+              align-items:center !important;
+              justify-content:center !important;
+              gap:3px !important;
+              border-radius:999px !important;
+              font-size:clamp(7px,2.2vw,10px) !important;
+              line-height:1 !important;
+              white-space:nowrap !important;
+              overflow:hidden !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(1) { grid-column:1 !important; grid-row:1 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(2) { grid-column:2 !important; grid-row:1 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(3) { grid-column:3 !important; grid-row:1 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(4) { grid-column:1 !important; grid-row:2 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(5) { grid-column:2 !important; grid-row:2 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(6) { grid-column:3 !important; grid-row:2 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(7) { grid-column:1 !important; grid-row:3 !important; }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+              width:13px !important;
+              height:13px !important;
+              min-width:13px !important;
+              flex:0 0 13px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > .sm-album-quick-button {
+              grid-column:1 !important;
+              grid-row:3 !important;
+              display:flex !important;
+              visibility:visible !important;
+              opacity:1 !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-dashboard-quick {
+              padding:10px !important;
+              margin-top:10px !important;
+              height:auto !important;
+              min-height:0 !important;
+              overflow:visible !important;
+            }
+          }
+
+          /* PERBAIKAN FINAL: Album Juara benar-benar tampil pada baris ketiga di bawah Knockout. */
+          @media (max-width: 767px) {
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid {
+              display: grid !important;
+              grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              grid-template-rows: auto auto auto !important;
+              grid-auto-flow: row !important;
+              grid-auto-rows: 34px !important;
+              gap: 5px !important;
+              height: auto !important;
+              max-height: none !important;
+              overflow: visible !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button {
+              grid-column: auto !important;
+              grid-row: auto !important;
+              min-height: 34px !important;
+              height: 34px !important;
+              max-height: 34px !important;
+              padding: 2px 3px !important;
+              font-size: 8px !important;
+              border-radius: 999px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > .sm-album-quick-button {
+              grid-column: 1 !important;
+              grid-row: 3 !important;
+              display: flex !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              background: linear-gradient(90deg, #d97706, #fbbf24) !important;
+              color: #fff !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-dashboard-quick {
+              padding: 10px 10px 12px !important;
+              margin-top: 10px !important;
+              height: auto !important;
+              min-height: 0 !important;
+              overflow: visible !important;
+            }
+          }
+
+
+          /* FINAL: pertahankan susunan saat ini, tambahkan Album Juara sebagai tombol ketiga baris 3. */
+          @media (max-width: 767px) {
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid {
+              display: grid !important;
+              grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              grid-template-rows: 34px 34px 34px !important;
+              grid-auto-flow: row !important;
+              grid-auto-rows: 34px !important;
+              gap: 5px !important;
+              height: auto !important;
+              max-height: none !important;
+              overflow: visible !important;
+              align-items: stretch !important;
+            }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button {
+              grid-column: auto !important;
+              grid-row: auto !important;
+              display: flex !important;
+              position: relative !important;
+              inset: auto !important;
+              width: 100% !important;
+              min-width: 0 !important;
+              min-height: 34px !important;
+              height: 34px !important;
+              max-height: 34px !important;
+              margin: 0 !important;
+              padding: 2px 3px !important;
+              flex-direction: row !important;
+              align-items: center !important;
+              justify-content: center !important;
+              gap: 3px !important;
+              border-radius: 999px !important;
+              font-size: clamp(7px, 2.15vw, 10px) !important;
+              line-height: 1 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+            }
+            /* Baris 1: Data Peserta saja. */
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(1) { grid-column: 1 !important; grid-row: 1 !important; }
+            /* Baris 2: Mesin Undian, Jadwal, Knockout. */
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(2) { grid-column: 1 !important; grid-row: 2 !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(3) { grid-column: 2 !important; grid-row: 2 !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(4) { grid-column: 3 !important; grid-row: 2 !important; }
+            /* Baris 3: Brosur Kejuaraan, Chat Publik, Album Juara. */
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(5) { grid-column: 1 !important; grid-row: 3 !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(6) { grid-column: 2 !important; grid-row: 3 !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button:nth-child(7),
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button.sm-album-quick-button { grid-column: 3 !important; grid-row: 3 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; background: linear-gradient(90deg, #d97706, #fbbf24) !important; color: #fff !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button svg { width: 13px !important; height: 13px !important; min-width: 13px !important; flex: 0 0 13px !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid > button.sm-album-quick-button { grid-column: 3 !important; grid-row: 3 !important; }
+            .sm-dashboard-screen .sm-public-quick-grid.sm-public-two-row-grid ~ * { min-height: 0; }
           }
 </style>
       {saveFeedback !== null && (
