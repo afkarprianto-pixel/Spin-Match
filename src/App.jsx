@@ -10220,7 +10220,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
-      `}
           /* FIX: jangan biarkan aturan lama membuat Data Peserta memenuhi satu baris. */
           @media (max-width:767px) {
             .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid {
@@ -10456,7 +10455,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-chat { grid-column: 2 !important; grid-row: 3 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-album { grid-column: 3 !important; grid-row: 3 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; }
           }
-</style>
+      `}</style>
       {saveFeedback !== null && (
         <div
           role={saveFeedback ? 'status' : 'alert'}
