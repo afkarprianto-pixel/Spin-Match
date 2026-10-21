@@ -10449,23 +10449,26 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
               grid-template-rows: 30px 30px 30px !important;
               grid-auto-rows: 30px !important;
+              grid-auto-flow: row !important;
               height: auto !important;
               overflow: visible !important;
             }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-data { grid-column: 1 / -1 !important; grid-row: 1 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-draw { grid-column: 1 !important; grid-row: 2 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-schedule { grid-column: 2 !important; grid-row: 2 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-knockout { grid-column: 3 !important; grid-row: 2 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-brochures { grid-column: 1 !important; grid-row: 3 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-album { grid-column: 2 !important; grid-row: 3 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-chat { grid-column: 3 !important; grid-row: 3 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-data { grid-column: 1 / span 3 !important; grid-row: 1 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-draw { grid-column: 1 / span 1 !important; grid-row: 2 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-schedule { grid-column: 2 / span 1 !important; grid-row: 2 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-knockout { grid-column: 3 / span 1 !important; grid-row: 2 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-brochures { grid-column: 1 / span 1 !important; grid-row: 3 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-album { grid-column: 2 / span 1 !important; grid-row: 3 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-chat { grid-column: 3 / span 1 !important; grid-row: 3 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > button {
               height: 30px !important;
               min-height: 30px !important;
               max-height: 30px !important;
-              border-radius: 12px !important;
+              border-radius: 14px !important;
               padding: 2px 4px !important;
               gap: 3px !important;
+              flex-direction: row !important;
+              white-space: nowrap !important;
             }
           }
       `}</style>
