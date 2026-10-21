@@ -7070,7 +7070,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
         </div>
 
         {/* Mobile: menu publik selalu 2 baris x 3 kolom dengan lebar tombol seragam. */}
-        <div className={`mx-auto w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid max-w-2xl grid grid-cols-3' : 'grid grid-cols-3'}`}>
+        <div className={`mx-auto w-full gap-2 md:hidden ${isPublic ? 'sm-public-quick-grid sm-public-two-row-grid max-w-2xl grid grid-cols-3' : 'grid grid-cols-3'}`}>
           {!isPublic && <button
             onClick={() => (() => { if (isPublic || isWasit) { alert('Kelola Event hanya untuk EO atau Super Admin.'); return; } const ev = (dashboardActiveEvent && canManageEvent(dashboardActiveEvent)) ? dashboardActiveEvent : myEvents[0]; if (ev) handleRowClick(ev); else alert('Belum ada event yang dapat dikelola.'); })()}
             className="flex min-w-0 items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-[#1478f2] to-[#0b96ff] px-4 py-3.5 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(20,120,242,.24)] active:scale-[.98]"
@@ -10047,6 +10047,61 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             width:14px !important;
             height:14px !important;
             flex-shrink:0 !important;
+          }
+          /* FINAL MENU CEPAT PUBLIK: 3 kapsul per baris, tepat 2 baris. */
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid {
+            display:grid !important;
+            width:100% !important;
+            max-width:640px !important;
+            grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+            grid-template-rows:repeat(2,minmax(36px,auto)) !important;
+            grid-auto-flow:row !important;
+            align-items:stretch !important;
+            gap:5px !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button {
+            display:flex !important;
+            flex-direction:row !important;
+            align-items:center !important;
+            justify-content:center !important;
+            width:100% !important;
+            min-width:0 !important;
+            min-height:38px !important;
+            max-height:42px !important;
+            padding:3px 2px !important;
+            gap:3px !important;
+            border-radius:999px !important;
+            white-space:nowrap !important;
+            overflow:hidden !important;
+            font-size:8.5px !important;
+            line-height:1.05 !important;
+            text-overflow:clip !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+            display:block !important;
+            width:13px !important;
+            height:13px !important;
+            min-width:13px !important;
+            flex-shrink:0 !important;
+          }
+          .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid .sm-chat-quick-button::after {
+            content:none !important;
+            display:none !important;
+          }
+          @media (max-width:360px) {
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid {
+              gap:4px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button {
+              gap:2px !important;
+              padding:2px 1px !important;
+              font-size:7.5px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+              width:12px !important;
+              height:12px !important;
+              min-width:12px !important;
+            }
           }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
