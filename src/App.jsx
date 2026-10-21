@@ -6051,7 +6051,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
                     </button>
                   )}
 
-                  {(isPublic || isSuperAdmin) && <button type="button" onClick={() => { setActiveView('ALBUM'); setShowMobileMoreMenu(false); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-extrabold text-amber-700 hover:bg-amber-50"><Trophy className="h-4 w-4" />Album Juara</button>}
                   <button
                     type="button"
                     onClick={handleMobileRestart}
@@ -7126,6 +7125,14 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           >
             <MessageCircle className="h-5 w-5 shrink-0" /> Chat Publik
           </button>
+
+          {isPublic && <button
+            type="button"
+            onClick={() => setActiveView('ALBUM')}
+            className="sm-album-quick-button flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+          >
+            <Trophy className="h-5 w-5 shrink-0" /> Album Juara
+          </button>}
 
           {!isPublic && (
             <button
@@ -10048,6 +10055,48 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             height:14px !important;
             flex-shrink:0 !important;
           }
+          /* Menu Publik: Album Juara dipindah ke Menu Cepat, tepat di bawah Knockout (baris ketiga). */
+          @media (max-width: 767px) {
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-dashboard-quick {
+              margin-top:10px !important;
+              padding:10px 10px 12px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-dashboard-quick > div:first-child {
+              margin-bottom:8px !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid {
+              display:grid !important;
+              grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+              grid-auto-flow:row !important;
+              grid-template-rows:none !important;
+              gap:5px !important;
+              max-width:100% !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button {
+              grid-column:auto !important;
+              flex:initial !important;
+              width:100% !important;
+              max-width:none !important;
+              min-width:0 !important;
+              min-height:32px !important;
+              height:32px !important;
+              max-height:32px !important;
+              padding:3px 4px !important;
+              gap:3px !important;
+              border-radius:999px !important;
+              font-size:8px !important;
+              line-height:1 !important;
+              white-space:nowrap !important;
+              overflow:hidden !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+              width:12px !important;
+              height:12px !important;
+              min-width:12px !important;
+              flex-shrink:0 !important;
+            }
+          }
+
           /* FINAL MENU CEPAT PUBLIK: 3 kapsul per baris, tepat 2 baris. */
           .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick-grid.sm-public-two-row-grid {
             display:grid !important;
