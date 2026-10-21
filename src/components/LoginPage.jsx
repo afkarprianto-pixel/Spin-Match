@@ -906,7 +906,7 @@ export const LoginPage = ({ onCancel }) => {
 
                   <button type="button" title="Login Referee" onClick={() => document.querySelector('input[name="username"], input[autocomplete="username"], .sm-panel form input')?.focus()} className="rounded-xl border-2 border-blue-300 bg-blue-50 py-1.5 cursor-pointer hover:ring-2 hover:ring-blue-300">
                     <ShieldCheck className="w-3.5 h-3.5 mx-auto text-blue-600 mb-1" />
-                    <p className="text-[11px] font-extrabold text-[#173d70]">Login Wasit</p>
+                    <p className="text-[11px] font-extrabold text-[#173d70]">Login Referee</p>
                   </button>
 
                   <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] py-1.5">
