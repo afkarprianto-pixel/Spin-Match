@@ -86,7 +86,7 @@ const SpinMatchSidebar = ({ activeView, setActiveView, role = '', onMyEvents, on
 
         <div className="my-1.5 border-t border-white/10" />
         {!isPublicRole && !isWasitRole && !isRefereeRole && <button type="button" onClick={onMyEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><Trophy className="h-[18px] w-[18px] text-cyan-300" /><span>Event Saya</span></button>}
-        {!isWasitRole && !isRefereeRole && <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[12px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>}
+        {!isWasitRole && !isRefereeRole && <button type="button" onClick={onAllEvents} className="flex w-full items-center gap-3 rounded-[11px] px-3 py-1.5 text-left text-[11px] font-extrabold text-[#d5e3ed] transition hover:bg-white/10 hover:text-white"><FileText className="h-[18px] w-[18px] text-orange-300" /><span>Semua Event</span></button>}
       </nav>
 
       <div className="relative border-t border-white/10 p-2.5">
@@ -977,7 +977,7 @@ const RefereeWorkspace = ({ user, activeView, setActiveView, events, getSchedule
     <section className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4"><h2 className="text-base font-black text-slate-950">Menu Cepat</h2><p className="mt-1 text-xs text-slate-500">Akses operasional pertandingan</p></div>
       <div className="grid grid-cols-6 gap-2 sm:gap-3">
-        {quickLinks.map(({ view, label, Icon, color, span }) => <button key={view} type="button" onClick={() => setActiveView(view)} className={`${span} flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-r ${color} px-2 py-1.5 text-center text-[10px] font-black leading-tight text-white shadow-sm active:scale-[.98] sm:min-h-[52px] sm:flex-row sm:gap-2 sm:text-xs`}>
+        {quickLinks.map(({ view, label, Icon, color, span }) => <button key={view} type="button" onClick={() => setActiveView(view)} className={`${span} flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-r ${color} px-2 py-1.5 text-center text-[11px] font-black leading-tight text-white shadow-sm active:scale-[.98] sm:min-h-[52px] sm:flex-row sm:gap-2 sm:text-[11px]`}>
           <Icon className="h-5 w-5 shrink-0" /><span>{label}</span>
         </button>)}
       </div>
@@ -7115,7 +7115,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             <Trophy className="h-5 w-5 shrink-0" /> Knockout
           </button>
 
-          {(isPublic || isSuperAdmin) && <button type="button" onClick={() => setActiveView('BROCHURES')} className="sm-quick-brochures flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0891b2] to-[#22d3ee] px-2 py-3 text-[10px] font-black text-white shadow-md active:scale-[.98]"><FileText className="h-5 w-5 shrink-0" /> Brosur Kejuaraan</button>}
+          {(isPublic || isSuperAdmin) && <button type="button" onClick={() => setActiveView('BROCHURES')} className="sm-quick-brochures flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0891b2] to-[#22d3ee] px-2 py-3 text-[10px] font-black text-white shadow-md active:scale-[.98]"><FileText className="h-5 w-5 shrink-0" /> Brosur</button>}
           {isPublic && <button
             type="button"
             onClick={() => setActiveView('ALBUM')}
@@ -7151,11 +7151,11 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             { label: isPublic ? 'Mesin Undian' : 'Undian Pool', icon: Shuffle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('DRAW'); }, box: 'from-emerald-50 to-emerald-100', iconColor: 'text-emerald-600' },
             { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
-            { label: 'Brosur Kejuaraan', icon: FileText, action: () => setActiveView('BROCHURES'), box: 'from-cyan-50 to-cyan-100', iconColor: 'text-cyan-600' },
+            { label: 'Brosur', icon: FileText, action: () => setActiveView('BROCHURES'), box: 'from-cyan-50 to-cyan-100', iconColor: 'text-cyan-600' },
             ...(isPublic ? [{ label: 'Album Juara', icon: Trophy, action: () => setActiveView('ALBUM'), box: 'from-amber-50 to-yellow-100', iconColor: 'text-amber-600' }] : []),
             { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
-          ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur Kejuaraan', 'Album Juara'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
+          ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur', 'Album Juara'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className={`group flex w-full min-w-0 items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
               <span className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br ${box} transition group-hover:-translate-y-1 group-hover:shadow-lg ${isPublic ? 'h-12 w-12 shrink-0' : 'aspect-square w-full max-w-[84px]'}`}>
                 <Icon className={`h-7 w-7 ${iconColor}`} />
@@ -9570,7 +9570,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           .sm-dashboard-event-buttons { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; order:0 !important; width:100% !important; }
           .sm-dashboard-event-buttons button { min-height:32px !important; border-radius:13px !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; font-size:11px !important; font-weight:900 !important; color:#fff !important; border:0 !important; box-shadow:0 5px 16px rgba(15,23,42,.06) !important; }
           .sm-btn-my-events { background:linear-gradient(135deg,#0a3971,#0874c9) !important; }
-          .sm-btn-all-events { background:linear-gradient(135deg,#f97316,#fb923c) !important; }
+          .sm-btn-all-events { background:linear-gradient(135deg,#f97316,#fb923c) !important; font-size:11px !important; }
           .sm-event-browser { width:100% !important; }
           .sm-dashboard-hero { order:2 !important; width:100% !important; margin:0 auto !important; border-radius:22px !important; }
           .sm-dashboard-hero-inner { min-height:0 !important; display:block !important; padding:6px 12px 7px !important; }
