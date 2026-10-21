@@ -10430,7 +10430,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
               grid-template-rows: repeat(3, minmax(72px, auto)) !important;
             }
-            .sm-public-desktop-quick-grid > button:nth-child(1) { grid-column: 1 / -1 !important; grid-row: 1 !important; }
+            .sm-public-desktop-quick-grid > button:nth-child(1) { grid-column: 2 / span 1 !important; grid-row: 1 !important; }
             .sm-public-desktop-quick-grid > button:nth-child(2) { grid-column: 1 !important; grid-row: 2 !important; }
             .sm-public-desktop-quick-grid > button:nth-child(3) { grid-column: 2 !important; grid-row: 2 !important; }
             .sm-public-desktop-quick-grid > button:nth-child(4) { grid-column: 3 !important; grid-row: 2 !important; }
@@ -10453,7 +10453,7 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               height: auto !important;
               overflow: visible !important;
             }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-data { grid-column: 1 / span 3 !important; grid-row: 1 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-data { grid-column: 2 / span 1 !important; grid-row: 1 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-draw { grid-column: 1 / span 1 !important; grid-row: 2 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-schedule { grid-column: 2 / span 1 !important; grid-row: 2 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-knockout { grid-column: 3 / span 1 !important; grid-row: 2 !important; }
@@ -10465,10 +10465,41 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               min-height: 30px !important;
               max-height: 30px !important;
               border-radius: 14px !important;
-              padding: 2px 4px !important;
+              padding: 2px 5px !important;
               gap: 3px !important;
               flex-direction: row !important;
               white-space: nowrap !important;
+              font-size: 11px !important;
+              line-height: 1 !important;
+              font-weight: 900 !important;
+              overflow: hidden !important;
+            }
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-data,
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-draw,
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-schedule,
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-knockout,
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-brochures,
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-album,
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-chat {
+              border-radius: 14px !important;
+              font-size: 11px !important;
+            }
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-data {
+              grid-column: 2 / span 1 !important;
+              grid-row: 1 !important;
+              justify-content: center !important;
+              text-align: center !important;
+              border-radius: 14px !important;
+            }
+            .sm-public-quick-grid.sm-public-two-row-grid > button.sm-quick-chat {
+              background: #7c3aed !important;
+              border-color: #6d28d9 !important;
+              color: #ffffff !important;
+            }
+            .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+              width: 16px !important;
+              height: 16px !important;
+              min-width: 16px !important;
             }
           }
       `}</style>
