@@ -7116,14 +7116,6 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           </button>
 
           {(isPublic || isSuperAdmin) && <button type="button" onClick={() => setActiveView('BROCHURES')} className="sm-quick-brochures flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0891b2] to-[#22d3ee] px-2 py-3 text-[10px] font-black text-white shadow-md active:scale-[.98]"><FileText className="h-5 w-5 shrink-0" /> Brosur Kejuaraan</button>}
-          <button
-            type="button"
-            onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
-            className="sm-quick-chat sm-chat-quick-button flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
-          >
-            <MessageCircle className="h-5 w-5 shrink-0" /> Chat Publik
-          </button>
-
           {isPublic && <button
             type="button"
             onClick={() => setActiveView('ALBUM')}
@@ -7131,6 +7123,14 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           >
             <Trophy className="h-5 w-5 shrink-0" /> Album Juara
           </button>}
+
+          <button
+            type="button"
+            onClick={() => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }}
+            className="sm-quick-chat sm-chat-quick-button flex min-h-[58px] w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#635bdb] to-[#8b83f6] px-3 py-3 text-[11px] font-black text-white shadow-md active:scale-[.98]"
+          >
+            <MessageCircle className="h-5 w-5 shrink-0" /> Chat Publik
+          </button>
 
           {!isPublic && (
             <button
@@ -7152,8 +7152,8 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             { label: 'Jadwal', icon: Calendar, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('SCHEDULE'); }, box: 'from-amber-50 to-orange-100', iconColor: 'text-orange-500' },
             { label: 'Knockout', icon: Trophy, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('KNOCKOUT'); }, box: 'from-rose-50 to-red-100', iconColor: 'text-rose-600' },
             { label: 'Brosur Kejuaraan', icon: FileText, action: () => setActiveView('BROCHURES'), box: 'from-cyan-50 to-cyan-100', iconColor: 'text-cyan-600' },
-            { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             ...(isPublic ? [{ label: 'Album Juara', icon: Trophy, action: () => setActiveView('ALBUM'), box: 'from-amber-50 to-yellow-100', iconColor: 'text-amber-600' }] : []),
+            { label: 'Chat Publik', icon: MessageCircle, action: () => { if (dashboardActiveEvent) selectDashboardEvent(dashboardActiveEvent); setActiveView('CHAT'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' },
             ...(!isPublic ? [{ label: 'Kelola Wasit', icon: Users, action: () => { setSettingsSection('REFEREE'); setActiveView('SETTINGS'); }, box: 'from-violet-50 to-purple-100', iconColor: 'text-violet-600' }] : []),
           ].filter(item => (!isPublic && !isSuperAdmin) || ['Data Peserta', 'Mesin Undian', 'Chat Publik', 'Jadwal', 'Knockout', 'Brosur Kejuaraan', 'Album Juara'].includes(item.label)).map(({ label, icon: Icon, action, box, iconColor }) => (
             <button key={label} onClick={action} className={`group flex w-full min-w-0 items-center gap-3 ${isPublic ? 'min-h-[72px] flex-row justify-center rounded-2xl border border-slate-100 bg-white px-4 shadow-sm' : 'flex-col gap-2'}`}>
@@ -10437,13 +10437,18 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             .sm-public-desktop-quick-grid > button:nth-child(5) { grid-column: 1 !important; grid-row: 3 !important; }
             .sm-public-desktop-quick-grid > button:nth-child(6) { grid-column: 2 !important; grid-row: 3 !important; }
             .sm-public-desktop-quick-grid > button:nth-child(7) { grid-column: 3 !important; grid-row: 3 !important; }
+            .sm-public-desktop-quick-grid > button {
+              min-height: 56px !important;
+              height: 56px !important;
+              border-radius: 14px !important;
+            }
           }
           /* KUNCI TERAKHIR: posisi berdasarkan fungsi tombol, bukan nth-child. */
           @media (max-width: 767px) {
             .sm-public-quick-grid.sm-public-two-row-grid {
               grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-              grid-template-rows: 34px 34px 34px !important;
-              grid-auto-rows: 34px !important;
+              grid-template-rows: 30px 30px 30px !important;
+              grid-auto-rows: 30px !important;
               height: auto !important;
               overflow: visible !important;
             }
@@ -10452,8 +10457,16 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-schedule { grid-column: 2 !important; grid-row: 2 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-knockout { grid-column: 3 !important; grid-row: 2 !important; }
             .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-brochures { grid-column: 1 !important; grid-row: 3 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-chat { grid-column: 2 !important; grid-row: 3 !important; }
-            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-album { grid-column: 3 !important; grid-row: 3 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-album { grid-column: 2 !important; grid-row: 3 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-chat { grid-column: 3 !important; grid-row: 3 !important; }
+            .sm-public-quick-grid.sm-public-two-row-grid > button {
+              height: 30px !important;
+              min-height: 30px !important;
+              max-height: 30px !important;
+              border-radius: 12px !important;
+              padding: 2px 4px !important;
+              gap: 3px !important;
+            }
           }
       `}</style>
       {saveFeedback !== null && (
