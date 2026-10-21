@@ -10531,7 +10531,83 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
             }
             .spinmatch-app aside nav button,
             .spinmatch-app aside > div:last-child button {
-              font-size: 12px !important;
+              font-size: 13px !important;
+            }
+          }
+          /* FINAL MENU PUBLIK: 1 tombol di baris pertama, 3 di baris kedua, 3 di baris ketiga. */
+          @media (max-width: 767px) {
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid {
+              display: grid !important;
+              grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              grid-template-rows: repeat(3, 42px) !important;
+              grid-auto-rows: 42px !important;
+              grid-auto-flow: row !important;
+              gap: 6px !important;
+              height: auto !important;
+              max-height: none !important;
+              overflow: visible !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button {
+              display: flex !important;
+              width: 100% !important;
+              height: 42px !important;
+              min-height: 42px !important;
+              max-height: 42px !important;
+              min-width: 0 !important;
+              margin: 0 !important;
+              padding: 4px 6px !important;
+              border-radius: 14px !important;
+              flex-direction: row !important;
+              align-items: center !important;
+              justify-content: center !important;
+              gap: 4px !important;
+              font-size: 11px !important;
+              line-height: 1 !important;
+              font-weight: 900 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              opacity: 1 !important;
+              visibility: visible !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-data {
+              display: flex !important;
+              grid-column: 2 !important;
+              grid-row: 1 !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-draw {
+              grid-column: 1 !important;
+              grid-row: 2 !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-schedule {
+              grid-column: 2 !important;
+              grid-row: 2 !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-knockout {
+              grid-column: 3 !important;
+              grid-row: 2 !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-brochures {
+              grid-column: 1 !important;
+              grid-row: 3 !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-album {
+              display: flex !important;
+              grid-column: 2 !important;
+              grid-row: 3 !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > .sm-quick-chat {
+              grid-column: 3 !important;
+              grid-row: 3 !important;
+              background: #7c3aed !important;
+              background-image: none !important;
+              border-color: #6d28d9 !important;
+              color: #ffffff !important;
+            }
+            .sm-dashboard-screen .sm-dashboard-quick.sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+              width: 16px !important;
+              height: 16px !important;
+              min-width: 16px !important;
+              flex: 0 0 16px !important;
             }
           }
       `}</style>
