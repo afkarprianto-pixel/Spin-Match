@@ -10172,7 +10172,50 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
-      `}</style>
+      `}
+          /* FIX: jangan biarkan aturan lama membuat Data Peserta memenuhi satu baris. */
+          @media (max-width:767px) {
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid {
+              display:grid !important;
+              grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+              grid-template-rows:repeat(2,48px) !important;
+              grid-auto-flow:row !important;
+              gap:6px !important;
+              width:100% !important;
+              max-width:100% !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button:first-child,
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button {
+              grid-column:auto / span 1 !important;
+              grid-row:auto !important;
+              justify-self:stretch !important;
+              width:100% !important;
+              min-width:0 !important;
+              max-width:100% !important;
+              height:48px !important;
+              min-height:48px !important;
+              max-height:48px !important;
+              margin:0 !important;
+              padding:3px 2px !important;
+              display:flex !important;
+              flex-direction:row !important;
+              align-items:center !important;
+              justify-content:center !important;
+              gap:3px !important;
+              border-radius:999px !important;
+              white-space:nowrap !important;
+              overflow:hidden !important;
+              font-size:clamp(7px,2.15vw,10px) !important;
+              line-height:1 !important;
+            }
+            .sm-dashboard-screen:has(.sm-public-quick) .sm-public-quick .sm-public-quick-grid.sm-public-two-row-grid > button svg {
+              width:13px !important;
+              height:13px !important;
+              min-width:13px !important;
+              flex:0 0 13px !important;
+            }
+          }
+</style>
       {saveFeedback !== null && (
         <div
           role={saveFeedback ? 'status' : 'alert'}
