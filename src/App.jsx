@@ -10103,6 +10103,72 @@ const handleParticipantPaymentChange = async (player, statusBayar) => {
               min-width:12px !important;
             }
           }
+          /* PERBAIKAN FINAL: menu publik selalu 3 kolom x 2 baris, kapsul seragam. */
+          .sm-public-two-row-grid {
+            display:grid !important;
+            grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+            grid-template-rows:repeat(2,minmax(48px,auto)) !important;
+            grid-auto-flow:row !important;
+            align-items:stretch !important;
+            justify-items:stretch !important;
+            align-content:start !important;
+            width:100% !important;
+            max-width:100% !important;
+            gap:8px !important;
+          }
+          .sm-public-two-row-grid > button {
+            display:flex !important;
+            grid-column:auto / span 1 !important;
+            grid-row:auto !important;
+            justify-self:stretch !important;
+            align-self:stretch !important;
+            flex:none !important;
+            width:100% !important;
+            min-width:0 !important;
+            max-width:none !important;
+            height:48px !important;
+            min-height:48px !important;
+            max-height:48px !important;
+            padding:4px 5px !important;
+            margin:0 !important;
+            gap:4px !important;
+            border-radius:999px !important;
+            flex-direction:row !important;
+            align-items:center !important;
+            justify-content:center !important;
+            white-space:nowrap !important;
+            overflow:hidden !important;
+            font-size:clamp(8px,2.4vw,11px) !important;
+            line-height:1.1 !important;
+            text-overflow:clip !important;
+          }
+          .sm-public-two-row-grid > button svg {
+            display:block !important;
+            width:15px !important;
+            height:15px !important;
+            min-width:15px !important;
+            max-width:15px !important;
+            flex:0 0 15px !important;
+          }
+          .sm-public-two-row-grid .sm-chat-quick-button::after {
+            content:none !important;
+            display:none !important;
+          }
+          @media (max-width:380px) {
+            .sm-public-two-row-grid { gap:5px !important; }
+            .sm-public-two-row-grid > button {
+              gap:2px !important;
+              padding:3px 2px !important;
+              font-size:7.5px !important;
+            }
+            .sm-public-two-row-grid > button svg {
+              width:12px !important;
+              height:12px !important;
+              min-width:12px !important;
+              max-width:12px !important;
+              flex-basis:12px !important;
+            }
+          }
           /* hero pingpong glow: cahaya putih/cyan lembut di belakang gambar */
           img[src*=\"hero-pingpong\"] { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 24px rgba(125,211,252,.75)) drop-shadow(0 0 42px rgba(255,255,255,.38)) !important; }
         }
